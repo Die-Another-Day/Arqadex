@@ -4,9 +4,9 @@ import { motion } from 'framer-motion'
 import { Github, Linkedin, Mail, Terminal } from 'lucide-react'
 
 const LINKS = [
-  { icon: Github, label: 'GITHUB', href: 'https://github.com' },
-  { icon: Linkedin, label: 'LINKEDIN', href: 'https://linkedin.com' },
-  { icon: Mail, label: 'CONTACT', href: 'mailto:hello@arcadelab.dev' },
+  { icon: Github, label: 'GITHUB', href: 'https://github.com/Die-Another-Day' },
+  { icon: Linkedin, label: 'LINKEDIN', href: 'https://linkedin.com/in/eeshangarg888' },
+  { icon: Mail, label: 'CONTACT', href: 'eeshan.agrawal.779@gmail.com' },
 ]
 
 export default function Footer() {
