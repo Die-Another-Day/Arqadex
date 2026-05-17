@@ -6,6 +6,20 @@ import { Lock, Loader } from 'lucide-react'
 
 const UPCOMING_GAMES = [
   {
+    id: 'signal-collapse',
+    title: 'SIGNAL COLLAPSE',
+    url: 'https://die-another-day.github.io/SIGNAL-COLLAPSE/',
+    description:'Trace corrupted signals through collapsing neon infrastructure before the entire network fails.',
+    tags: ['PUZZLE', 'NETWORK', 'DARK'],
+    color: '#00F5FF',
+    accent: 'rgba(0, 245, 255, 0.15)',
+    border: 'rgba(0, 245, 255, 0.3)',
+    progress: 100,
+    eta: 'LIVE',
+    shape: 'wave',
+  },
+
+  {
     id: 'ctrl',
     title: 'CTRL',
     description: 'Control systems pushed to the breaking point. Every action triggers an unpredictable cascade.',
@@ -41,18 +55,7 @@ const UPCOMING_GAMES = [
     eta: 'Q4 2025',
     shape: 'circle',
   },
-  {
-    id: 'signal-collapse',
-    title: 'SIGNAL COLLAPSE',
-    description: 'The network is failing. Trace corrupted signals through decaying infrastructure before it all collapses.',
-    tags: ['PUZZLE', 'NETWORK', 'DARK'],
-    color: '#00F5FF',
-    accent: 'rgba(0, 245, 255, 0.15)',
-    border: 'rgba(0, 245, 255, 0.3)',
-    progress: 15,
-    eta: '2026',
-    shape: 'wave',
-  },
+
 ]
 
 // Unique shape previews per game
@@ -196,7 +199,7 @@ function GameCard({ game, index }: { game: typeof UPCOMING_GAMES[0]; index: numb
             }}
           >
             <Loader className="w-2.5 h-2.5 animate-spin" />
-            COMING SOON
+            {game.url ? 'LIVE' : 'COMING SOON'}
           </div>
           <span
             className="text-xs text-silver/30"
@@ -261,6 +264,23 @@ function GameCard({ game, index }: { game: typeof UPCOMING_GAMES[0]; index: numb
             />
           </div>
         </div>
+
+        {game.url && (
+          <a
+            href={game.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 block text-center py-2 rounded text-xs font-bold tracking-widest"
+            style={{
+              background: `${game.color}15`,
+              border: `1px solid ${game.color}40`,
+              color: game.color,
+              fontFamily: 'var(--font-orbitron)',
+            }}
+          >
+            PLAY NOW ↗
+          </a>
+        )}
       </div>
     </motion.div>
   )
