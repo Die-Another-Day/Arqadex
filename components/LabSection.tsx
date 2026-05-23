@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Atom, Brain, Network, Zap, Wind, Users } from 'lucide-react'
+import { Atom, Brain, Network, Zap, Wind, Users, ExternalLink } from 'lucide-react'
 
 const EXPERIMENTS = [
   {
@@ -43,7 +43,8 @@ const EXPERIMENTS = [
     title: 'MULTIPLAYER PSYCH',
     desc: 'Social dynamics as game loops. Collective behavior shaping emergent narratives.',
     color: '#FF2DA6',
-    status: 'PLANNED',
+    status: 'LIVE',       
+    url: 'https://multiplayer-psych.up.railway.app',
   },
   {
     id: 'network',
@@ -59,6 +60,7 @@ const STATUS_COLORS: Record<string, string> = {
   ACTIVE: '#C7FF4D',
   RESEARCH: '#FF2DA6',
   PLANNED: '#7A5CFF',
+  LIVE:     '#00F5FF'
 }
 
 function ExperimentCard({ exp, index }: { exp: typeof EXPERIMENTS[0]; index: number }) {
@@ -114,7 +116,7 @@ function ExperimentCard({ exp, index }: { exp: typeof EXPERIMENTS[0]; index: num
         </span>
       </div>
 
-      {/* Title */}
+    {/* Title */}
       <h3
         className="font-orbitron text-sm font-bold mb-2 tracking-wide text-white/80 group-hover:text-white transition-colors"
         style={{ fontFamily: 'var(--font-orbitron)' }}
@@ -126,6 +128,28 @@ function ExperimentCard({ exp, index }: { exp: typeof EXPERIMENTS[0]; index: num
       <p className="text-silver/40 text-xs leading-relaxed">
         {exp.desc}
       </p>
+    
+
+
+      {exp.url && (
+       <a  
+        href={exp.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-widest transition-all duration-300"
+        style={{
+          background: `${exp.color}12`,
+          border: `1px solid ${exp.color}40`,
+          color: exp.color,
+          fontFamily: 'var(--font-orbitron)',
+        }}
+      >
+        <ExternalLink className="w-3 h-3" />
+        ENTER LAB
+      </a>
+    )}
+
+
     </motion.div>
   )
 }
@@ -133,7 +157,7 @@ function ExperimentCard({ exp, index }: { exp: typeof EXPERIMENTS[0]; index: num
 export default function LabSection() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-80px' })
-
+ http://localhost:3000
   return (
     <section id="lab" className="relative py-32 px-6 overflow-hidden">
       {/* Background glow */}
