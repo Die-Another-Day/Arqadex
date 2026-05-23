@@ -6,6 +6,15 @@ import { Atom, Brain, Network, Zap, Wind, Users, ExternalLink } from 'lucide-rea
 
 const EXPERIMENTS = [
   {
+    id: 'multiplayer',
+    icon: Users,
+    title: 'MULTIPLAYER PSYCH',
+    desc: 'Social dynamics as game loops. Collective behavior shaping emergent narratives.',
+    color: '#FF2DA6',
+    status: 'LIVE',
+    url: 'https://multiplayer-psych.up.railway.app',
+  },
+  {
     id: 'proc-gen',
     icon: Atom,
     title: 'PROCEDURAL SYSTEMS',
@@ -36,15 +45,6 @@ const EXPERIMENTS = [
     desc: 'Custom constraint solvers. Real-time rigid body dynamics. Forces as gameplay mechanics.',
     color: '#C7FF4D',
     status: 'ACTIVE',
-  },
-  {
-    id: 'multiplayer',
-    icon: Users,
-    title: 'MULTIPLAYER PSYCH',
-    desc: 'Social dynamics as game loops. Collective behavior shaping emergent narratives.',
-    color: '#FF2DA6',
-    status: 'LIVE',       
-    url: 'https://multiplayer-psych.up.railway.app',
   },
   {
     id: 'network',
