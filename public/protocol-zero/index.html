@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+  <title>PROTOCOL ZERO — ARQADEX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- FX overlay canvas — always on top -->
+<canvas id="fx"></canvas>
+<!-- Custom cursor -->
+<div id="cur"></div>
+
+<!-- ═══ HUD ═══════════════════════════════════════════════ -->
+<div id="hud">
+  <div class="hud-cell">
+    <div class="hud-lbl">PROTOCOL</div>
+    <div class="hud-val" id="h-level">ZERO</div>
+  </div>
+  <div class="hud-cell center">
+    <div class="hud-lbl">ASSESSMENT PROGRESS</div>
+    <div class="hud-progress-track"><div id="h-prog" class="hud-progress-fill"></div></div>
+  </div>
+  <div class="hud-cell right">
+    <div class="hud-lbl">TOLERANCE</div>
+    <div id="h-dots" class="miss-dots"></div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: BOOT ═══════════════════════════════════════ -->
+<div id="s-boot" class="screen active">
+  <div id="boot-lines"></div>
+  <div class="boot-bar-wrap"><div id="boot-bar"></div></div>
+</div>
+
+<!-- ═══ SCREEN: INTRO ══════════════════════════════════════ -->
+<div id="s-intro" class="screen">
+  <div class="panel-center">
+    <div class="eyebrow">ARQADEX BEHAVIORAL RESEARCH DIVISION</div>
+    <h1 class="title-xl">PROTOCOL<br><span class="glow-c">ZERO</span></h1>
+    <p class="body-mono" style="max-width:560px;text-align:center;margin:0 auto 36px">
+      You have been selected to participate in a classified cognitive stress assessment.<br><br>
+      Your reaction times, decision patterns, hesitation markers, and behavioral responses
+      will be recorded and analyzed in real time.<br><br>
+      There are five assessment levels. Not all subjects complete the experiment.
+    </p>
+    <div class="warning-text">THIS IS NOT A GAME.</div>
+    <button class="btn-primary" id="btn-begin">ACKNOWLEDGE &amp; BEGIN</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: DIFFICULTY ═════════════════════════════════ -->
+<div id="s-diff" class="screen">
+  <div class="panel-center">
+    <div class="eyebrow">SELECT COGNITIVE PRESSURE PROTOCOL</div>
+    <div class="diff-grid">
+      <div class="diff-card" id="diff-low">
+        <div class="diff-label" style="color:#00F5FF">LOW</div>
+        <div class="diff-desc">Standard conditions.<br>Forgiving response windows.<br>Moderate visual pressure.</div>
+      </div>
+      <div class="diff-card" id="diff-medium">
+        <div class="diff-label" style="color:#FF8800">MEDIUM</div>
+        <div class="diff-desc">Elevated cognitive load.<br>Reduced error tolerance.<br>Increasing complexity.</div>
+      </div>
+      <div class="diff-card" id="diff-hard">
+        <div class="diff-label" style="color:#FF2020">HARD</div>
+        <div class="diff-desc">Maximum stress protocol.<br>Near-zero error margin.<br>Not recommended.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: LEVEL 1 ═════════════════════════════════════ -->
+<div id="s-l1" class="screen">
+  <canvas id="l1-cv"></canvas>
+  <div id="l1-overlay" class="level-overlay"></div>
+</div>
+
+<!-- ═══ SCREEN: LEVEL 2 ═════════════════════════════════════ -->
+<div id="s-l2" class="screen">
+  <div class="l2-wrap">
+    <div class="l2-header">
+      <div class="body-mono dim" id="l2-qnum">ETHICAL CALIBRATION — 01 / 10</div>
+      <div class="timer-bar-wrap"><div id="l2-timer-fill" class="timer-fill"></div></div>
+    </div>
+    <div id="l2-qtext" class="l2-question"></div>
+    <div class="l2-opts" id="l2-opts">
+      <button class="l2-opt" id="l2-a"></button>
+      <button class="l2-opt" id="l2-b"></button>
+    </div>
+    <div id="l2-insight" class="l2-insight hidden"></div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: LEVEL 3 ═════════════════════════════════════ -->
+<div id="s-l3" class="screen">
+  <div id="l3-depth-tag" class="l3-tag top">LOOP DEPTH: 0</div>
+  <div class="l3-corridor" id="l3-corridor">
+    <div id="l3-qtext" class="l3-question"></div>
+    <div class="l3-opts" id="l3-opts">
+      <button class="l3-opt" id="l3-a"></button>
+      <button class="l3-opt" id="l3-b"></button>
+    </div>
+  </div>
+  <div id="l3-decision-tag" class="l3-tag bot">DECISION 0</div>
+  <button id="l3-exit-btn" class="l3-exit hidden">⟶ EXIT PROTOCOL</button>
+</div>
+
+<!-- ═══ SCREEN: LEVEL 4 ═════════════════════════════════════ -->
+<div id="s-l4" class="screen">
+  <div id="l4-banner" class="l4-banner">CALIBRATING...</div>
+  <canvas id="l4-cv"></canvas>
+  <div id="l4-opts" class="l4-opts"></div>
+</div>
+
+<!-- ═══ SCREEN: ASSESSMENT ══════════════════════════════════ -->
+<div id="s-assess" class="screen">
+  <div id="assess-body" class="assess-body"></div>
+</div>
+
+<!-- ═══ SCREEN: TRANSITION ══════════════════════════════════ -->
+<div id="s-trans" class="screen trans-screen" style="display:none">
+  <div class="trans-inner">
+    <div id="t-eyebrow" class="trans-eyebrow"></div>
+    <div id="t-name"    class="trans-name"></div>
+    <div id="t-desc"    class="trans-desc"></div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
