@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 const GAME = {
   title: 'PROTOCOL ZERO',
-  url: '/protocol-zero',
+  url: '/protocol-zero/',
   description:
     'High-pressure human response experiment testing reflex, tolerance, decision patterns, and psychological endurance through escalating neural simulations.',
   
