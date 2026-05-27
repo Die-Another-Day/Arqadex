@@ -5,18 +5,32 @@ import { motion, useInView } from 'framer-motion'
 import { Lock, Loader } from 'lucide-react'
 
 const UPCOMING_GAMES = [
+{
+  id: 'merge-ball',
+  title: 'MERGE BALL',
+  url: '/merge-ball',
+  description:
+    'Physics-driven chaotic merge experience with neon arcade aesthetics. Drop, collide, and evolve unstable quantum spheres.',
+  tags: ['PHYSICS', 'CASUAL', 'NEON'],
+  color: '#00F5FF',
+  accent: 'rgba(0, 245, 255, 0.15)',
+  border: 'rgba(0, 245, 255, 0.3)',
+  progress: 100,
+  eta: 'LIVE',
+  shape: 'merge',
+},
   {
     id: 'signal-collapse',
     title: 'SIGNAL COLLAPSE',
     url: 'https://die-another-day.github.io/SIGNAL-COLLAPSE/',
     description:'Trace corrupted signals through collapsing neon infrastructure before the entire network fails.',
     tags: ['PUZZLE', 'NETWORK', 'DARK'],
-    color: '#00F5FF',
+    color: '#FF3410',
     accent: 'rgba(0, 245, 255, 0.15)',
     border: 'rgba(0, 245, 255, 0.3)',
     progress: 100,
     eta: 'LIVE',
-    shape: 'wave',
+    shape: 'combat',
   },
 
 {
@@ -26,12 +40,12 @@ const UPCOMING_GAMES = [
   description:
     'Voice-controlled neural combat simulator where phonetic commands directly control real-time cybernetic warfare.',
   tags: ['VOICE', 'COMBAT', 'AI'],
-  color: '#00F5FF',
-  accent: 'rgba(0, 245, 255, 0.15)',
-  border: 'rgba(0, 245, 255, 0.3)',
+  color: '#FF3D81',
+  accent: 'rgba(255, 61, 129, 0.15)',
+  border: 'rgba(255, 62, 129, 0.3)',
   progress: 100,
   eta: 'LIVE',
-  shape: 'neural',
+  shape: 'duel',
 },
   {
     id: 'quantum-drift',
@@ -121,6 +135,129 @@ function GamePreview({ game }: { game: typeof UPCOMING_GAMES[0] }) {
             }}
           />
         )}
+{game.shape === 'combat' && (
+  <div className="relative w-20 h-20 float">
+    {/* Outer radar ring */}
+    <div
+      className="absolute inset-0 rounded-full"
+      style={{
+        border: `2px solid ${game.color}40`,
+        boxShadow: `0 0 25px ${game.color}50`,
+      }}
+    />
+
+    {/* Inner ring */}
+    <div
+      className="absolute inset-3 rounded-full"
+      style={{
+        border: `1px solid ${game.color}60`,
+      }}
+    />
+
+    {/* Core */}
+    <div
+      className="absolute inset-[34%] rounded-full"
+      style={{
+        background: game.color,
+        filter: `blur(4px)`,
+        boxShadow: `0 0 20px ${game.color}`,
+      }}
+    />
+
+    {/* Pulse line */}
+    <div
+      className="absolute left-1/2 top-1/2 origin-left"
+      style={{
+        width: '35px',
+        height: '1px',
+        background: game.color,
+        transform: 'rotate(35deg)',
+        boxShadow: `0 0 10px ${game.color}`,
+      }}
+    />
+  </div>
+)}
+{game.shape === 'merge' && (
+  <div className="relative w-24 h-24">
+    <div
+      className="absolute w-12 h-12 rounded-full float"
+      style={{
+        background: '#00F5FF80',
+        left: '0px',
+        top: '20px',
+        boxShadow: '0 0 25px #00F5FF',
+      }}
+    />
+
+    <div
+      className="absolute w-10 h-10 rounded-full float-delay-1"
+      style={{
+        background: '#FF3D8180',
+        right: '8px',
+        top: '0px',
+        boxShadow: '0 0 25px #FF3D81',
+      }}
+    />
+
+    <div
+      className="absolute w-8 h-8 rounded-full float-delay-2"
+      style={{
+        background: '#8B5CF680',
+        left: '40px',
+        bottom: '0px',
+        boxShadow: '0 0 20px #8B5CF6',
+      }}
+    />
+  </div>
+)}
+{game.shape === 'duel' && (
+  <div className="relative w-24 h-16 flex items-center justify-between">
+    
+    {/* Left fighter */}
+    <div className="relative">
+      <div
+        className="w-8 h-8 rounded-full float"
+        style={{
+          background: '#00F5FF',
+          boxShadow: '0 0 20px #00F5FF',
+        }}
+      />
+      <div
+        className="absolute top-3 left-8 w-8 h-[2px]"
+        style={{
+          background: 'linear-gradient(to right, #00F5FF, transparent)',
+        }}
+      />
+    </div>
+
+    {/* Right fighter */}
+    <div className="relative">
+      <div
+        className="w-8 h-8 rounded-full float-delay-1"
+        style={{
+          background: '#FF3D81',
+          boxShadow: '0 0 20px #FF3D81',
+        }}
+      />
+      <div
+        className="absolute top-3 right-8 w-8 h-[2px]"
+        style={{
+          background: 'linear-gradient(to left, #FF3D81, transparent)',
+        }}
+      />
+    </div>
+
+    {/* Center clash */}
+    <div
+      className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full"
+      style={{
+        background: '#FFFFFF',
+        transform: 'translate(-50%, -50%)',
+        boxShadow: '0 0 20px #FFFFFF',
+      }}
+    />
+  </div>
+)}
         {game.shape === 'wave' && (
           <div
             className="w-20 h-8 float-delay-2"
