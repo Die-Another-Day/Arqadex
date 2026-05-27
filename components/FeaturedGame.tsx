@@ -3,15 +3,18 @@
 import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ExternalLink, Zap, Cpu, Globe } from 'lucide-react'
+import Link from 'next/link'
 
 const GAME = {
-  title: 'MERGE BALL',
-  url: 'http://merge-colour.vercel.app/',
-  description: 'Physics-driven chaotic merge experience with neon arcade aesthetics. Drop, collide, and evolve chromatic orbs through increasingly unstable quantum states.',
-  tags: ['PHYSICS', 'CASUAL', 'NEON', 'MERGE'],
+  title: 'PROTOCOL ZERO',
+  url: '/protocol-zero',
+  description:
+    'High-pressure human response experiment testing reflex, tolerance, decision patterns, and psychological endurance through escalating neural simulations.',
+  
+  tags: ['REFLEX', 'PSYCHO', 'SIM', 'NEURAL'],
+
   status: 'LIVE',
 }
-
 // Canvas-style thumbnail placeholder with animated elements
 function GameThumbnail() {
   return (
@@ -27,30 +30,64 @@ function GameThumbnail() {
           backgroundSize: '30px 30px',
         }}
       />
-      {/* Orbs preview */}
-      {[
-        { cx: '25%', cy: '45%', r: 30, color: '#00F5FF', delay: '0s' },
-        { cx: '50%', cy: '55%', r: 42, color: '#FF2DA6', delay: '0.5s' },
-        { cx: '72%', cy: '40%', r: 25, color: '#7A5CFF', delay: '1s' },
-        { cx: '40%', cy: '75%', r: 20, color: '#C7FF4D', delay: '1.5s' },
-        { cx: '65%', cy: '70%', r: 35, color: '#00F5FF', delay: '0.7s' },
-        { cx: '82%', cy: '55%', r: 18, color: '#FF2DA6', delay: '1.2s' },
-      ].map((orb, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            left: orb.cx,
-            top: orb.cy,
-            width: orb.r * 2,
-            height: orb.r * 2,
-            transform: 'translate(-50%, -50%)',
-            background: `radial-gradient(circle at 35% 35%, ${orb.color}99, ${orb.color}33)`,
-            boxShadow: `0 0 ${orb.r}px ${orb.color}44, inset 0 0 ${orb.r/2}px ${orb.color}22`,
-            animation: `float ${4 + i * 0.5}s ease-in-out infinite ${orb.delay}`,
-          }}
-        />
-      ))}
+      
+
+
+{/* Protocol Zero Core */}
+<div className="absolute inset-0 flex items-center justify-center">
+
+  {/* Outer Ring */}
+  <div
+    className="absolute w-36 h-36 rounded-full"
+    style={{
+      border: '2px solid rgba(255,0,76,0.25)',
+      boxShadow: '0 0 40px rgba(255,0,76,0.25)',
+    }}
+  />
+
+  {/* Inner Ring */}
+  <div
+    className="absolute w-24 h-24 rounded-full animate-pulse"
+    style={{
+      border: '2px solid rgba(255,80,120,0.7)',
+      boxShadow: '0 0 25px rgba(255,0,76,0.45)',
+    }}
+  />
+
+  {/* Core */}
+  <div
+    className="absolute w-6 h-6 rounded-full"
+    style={{
+      background: '#FF004C',
+      boxShadow: `
+        0 0 12px #FF004C,
+        0 0 30px #FF004C
+      `,
+    }}
+  />
+
+  {/* Rotating scan line */}
+  <div
+    className="absolute w-40 h-[2px] rotate-45"
+    style={{
+      background:
+        'linear-gradient(to right, transparent, #FF004C, transparent)',
+      opacity: 0.9,
+    }}
+  />
+
+  {/* Danger glow */}
+  <div
+    className="absolute w-52 h-52 rounded-full"
+    style={{
+      background:
+        'radial-gradient(circle, rgba(255,0,76,0.12), transparent 70%)',
+      filter: 'blur(20px)',
+    }}
+  />
+</div>
+
+
       {/* Scan line on thumbnail */}
       <div
         className="absolute inset-x-0 h-px opacity-30"
@@ -70,7 +107,7 @@ function GameThumbnail() {
           className="font-orbitron text-3xl font-black opacity-10 tracking-widest select-none"
           style={{ fontFamily: 'var(--font-orbitron)', color: 'var(--accent-cyan)' }}
         >
-          MERGE
+          PROTOCOL
         </div>
       </div>
     </div>
@@ -244,10 +281,10 @@ export default function FeaturedGame() {
               </div>
 
               {/* CTA */}
-              <a
+              <Link
                 href={GAME.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                
+                
                 className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-lg font-bold tracking-widest text-sm overflow-hidden"
                 style={{
                   background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(122,92,255,0.2))',
@@ -263,7 +300,7 @@ export default function FeaturedGame() {
                 />
                 <span className="relative">PLAY NOW</span>
                 <ExternalLink className="relative w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </a>
+              </Link>
             </div>
           </div>
         </motion.div>
