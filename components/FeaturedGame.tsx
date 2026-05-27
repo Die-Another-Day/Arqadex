@@ -281,9 +281,9 @@ export default function FeaturedGame() {
               </div>
 
               {/* CTA */}
-              <Link
-                href={GAME.url}
+              <a
                 
+                href="/protocol-zero/index.html"
                 
                 className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-lg font-bold tracking-widest text-sm overflow-hidden"
                 style={{
@@ -300,7 +300,7 @@ export default function FeaturedGame() {
                 />
                 <span className="relative">PLAY NOW</span>
                 <ExternalLink className="relative w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </Link>
+              </a>
             </div>
           </div>
         </motion.div>
