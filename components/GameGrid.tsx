@@ -211,6 +211,60 @@ function GamePreview({ game }: { game: typeof UPCOMING_GAMES[0] }) {
   </div>
 )}
 {game.shape === 'duel' && (
+  <div className="relative w-24 h-20 flex items-center justify-center">
+    
+    {/* Left fighter */}
+    <div
+      className="absolute left-2 top-1/2 -translate-y-1/2 float"
+      style={{
+        width: 0,
+        height: 0,
+        borderTop: '14px solid transparent',
+        borderBottom: '14px solid transparent',
+        borderRight: '22px solid #00F5FF',
+        filter: 'drop-shadow(0 0 12px #00F5FF)',
+      }}
+    />
+
+    {/* Right fighter */}
+    <div
+      className="absolute right-2 top-1/2 -translate-y-1/2 float-delay-1"
+      style={{
+        width: 0,
+        height: 0,
+        borderTop: '14px solid transparent',
+        borderBottom: '14px solid transparent',
+        borderLeft: '22px solid #FF3D81',
+        filter: 'drop-shadow(0 0 12px #FF3D81)',
+      }}
+    />
+
+    {/* Clash spark */}
+    <div
+      className="absolute w-3 h-3 rounded-full animate-pulse"
+      style={{
+        background: '#FFFFFF',
+        boxShadow: `
+          0 0 8px #FFFFFF,
+          0 0 18px #00F5FF,
+          0 0 18px #FF3D81
+        `,
+      }}
+    />
+
+    {/* Energy slash */}
+    <div
+      className="absolute w-10 h-[2px] rotate-12"
+      style={{
+        background:
+          'linear-gradient(to right, #00F5FF, #FFFFFF, #FF3D81)',
+        opacity: 0.8,
+        boxShadow: '0 0 12px rgba(255,255,255,0.8)',
+      }}
+    />
+  </div>
+)}
+{game.shape === 'notdule' && (
   <div className="relative w-24 h-16 flex items-center justify-between">
     
     {/* Left fighter */}
