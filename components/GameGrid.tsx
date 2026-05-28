@@ -36,7 +36,7 @@ const UPCOMING_GAMES = [
 {
   id: 'vi-battle',
   title: 'VI-Battle',
-  url: 'https://vi-battle.vercel.app',
+  url: 'vi-battle',
   description:
     'Voice-controlled neural combat simulator where phonetic commands directly control real-time cybernetic warfare.',
   tags: ['VOICE', 'COMBAT', 'AI'],
