@@ -22,7 +22,7 @@ const UPCOMING_GAMES = [
   {
     id: 'signal-collapse',
     title: 'SIGNAL COLLAPSE',
-    url: 'https://die-another-day.github.io/SIGNAL-COLLAPSE/',
+    url: '/signal-collapse',
     description:'Trace corrupted signals through collapsing neon infrastructure before the entire network fails.',
     tags: ['PUZZLE', 'NETWORK', 'DARK'],
     color: '#FF3410',
@@ -474,8 +474,8 @@ function GameCard({ game, index }: { game: typeof UPCOMING_GAMES[0]; index: numb
         {game.url && (
           <a
             href={game.url}
-            target="_blank"
-            rel="noopener noreferrer"
+          
+           
             className="mt-4 block text-center py-2 rounded text-xs font-bold tracking-widest"
             style={{
               background: `${game.color}15`,
