@@ -12,7 +12,7 @@ const EXPERIMENTS = [
     desc: 'Social dynamics as game loops. Collective behavior shaping emergent narratives.',
     color: '#FF2DA6',
     status: 'LIVE',
-    url: 'https://multiplayer-psych.up.railway.app',
+    url: '/multiplayer-psych',
   },
   {
     id: 'proc-gen',
@@ -134,8 +134,8 @@ function ExperimentCard({ exp, index }: { exp: typeof EXPERIMENTS[0]; index: num
       {exp.url && (
        <a  
         href={exp.url}
-        target="_blank"
-        rel="noopener noreferrer"
+        
+        
         className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-widest transition-all duration-300"
         style={{
           background: `${exp.color}12`,
