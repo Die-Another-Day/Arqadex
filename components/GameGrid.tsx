@@ -50,7 +50,7 @@ const UPCOMING_GAMES = [
   {
     id: 'quantum-drift',
     title: 'QUANTUM DRIFT',
-    url: 'https://quantum-drift.netlify.app',
+    url: 'quantum-drift',
     description: 'Pilot through superposition states. Exist in multiple paths simultaneously until observed.',
     tags: ['PHYSICS', 'QUANTUM', 'RACING'],
     color: '#7A5CFF',
