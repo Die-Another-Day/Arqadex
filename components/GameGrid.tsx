@@ -8,7 +8,7 @@ const UPCOMING_GAMES = [
 {
   id: 'merge-ball',
   title: 'MERGE BALL',
-  url: 'https://merge-colour.vercel.app',
+  url: 'merge-colour',
   description:
     'Physics-driven chaotic merge experience with neon arcade aesthetics. Drop, collide, and evolve unstable quantum spheres.',
   tags: ['PHYSICS', 'CASUAL', 'NEON'],
@@ -22,7 +22,7 @@ const UPCOMING_GAMES = [
   {
     id: 'signal-collapse',
     title: 'SIGNAL COLLAPSE',
-    url: '/signal-collapse',
+    url: 'signal-collapse',
     description:'Trace corrupted signals through collapsing neon infrastructure before the entire network fails.',
     tags: ['PUZZLE', 'NETWORK', 'DARK'],
     color: '#FF3410',
