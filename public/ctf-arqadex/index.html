@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>ARQADEX CTF DIVISION — Premium Challenge Engineering</title>
+  <meta name="description" content="ARQADEX CTF Division — We engineer premium Capture The Flag challenges for competitions worldwide. Web, Pwn, Crypto, RE, OSINT, DFIR and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+
+<!-- ═══ NAV ══════════════════════════════════════════════════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <span class="logo-bracket">[</span>
+    ARQADEX
+    <span class="logo-slash">/</span>
+    <span class="logo-ctf">CTF</span>
+    <span class="logo-bracket">]</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a href="#brief"      class="nav-link">BRIEF</a>
+    <a href="#categories" class="nav-link">CATEGORIES</a>
+    <a href="#challenges" class="nav-link">CHALLENGES</a>
+    <a href="#terminal"   class="nav-link">BOOK</a>
+    <a href="#division"   class="nav-link">DIVISION</a>
+  </div>
+  <a href="#terminal" class="nav-cta">CONFIGURE MISSION</a>
+  <button class="nav-burger" id="nav-burger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ═══ HERO ═════════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-grid-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      ARQADEX SYSTEMS — CTF ENGINEERING DIVISION — OPERATIONAL
+    </div>
+    <h1 class="hero-title">
+      <span class="ht-line1">CAPTURE</span>
+      <span class="ht-line2">THE<span class="ht-accent"> FLAG</span></span>
+      <span class="ht-line3">DIVISION</span>
+    </h1>
+    <p class="hero-sub">
+      We engineer premium offensive-security challenges for CTF competitions worldwide.<br>
+      From zero-days to AI exploitation — every challenge is a precision-crafted simulation.
+    </p>
+    <div class="hero-ctas">
+      <a href="#challenges" class="btn-primary">VIEW SAMPLE CHALLENGES</a>
+      <a href="#terminal"   class="btn-ghost">CONFIGURE MISSION →</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-val" data-count="500">0</div>
+        <div class="stat-lbl">CHALLENGES DEPLOYED</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-val" data-count="10">0</div>
+        <div class="stat-lbl">DISCIPLINES</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-val" data-count="48">0</div>
+        <div class="stat-lbl">CTF EVENTS SERVED</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-val" data-count="100" data-suffix="%">0%</div>
+        <div class="stat-lbl">SATISFACTION RATE</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll-indicator">
+    <div class="scroll-line"></div>
+    <span>SCROLL</span>
+  </div>
+</section>
+
+<!-- ═══ BRIEF ════════════════════════════════════════════════ -->
+<section id="brief" class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">MISSION BRIEF</div>
+      <h2 class="section-title">What We Engineer</h2>
+    </div>
+    <div class="brief-grid">
+      <div class="brief-card reveal">
+        <div class="brief-icon">⬡</div>
+        <h3>CHALLENGE DESIGN</h3>
+        <p>Every challenge is architected from real-world vulnerability research. No generic CTF templates — only original, thoroughly tested simulation scenarios.</p>
+      </div>
+      <div class="brief-card reveal">
+        <div class="brief-icon">◈</div>
+        <h3>FULL CTF SYSTEMS</h3>
+        <p>End-to-end CTF event packages including infrastructure, scoring systems, challenge distribution, and live support for your competition.</p>
+      </div>
+      <div class="brief-card reveal">
+        <div class="brief-icon">⬟</div>
+        <h3>DIFFICULTY CALIBRATION</h3>
+        <p>Challenges tuned to your target audience — from introductory jeopardy to elite university competitions and corporate security assessments.</p>
+      </div>
+      <div class="brief-card reveal">
+        <div class="brief-icon">◇</div>
+        <h3>NARRATIVE INTEGRATION</h3>
+        <p>Optional storyline and lore systems that transform isolated challenges into immersive multi-stage attack simulations with coherent narratives.</p>
+      </div>
+    </div>
+    <div class="brief-terminal reveal">
+      <div class="bt-header">
+        <div class="bt-dots"><span></span><span></span><span></span></div>
+        <span class="bt-title">arqadex@ctf-division:~$</span>
+      </div>
+      <div class="bt-body" id="brief-terminal-body">
+        <div class="bt-line"><span class="bt-prompt">$</span> cat mission_statement.txt</div>
+        <div class="bt-line out">ARQADEX CTF DIVISION — OPERATIONAL SINCE 2022</div>
+        <div class="bt-line out">We do not deliver challenges. We deliver experiences.</div>
+        <div class="bt-line out">Each simulation is grounded in real attack methodology,</div>
+        <div class="bt-line out">engineered for cognitive depth, and tested under adversarial conditions.</div>
+        <div class="bt-line out cyan">Status: 500+ challenges deployed across 48 events worldwide.</div>
+        <div class="bt-line"><span class="bt-prompt">$</span> <span class="bt-cursor">▌</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CATEGORIES ════════════════════════════════════════════ -->
+<section id="categories" class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">DISCIPLINE MATRIX</div>
+      <h2 class="section-title">Challenge Categories</h2>
+      <p class="section-sub">Ten offensive-security disciplines. Each engineered with domain-specific depth.</p>
+    </div>
+    <div class="cat-grid" id="cat-grid">
+      <!-- Generated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CHALLENGES ════════════════════════════════════════════ -->
+<section id="challenges" class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">SAMPLE OPERATIONS</div>
+      <h2 class="section-title">Challenge Showcase</h2>
+      <p class="section-sub">Live samples from our challenge library. Click any challenge to inspect and attempt the flag.</p>
+    </div>
+    <div class="ch-filter reveal" id="ch-filter">
+      <button class="filter-btn active" data-cat="all">ALL</button>
+      <!-- Generated by JS -->
+    </div>
+    <div class="ch-grid" id="ch-grid">
+      <!-- Generated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MISSION TERMINAL ══════════════════════════════════════ -->
+<section id="terminal" class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">MISSION CONFIGURATION</div>
+      <h2 class="section-title">Deploy Your Operation</h2>
+      <p class="section-sub">Configure a custom CTF challenge pack. Tell us what you need — we build it.</p>
+    </div>
+    <div class="term-wrap reveal" id="term-wrap">
+      <div class="term-header">
+        <div class="term-dots"><span></span><span></span><span></span></div>
+        <div class="term-title">ARQADEX MISSION TERMINAL v3.1 — SECURE CHANNEL</div>
+        <div class="term-status"><span class="ts-dot"></span>ENCRYPTED</div>
+      </div>
+      <div class="term-body" id="term-body">
+        <div class="term-progress" id="term-progress">
+          <div class="tp-step active" data-step="1">01 TYPE</div>
+          <div class="tp-sep">─</div>
+          <div class="tp-step" data-step="2">02 CATEGORIES</div>
+          <div class="tp-sep">─</div>
+          <div class="tp-step" data-step="3">03 PARAMETERS</div>
+          <div class="tp-sep">─</div>
+          <div class="tp-step" data-step="4">04 DIRECTIVES</div>
+          <div class="tp-sep">─</div>
+          <div class="tp-step" data-step="5">05 IDENTIFY</div>
+          <div class="tp-sep">─</div>
+          <div class="tp-step" data-step="6">06 TRANSMIT</div>
+        </div>
+
+        <!-- STEP 1: OPERATION TYPE -->
+        <div class="term-step active" id="step-1">
+          <div class="step-label">SELECT OPERATION TYPE</div>
+          <div class="op-type-grid">
+            <div class="op-card" data-val="single">
+              <div class="op-icon">◈</div>
+              <div class="op-name">SINGLE CHALLENGE</div>
+              <div class="op-desc">One precision-crafted challenge for a specific scenario.</div>
+              <div class="op-price">FROM $150</div>
+            </div>
+            <div class="op-card" data-val="pack">
+              <div class="op-icon">⬡</div>
+              <div class="op-name">CHALLENGE PACK</div>
+              <div class="op-desc">Curated set of 5–25 challenges across selected disciplines.</div>
+              <div class="op-price">FROM $800</div>
+            </div>
+            <div class="op-card" data-val="full">
+              <div class="op-icon">◉</div>
+              <div class="op-name">FULL CTF SYSTEM</div>
+              <div class="op-desc">Complete event package with challenges, infra, and live support.</div>
+              <div class="op-price">FROM $3,500</div>
+            </div>
+          </div>
+          <button class="term-next" id="step1-next" disabled>PROCEED →</button>
+        </div>
+
+        <!-- STEP 2: CATEGORIES -->
+        <div class="term-step" id="step-2">
+          <div class="step-label">SELECT CHALLENGE DISCIPLINES <span class="step-hint">(select all that apply)</span></div>
+          <div class="cat-select-grid" id="cat-select-grid">
+            <!-- Generated by JS -->
+          </div>
+          <div class="term-nav">
+            <button class="term-back">← BACK</button>
+            <button class="term-next" id="step2-next" disabled>PROCEED →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: PARAMETERS -->
+        <div class="term-step" id="step-3">
+          <div class="step-label">CONFIGURE PARAMETERS</div>
+          <div class="param-grid">
+            <div class="param-group">
+              <label class="param-label">CHALLENGE COUNT</label>
+              <div class="param-stepper">
+                <button class="stepper-btn" id="count-dec">−</button>
+                <span class="stepper-val" id="count-val">5</span>
+                <button class="stepper-btn" id="count-inc">+</button>
+              </div>
+            </div>
+            <div class="param-group">
+              <label class="param-label">DIFFICULTY DISTRIBUTION</label>
+              <div class="diff-select" id="diff-select">
+                <div class="diff-opt active" data-val="beginner">BEGINNER</div>
+                <div class="diff-opt active" data-val="medium">MEDIUM</div>
+                <div class="diff-opt active" data-val="hard">HARD</div>
+                <div class="diff-opt" data-val="elite">ELITE</div>
+              </div>
+            </div>
+            <div class="param-group">
+              <label class="param-label">DELIVERY TIMELINE</label>
+              <select class="param-select" id="timeline-select">
+                <option value="rush">RUSH — 72 HOURS (+50%)</option>
+                <option value="standard" selected>STANDARD — 1 WEEK</option>
+                <option value="extended">EXTENDED — 2 WEEKS (−15%)</option>
+                <option value="planned">PLANNED — 1 MONTH (−25%)</option>
+              </select>
+            </div>
+            <div class="param-group">
+              <label class="param-label">CHALLENGE HARDNESS PROFILE</label>
+              <div class="slider-wrap">
+                <input type="range" min="1" max="5" value="3" class="param-slider" id="hardness-slider">
+                <div class="slider-labels">
+                  <span>INTRODUCTORY</span>
+                  <span id="hardness-label">BALANCED</span>
+                  <span>ELITE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="term-nav">
+            <button class="term-back">← BACK</button>
+            <button class="term-next" id="step3-next">PROCEED →</button>
+          </div>
+        </div>
+
+        <!-- STEP 4: DIRECTIVES -->
+        <div class="term-step" id="step-4">
+          <div class="step-label">SPECIAL DIRECTIVES <span class="step-hint">(optional)</span></div>
+          <textarea class="term-textarea" id="directives-input" placeholder="Describe any specific requirements:
+— Target audience (students, professionals, mixed)
+— Thematic constraints (corporate, space, dystopian...)
+— Existing platform or scoring system
+— Language / localization requirements
+— Any challenge ideas you want included
+— Anything else relevant to the mission"></textarea>
+          <div class="term-nav">
+            <button class="term-back">← BACK</button>
+            <button class="term-next" id="step4-next">PROCEED →</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: IDENTIFICATION -->
+        <div class="term-step" id="step-5">
+          <div class="step-label">OPERATIVE IDENTIFICATION</div>
+          <div class="id-form">
+            <div class="id-group">
+              <label class="param-label">FULL NAME</label>
+              <input type="text" class="term-input" id="name-input" placeholder="Your name">
+            </div>
+            <div class="id-group">
+              <label class="param-label">EMAIL ADDRESS</label>
+              <input type="email" class="term-input" id="email-input" placeholder="contact@organization.com">
+            </div>
+            <div class="id-group">
+              <label class="param-label">ORGANIZATION / EVENT NAME</label>
+              <input type="text" class="term-input" id="org-input" placeholder="CTF event or organization name">
+            </div>
+          </div>
+          <div class="term-nav">
+            <button class="term-back">← BACK</button>
+            <button class="term-next" id="step5-next" disabled>PROCEED →</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: CONFIRM + TRANSMIT -->
+        <div class="term-step" id="step-6">
+          <div class="step-label">MISSION SUMMARY</div>
+          <div class="summary-block" id="mission-summary"></div>
+          <button class="btn-transmit" id="btn-transmit">
+            <span>⟶ TRANSMIT MISSION REQUEST</span>
+          </button>
+          <div class="term-nav"><button class="term-back">← BACK</button></div>
+        </div>
+
+        <!-- STEP 7: TRANSMITTED -->
+        <div class="term-step" id="step-7">
+          <div class="transmission-wrap" id="transmission-wrap">
+            <div class="tx-lines" id="tx-lines"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DIVISION ═════════════════════════════════════════════ -->
+<section id="division" class="section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">ABOUT THE DIVISION</div>
+      <h2 class="section-title">Who We Are</h2>
+    </div>
+    <div class="div-layout">
+      <div class="div-text reveal">
+        <p class="div-lead">ARQADEX CTF Division is a specialized team of offensive security researchers, reverse engineers, and challenge architects.</p>
+        <p class="div-body">We operate at the intersection of cybersecurity research and simulation engineering. Our challenges are built from real vulnerability classes, real exploit techniques, and real operational scenarios — not textbook theory.</p>
+        <p class="div-body">Every team member has active CTF competition experience. We've competed at, placed in, and been invited to build challenges for events across Asia, Europe, and North America.</p>
+        <div class="div-stats">
+          <div class="ds-item"><span class="ds-val">3+</span><span class="ds-lbl">Years Active</span></div>
+          <div class="ds-item"><span class="ds-val">500+</span><span class="ds-lbl">Challenges Built</span></div>
+          <div class="ds-item"><span class="ds-val">48</span><span class="ds-lbl">Events Served</span></div>
+          <div class="ds-item"><span class="ds-val">10</span><span class="ds-lbl">Disciplines</span></div>
+        </div>
+      </div>
+      <div class="div-expertise reveal">
+        <div class="exp-title">CORE COMPETENCIES</div>
+        <div class="exp-list" id="exp-list">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+    <div class="trust-bar reveal">
+      <div class="tb-label">TRUSTED FOR</div>
+      <div class="tb-items">
+        <div class="tb-item">University CTF Competitions</div>
+        <div class="tb-item">Corporate Security Training</div>
+        <div class="tb-item">National Qualification Events</div>
+        <div class="tb-item">Red Team Exercises</div>
+        <div class="tb-item">Security Bootcamps</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════ -->
+<footer id="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">ARQADEX<span class="fl-slash">/</span>CTF</div>
+        <p class="footer-tagline">Premium challenge engineering for offensive-security simulations.</p>
+        <div class="footer-links-social">
+          <a href="https://arqadex.pages.dev" target="_blank" class="fsocial">MAIN SITE</a>
+          <a href="mailto:ctf@arqadex.site" class="fsocial">CONTACT</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <div class="fc-title">DISCIPLINES</div>
+        <div id="footer-cats"></div>
+      </div>
+      <div class="footer-col">
+        <div class="fc-title">OPERATIONS</div>
+        <a href="#terminal" class="fc-link">Book Challenges</a>
+        <a href="#challenges" class="fc-link">View Samples</a>
+        <a href="#brief" class="fc-link">About Service</a>
+        <a href="mailto:ctf@arqadex.site" class="fc-link">Direct Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="neon-divider"></div>
+      <div class="fb-row">
+        <span class="fb-copy">© 2025 ARQADEX CTF DIVISION — ALL CHALLENGE CONTENT PROPRIETARY</span>
+        <span class="fb-tagline">BUILT FOR CHAOS.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ CHALLENGE MODAL ════════════════════════════════════════ -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">✕ CLOSE</button>
+    <div class="modal-header">
+      <div class="modal-cat-badge" id="m-cat"></div>
+      <div class="modal-meta">
+        <h2 class="modal-title" id="m-title"></h2>
+        <div class="modal-badges" id="m-badges"></div>
+      </div>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-section">
+        <div class="ms-label">MISSION BRIEF</div>
+        <p class="ms-text" id="m-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="ms-label">ATTACHED FILES</div>
+        <div class="m-files" id="m-files"></div>
+      </div>
+      <div class="modal-section" id="m-hints-section">
+        <div class="ms-label">INTELLIGENCE <span class="hint-warning">(costs points)</span></div>
+        <div class="m-hints" id="m-hints"></div>
+      </div>
+      <div class="modal-section">
+        <div class="ms-label">SUBMIT FLAG</div>
+        <div class="flag-input-wrap">
+          <input type="text" id="flag-input" class="flag-input" placeholder="ARQADEX{...}" spellcheck="false" autocomplete="off">
+          <button class="flag-submit" id="flag-submit">SUBMIT</button>
+        </div>
+        <div class="flag-result hidden" id="flag-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
