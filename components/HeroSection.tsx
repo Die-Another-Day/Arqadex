@@ -54,7 +54,7 @@ export default function HeroSection() {
   }
 
   const randomGame = () => {
-    window.open('http://merge-colour.vercel.app/', '_blank')
+    window.open('http://arqadex.site/merge-colour')
   }
 
   return (
@@ -128,7 +128,7 @@ export default function HeroSection() {
         {/* Pre-title badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 20 }}
           transition={{ delay: 0.2, duration: 0.6 }}
           className="mb-8 flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-cyan/20"
         >

@@ -85,18 +85,18 @@ export default function Navigation() {
                 className="font-orbitron text-xs text-cyan/60 tracking-widest"
                 style={{ fontFamily: 'var(--font-orbitron)' }}
               >
-                1 LIVE
+                4+ LIVE
               </span>
             </div>
             <a
-              href="http://merge-colour.vercel.app/"
+              href="https://build.arqadex.site/"
               target="_blank"
               rel="noopener noreferrer"
               className="magnetic-btn px-5 py-2 bg-cyan/10 border border-cyan/30 rounded text-cyan text-xs font-bold tracking-widest hover:bg-cyan/20 hover:border-cyan/60 transition-all duration-300"
               style={{ fontFamily: 'var(--font-orbitron)' }}
               data-cursor="hover"
             >
-              PLAY NOW
+              Rent Us
             </a>
           </div>
 
@@ -140,13 +140,13 @@ export default function Navigation() {
               ))}
               <div className="neon-divider" />
               <a
-                href="http://merge-colour.vercel.app/"
+                href="https://build.arqadex.site/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-center px-5 py-2.5 bg-cyan/10 border border-cyan/30 rounded text-cyan text-xs font-bold tracking-widest"
                 style={{ fontFamily: 'var(--font-orbitron)' }}
               >
-                PLAY NOW
+                Rent Us
               </a>
             </div>
           </motion.div>
