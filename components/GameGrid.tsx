@@ -8,7 +8,7 @@ const UPCOMING_GAMES = [
 {
   id: 'merge-ball',
   title: 'MERGE BALL',
-  url: 'merge-colour',
+  url: 'merge-ball',
   description:
     'Physics-driven chaotic merge experience with neon arcade aesthetics. Drop, collide, and evolve unstable quantum spheres.',
   tags: ['PHYSICS', 'CASUAL', 'NEON'],
