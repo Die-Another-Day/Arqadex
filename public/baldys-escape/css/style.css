@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+html, body { width:100%; height:100%; overflow:hidden; background:#0a0e14; font-family:'Nunito',sans-serif; }
+#root { position:relative; width:100%; height:100%; overflow:hidden; }
+
+#game-canvas { position:absolute; inset:0; display:block; touch-action:none; }
+
+.hidden { display:none !important; }
+
+/* ─── SCREENS ─── */
+.screen {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:24px;
+  background:linear-gradient(160deg,#1b2230,#0a0e14);
+  z-index:10; overflow-y:auto;
+}
+
+.logo {
+  font-family:'Baloo 2',sans-serif; font-weight:800;
+  font-size:clamp(2.6rem,9vw,4.5rem); color:#ffd166;
+  text-shadow: 0 4px 0 #c4860a, 0 8px 18px rgba(0,0,0,0.4);
+  letter-spacing:-0.02em; text-align:center; line-height:1;
+}
+.logo .accent { color:#5fcf8a; text-shadow:0 4px 0 #2f8a52, 0 8px 18px rgba(0,0,0,0.4); }
+.tagline { color:#8a93a8; font-size:0.95rem; margin-top:10px; text-align:center; }
+
+.btn {
+  font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1.05rem;
+  border:none; border-radius:16px; padding:15px 34px; cursor:pointer;
+  box-shadow:0 5px 0 rgba(0,0,0,0.25), 0 8px 16px rgba(0,0,0,0.3);
+  transition:transform 0.12s; color:#0a0e14;
+}
+.btn:active { transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,0.25); }
+.btn-primary { background:#5fcf8a; }
+.btn-accent  { background:#ffd166; }
+.btn-ghost   { background:transparent; color:#c8d0e0; box-shadow:none; border:2px solid #2a3346; }
+.btn-ghost:active { transform:scale(0.96); }
+.btn-sm { padding:10px 22px; font-size:0.9rem; }
+.btn-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:24px; }
+
+.menu-stats { margin-top:30px; color:#8a93a8; font-size:0.95rem; display:flex; gap:8px; align-items:center; }
+.menu-stats b { color:#ffd166; font-size:1.1rem; }
+
+.sound-toggle {
+  position:absolute; top:16px; right:16px; background:#161c28; border:2px solid #2a3346;
+  border-radius:12px; width:46px; height:46px; font-size:20px; cursor:pointer; color:#fff; z-index:50;
+}
+
+/* ─── HOW TO PLAY ─── */
+.how-card { max-width:420px; background:#141a26; border-radius:20px; padding:30px 26px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+.how-card h2 { font-family:'Baloo 2',sans-serif; color:#ffd166; margin-bottom:14px; }
+.how-card p { color:#c8d0e0; line-height:1.7; margin-bottom:10px; font-size:0.95rem; }
+.how-icon { font-size:48px; margin-bottom:10px; }
+.how-key { display:inline-block; background:#2a3346; border-radius:8px; padding:3px 10px; font-weight:700; color:#5fcf8a; margin:0 3px; }
+
+/* ─── LEVEL SELECT ─── */
+.levels-header { width:100%; max-width:640px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.levels-title { font-family:'Baloo 2',sans-serif; color:#fff; font-size:1.6rem; }
+#world-tabs { display:flex; gap:8px; overflow-x:auto; width:100%; max-width:680px; padding:6px 2px 14px; scrollbar-width:thin; }
+.world-tab {
+  flex-shrink:0; display:flex; align-items:center; gap:6px; padding:9px 16px; border-radius:20px;
+  background:#161c28; color:#8a93a8; font-weight:700; font-size:0.85rem; cursor:pointer;
+  border:2px solid transparent; transition:all 0.15s; white-space:nowrap;
+}
+.world-tab.active { background:#1f2738; color:#fff; border-color:var(--accent); }
+.world-tab.locked { opacity:0.4; }
+.wt-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+
+#world-banner { font-family:'Baloo 2',sans-serif; font-size:1.1rem; margin-bottom:14px; text-align:center; }
+
+#level-grid {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:12px;
+  max-width:640px; width:100%; margin-bottom:18px;
+}
+.level-card {
+  aspect-ratio:1; border-radius:16px; border:none; cursor:pointer;
+  background:#161c28; border:2px solid var(--accent); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:4px; transition:transform 0.12s;
+  box-shadow:0 4px 0 rgba(0,0,0,0.25);
+}
+.level-card:active { transform:translateY(3px); }
+.level-card.locked { background:#11151e; border-color:#222; box-shadow:none; cursor:default; }
+.level-card.boss { background:linear-gradient(160deg,#2a2010,#161c28); }
+.lc-num { font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.3rem; color:#fff; }
+.lc-stars { font-size:0.7rem; letter-spacing:1px; }
+.lc-lock { font-size:1.3rem; opacity:0.4; }
+
+/* ─── HUD ─── */
+#hud { position:absolute; top:0; left:0; right:0; z-index:20; padding:14px 16px; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.hud-top { display:flex; justify-content:space-between; align-items:center; }
+#hud-level { font-family:'Baloo 2',sans-serif; font-weight:700; font-size:0.95rem; background:rgba(10,14,20,0.55); padding:6px 14px; border-radius:20px; }
+#hud-deaths { font-family:'Baloo 2',sans-serif; font-weight:700; color:#fff; background:rgba(10,14,20,0.55); padding:6px 14px; border-radius:20px; font-size:0.9rem; }
+#btn-pause { pointer-events:auto; background:rgba(10,14,20,0.55); border:none; color:#fff; width:38px; height:38px; border-radius:50%; font-size:18px; cursor:pointer; }
+.prog-track { height:10px; background:rgba(10,14,20,0.4); border-radius:6px; overflow:hidden; }
+#prog-fill { height:100%; width:0%; background:linear-gradient(90deg,#5fcf8a,#ffd166); border-radius:6px; transition:width 0.15s; }
+
+.hint-tap {
+  position:absolute; bottom:30px; left:50%; transform:translateX(-50%);
+  color:rgba(255,255,255,0.5); font-family:'Baloo 2',sans-serif; font-size:0.85rem;
+  background:rgba(10,14,20,0.4); padding:8px 18px; border-radius:20px; pointer-events:none;
+}
+
+/* ─── OVERLAYS ─── */
+.overlay {
+  position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center;
+  background:rgba(6,9,14,0.72); backdrop-filter:blur(4px);
+}
+.overlay-card {
+  background:#141a26; border-radius:24px; padding:36px 32px; max-width:380px; width:90%;
+  text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  animation:popIn 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+.overlay-card h2 { font-family:'Baloo 2',sans-serif; color:#fff; font-size:1.6rem; margin-bottom:6px; }
+.overlay-card .sub { color:#8a93a8; font-size:0.9rem; margin-bottom:18px; }
+.death-emoji { font-size:54px; margin-bottom:8px; }
+
+.stat-row { display:flex; justify-content:center; gap:24px; margin:18px 0; }
+.stat-box { text-align:center; }
+.stat-box .v { font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.4rem; color:#ffd166; }
+.stat-box .l { font-size:0.75rem; color:#8a93a8; text-transform:uppercase; letter-spacing:0.06em; }
+
+#complete-stars { font-size:2.4rem; margin:14px 0; letter-spacing:6px; }
+#complete-stars .star { display:inline-block; filter:grayscale(1) opacity(0.3); transition:filter 0.3s, transform 0.3s; transform:scale(0.7); }
+#complete-stars .star.lit { filter:none; transform:scale(1); }
+#complete-stars .star::before { content:'⭐'; }
+
+/* ─── FINALE ─── */
+#s-finale { z-index:60; background:radial-gradient(circle at 50% 30%, #2a1a3a, #0a0e14); }
+#finale-canvas { position:absolute; inset:0; pointer-events:none; }
+.finale-trophy { font-size:88px; margin-bottom:10px; animation:bounce 1.6s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+.finale-title { font-family:'Baloo 2',sans-serif; font-weight:800; font-size:clamp(2rem,7vw,3.2rem); color:#ffd166; text-align:center; }
+.finale-sub { color:#c8d0e0; margin-top:10px; text-align:center; max-width:380px; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width:480px) {
+  #level-grid { grid-template-columns:repeat(5,1fr); gap:8px; }
+  .logo { font-size:3rem; }
+}
+@media (max-height:600px) {
+  .screen { padding:12px; }
+  .how-card { padding:18px; }
+}
+
+::-webkit-scrollbar { height:5px; width:5px; }
+::-webkit-scrollbar-thumb { background:#2a3346; border-radius:3px; }

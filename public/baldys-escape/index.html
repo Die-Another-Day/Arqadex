@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<title>Baldy's Escape — 100 Levels of Trap-Dodging Chaos</title>
+
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Standard + iOS home-screen icons -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Baldy's Escape">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="root">
+
+  <canvas id="game-canvas"></canvas>
+
+  <button class="sound-toggle" id="btn-sound">🔊</button>
+
+  <!-- ═══ MENU ═══ -->
+  <div id="s-menu" class="screen">
+    <div class="logo">BALDY'S<br>ESC<span class="accent">APE</span></div>
+    <p class="tagline">100 levels of traps, timing &amp; chaos</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-play">▶ Play</button>
+      <button class="btn btn-ghost" id="btn-how">How to Play</button>
+    </div>
+    <button class="btn btn-accent btn-sm hidden" id="btn-install" style="margin-top:14px">⬇ Install App</button>
+    <div class="menu-stats">⭐ <b id="total-stars">0</b> / 300 stars collected</div>
+  </div>
+
+  <!-- ═══ HOW TO PLAY ═══ -->
+  <div id="s-how" class="screen hidden">
+    <div class="how-card">
+      <div class="how-icon">👆</div>
+      <h2>One Button. Pure Timing.</h2>
+      <p><span class="how-key">TAP</span> / <span class="how-key">SPACE</span> to jump.</p>
+      <p>Hold longer for a <b>higher jump</b> — release early for a short hop.</p>
+      <p>Auto-walk carries you forward. Dodge catapult bombs, swing across spike pits, time falling boulders, and leap tipping seesaws.</p>
+      <p>One hit and you're out — but retries are instant. Reach the flag to win!</p>
+      <button class="btn btn-accent btn-sm" id="btn-how-back" style="margin-top:8px">Got it →</button>
+    </div>
+  </div>
+
+  <!-- ═══ COUNTDOWN ═══ -->
+  <div id="s-cd" class="screen hidden" style="background:transparent;pointer-events:none">
+    <div id="cd-num" style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:clamp(5rem,20vw,9rem);color:#ffd166;text-shadow:0 6px 0 #c4860a,0 12px 24px rgba(0,0,0,0.4);transition:transform 0.12s,color 0.3s">3</div>
+    <div id="cd-sub" style="color:#fff;font-family:'Baloo 2',sans-serif;font-size:1.1rem;margin-top:8px;text-shadow:0 2px 6px rgba(0,0,0,0.5)">Get Ready</div>
+  </div>
+
+  <!-- ═══ LEVEL SELECT ═══ -->
+  <div id="s-levels" class="screen hidden">
+    <div class="levels-header">
+      <button class="btn btn-ghost btn-sm" id="btn-levels-back">← Menu</button>
+      <div class="levels-title">Select Level</div>
+      <div style="width:70px"></div>
+    </div>
+    <div id="world-tabs"></div>
+    <div id="world-banner"></div>
+    <div id="level-grid"></div>
+  </div>
+
+  <!-- ═══ HUD (gameplay) ═══ -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div id="hud-level">1 · City Outskirts</div>
+      <button id="btn-pause">⏸</button>
+      <div id="hud-deaths">💀 0</div>
+    </div>
+    <div class="prog-track"><div id="prog-fill"></div></div>
+  </div>
+  <div class="hint-tap" id="hint-tap">TAP or SPACE to jump</div>
+
+  <!-- ═══ PAUSE ═══ -->
+  <div id="s-pause" class="overlay hidden">
+    <div class="overlay-card">
+      <h2>⏸ Paused</h2>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn btn-primary" id="btn-resume">▶ Resume</button>
+        <button class="btn btn-ghost btn-sm" id="btn-restart">↺ Restart</button>
+        <button class="btn btn-ghost btn-sm" id="btn-pause-menu">☰ Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DEATH ═══ -->
+  <div id="s-death" class="overlay hidden">
+    <div class="overlay-card">
+      <div class="death-emoji">💀</div>
+      <h2>Oops!</h2>
+      <p class="sub">Attempt <span id="death-count">1</span> — try again!</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-death-retry">↺ Retry</button>
+        <button class="btn btn-ghost btn-sm" id="btn-death-menu">☰ Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LEVEL COMPLETE ═══ -->
+  <div id="s-complete" class="overlay hidden">
+    <div class="overlay-card">
+      <h2 id="complete-title">Level Complete!</h2>
+      <div id="complete-stars">
+        <span class="star"></span><span class="star"></span><span class="star"></span>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="v" id="complete-time">0s</div><div class="l">Time</div></div>
+        <div class="stat-box"><div class="v" id="complete-deaths">0</div><div class="l">Deaths</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-next-level">Next ▶</button>
+        <button class="btn btn-ghost btn-sm" id="btn-complete-retry">↺ Retry</button>
+        <button class="btn btn-ghost btn-sm" id="btn-complete-levels">☰ Levels</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FINALE (level 100 complete) ═══ -->
+  <div id="s-finale" class="screen hidden">
+    <canvas id="finale-canvas"></canvas>
+    <div class="finale-trophy">🏆</div>
+    <div class="finale-title">YOU ESCAPED!</div>
+    <p class="finale-sub">You braved 100 levels across 10 worlds — catapults, spikes, boulders, blades and more. Baldy is finally free.</p>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="btn-finale-menu">☰ Back to Menu</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/constants.js"></script>
+<script src="js/rng.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/player.js"></script>
+<script src="js/obstacles.js"></script>
+<script src="js/levelgen.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/save.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

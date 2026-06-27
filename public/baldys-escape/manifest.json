@@ -1,0 +1,17 @@
+{
+  "name": "Baldy's Escape — 100 Levels of Trap-Dodging Chaos",
+  "short_name": "Baldy's Escape",
+  "description": "A physics-based hazard-survival platformer. One button. A hundred ways to die. Instant retries.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e14",
+  "theme_color": "#0a0e14",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
