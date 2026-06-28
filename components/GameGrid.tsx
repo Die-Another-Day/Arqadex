@@ -5,6 +5,19 @@ import { motion, useInView } from 'framer-motion'
 import { Lock, Loader } from 'lucide-react'
 
 const UPCOMING_GAMES = [
+  {
+    id: 'baldys-escape',
+    title: 'BALDYS ESCAPE',
+    url: 'baldys-escape',
+    description: 'Navigate corrupted digital landscapes. Reality is fragmented. Speed is you.' ,
+    tags: ['RUNNER', 'GLITCH', 'JUMP'],
+    color: '#C7FF4D',
+    accent: 'rgba(199, 255, 77, 0.15)',
+    border: 'rgba(199, 255, 77, 0.3)',
+    progress: 100,
+    eta: 'LIVE',
+    shape: 'hex',
+  },
 {
   id: 'merge-ball',
   title: 'MERGE BALL',
@@ -35,7 +48,7 @@ const UPCOMING_GAMES = [
 
 {
   id: 'vi-battle',
-  title: 'VI-Battle',
+  title: 'VI-BATTLE',
   url: 'vi-battle',
   description:
     'Voice-controlled neural combat simulator where phonetic commands directly control real-time cybernetic warfare.',
@@ -71,18 +84,6 @@ const UPCOMING_GAMES = [
     progress: 72,
     eta: 'Q2 2025',
     shape: 'triangle',
-  },
-  {
-    id: 'glitch-runner',
-    title: 'GLITCH RUNNER',
-    description: 'Navigate corrupted digital landscapes. Reality is fragmented. Speed is your only weapon.',
-    tags: ['RUNNER', 'GLITCH', 'SPEED'],
-    color: '#C7FF4D',
-    accent: 'rgba(199, 255, 77, 0.15)',
-    border: 'rgba(199, 255, 77, 0.3)',
-    progress: 48,
-    eta: 'Q3 2025',
-    shape: 'hex',
   },
 
 ]
