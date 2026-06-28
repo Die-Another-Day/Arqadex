@@ -2,7 +2,7 @@
   "name": "Baldy's Escape — 100 Levels of Trap-Dodging Chaos",
   "short_name": "Baldy's Escape",
   "description": "A physics-based hazard-survival platformer. One button. A hundred ways to die. Instant retries.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

@@ -4,11 +4,10 @@
 // to force clients to pick up new files.
 // ════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'baldys-escape-v1';
+const CACHE_NAME = 'baldys-escape-v2';
 
 const ASSETS = [
   './',
-  './index.html',
   './manifest.json',
   './css/style.css',
   './js/constants.js',
