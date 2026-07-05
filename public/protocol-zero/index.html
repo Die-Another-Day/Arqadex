@@ -6,7 +6,16 @@
   <title>PROTOCOL ZERO — ARQADEX</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="manifest" href="/protocol-zero/manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="/protocol-zero/icons/icon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/protocol-zero/icons/icon-180.png"> 
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Protocol Zero">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#020208">
   <link rel="stylesheet" href="/protocol-zero/style.css">
+
 </head>
 <body>
 
@@ -160,7 +169,20 @@ window.onerror = function(message, source, lineno, colno, error) {
 };
 </script>
 <script defer src="/protocol-zero/game.js"></script>
-
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/protocol-zero/service-worker.js').catch(() => {});
+  });
+}
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _installPrompt = e;
+  const btn = document.getElementById('pz-install-btn');
+  if (btn) btn.style.display = 'block';
+});
+</script>
 
 
 
