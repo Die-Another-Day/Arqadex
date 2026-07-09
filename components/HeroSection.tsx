@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowDown, Shuffle, ChevronRight } from 'lucide-react'
-
+import { ArrowDown, Download, ChevronRight } from 'lucide-react'
 const SUBTITLE = 'Experimental Web Games & Interactive Chaos'
 
 export default function HeroSection() {
@@ -53,8 +52,15 @@ export default function HeroSection() {
     document.getElementById('games')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const randomGame = () => {
-    window.open('http://arqadex.site/merge-colour')
+  const installApp = () => {
+    if (typeof window !== 'undefined' && (window as any).__installPrompt) {
+      (window as any).__installPrompt.prompt()
+      ;(window as any).__installPrompt.userChoice.then(() => {
+        ;(window as any).__installPrompt = null
+        const btn = document.getElementById('arqadex-install-btn')
+        if (btn) btn.style.display = 'none'
+      })
+    }
   }
 
   return (
@@ -231,18 +237,20 @@ export default function HeroSection() {
             </span>
           </button>
 
-          <button
-            onClick={randomGame}
-            className="magnetic-btn group px-8 py-4 rounded-lg border border-white/10 hover:border-pink/40 transition-all duration-300"
-            style={{ background: 'rgba(255,255,255,0.03)' }}
+
+	  <button
+            id="arqadex-install-btn"
+            onClick={installApp}
+            className="magnetic-btn group px-8 py-4 rounded-lg border border-white/10 hover:border-cyan/40 transition-all duration-300"
+            style={{ background: 'rgba(255,255,255,0.03)', display: 'none' }}
             data-cursor="hover"
           >
             <span
-              className="flex items-center gap-2 text-silver/60 group-hover:text-pink font-bold tracking-widest text-sm transition-colors"
+              className="flex items-center gap-2 text-silver/60 group-hover:text-cyan font-bold tracking-widest text-sm transition-colors"
               style={{ fontFamily: 'var(--font-orbitron)' }}
             >
-              <Shuffle className="w-4 h-4" />
-              RANDOM GAME
+              <Download className="w-4 h-4" />
+              INSTALL ARQADEX
             </span>
           </button>
         </motion.div>
