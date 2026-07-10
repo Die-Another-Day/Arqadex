@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Terminal, Gamepad2, FlaskConical, User, Menu, X } from 'lucide-react'
-
+import { Terminal, Gamepad2, FlaskConical, User, Menu, X, Upload } from 'lucide-react'
 const navItems = [
   { label: 'GAMES', href: '#games', icon: Gamepad2 },
   { label: 'LAB', href: '#lab', icon: FlaskConical },
   { label: 'ABOUT', href: '#about', icon: User },
+  { label: 'SUBMIT', href: '/submit', icon: Upload },
 ]
 
 export default function Navigation() {
@@ -138,6 +138,21 @@ export default function Navigation() {
                   </span>
                 </a>
               ))}
+	      <a   
+                href="/submit"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 text-cyan/70 hover:text-cyan transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span
+                  className="font-orbitron text-xs tracking-widest"
+                  style={{ fontFamily: 'var(--font-orbitron)' }}
+                >
+                  SUBMIT GAME
+                </span>
+              </a>
+
+
               <div className="neon-divider" />
               <a
                 href="https://build.arqadex.site/"

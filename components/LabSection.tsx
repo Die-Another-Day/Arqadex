@@ -269,6 +269,66 @@ export default function LabSection() {
             "The most interesting bugs become features."
           </p>
         </motion.div>
+
+        {/* Creator CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mt-16 relative rounded-2xl overflow-hidden"
+          style={{
+            background: 'rgba(8,8,24,0.7)',
+            border: '1px solid rgba(122,92,255,0.2)',
+          }}
+        >
+          {/* Background glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 60% 80% at 80% 50%, rgba(122,92,255,0.06) 0%, transparent 70%)',
+            }}
+          />
+          <div className="relative px-8 py-10 md:flex items-center justify-between gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple/60" />
+                <span
+                  className="text-xs tracking-widest text-purple/50"
+                  style={{ fontFamily: 'var(--font-orbitron)' }}
+                >
+                  OPEN SUBMISSIONS
+                </span>
+              </div>
+              <h3
+                className="text-2xl md:text-3xl font-black text-white mb-2"
+                style={{ fontFamily: 'var(--font-syne)' }}
+              >
+                Built something weird?
+              </h3>
+              <p className="text-silver/40 text-sm max-w-md leading-relaxed">
+                ARQADEX is open to creators. Submit your experimental game or interactive project — if it fits the lab, we publish it here.
+              </p>
+            </div>
+            <div className="mt-6 md:mt-0 flex-shrink-0">
+              <a  
+                href="/submit"
+                className="inline-flex items-center gap-3 px-7 py-3.5 rounded-xl font-bold tracking-widest text-sm transition-all duration-300 hover:scale-105"
+                style={{
+                  background: 'rgba(122,92,255,0.15)',
+                  border: '1px solid rgba(122,92,255,0.4)',
+                  color: '#7A5CFF',
+                  fontFamily: 'var(--font-orbitron)',
+                }}
+              >
+	     
+                SUBMIT YOUR GAME ↗
+              </a>
+            </div>
+          </div>
+        </motion.div>
+
+
       </div>
     </section>
   )
