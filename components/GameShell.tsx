@@ -87,6 +87,10 @@ function injectGameCursor(iframe: HTMLIFrameElement, theme: ThemeId) {
     const doc = iframe.contentDocument
     if (!doc || !doc.body) return
     if (window.matchMedia('(pointer: coarse)').matches) return
+    // v2.4: games that ship their own cursor (Quantum Drift's neon
+    // dot-and-ring) keep it — injecting a second one on top would
+    // double the cursor and was the reported "cursor not there" mess.
+    if (doc.getElementById('qd-cursor-dot')) return
     doc.documentElement.style.setProperty('--arq-cursor', CURSOR_ACCENT[theme])
     if (!doc.getElementById('arqadex-cursor-style')) {
       const style = doc.createElement('style')

@@ -6,6 +6,33 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.4.0 — Quantum Drift: Rival Season (new look)
+
+- **New look:** redesigned ship (swept hull, side pods, speed-reactive
+  engine flame), obstacles rebuilt as models (neon portals with
+  rotating dashed rings, faceted crystals, tumbling asteroids seeded
+  per obstacle), drifting nebula clouds in the sky, bright neon track
+  rails, gradient menu panel with an animated logo glow, and a sector
+  progress bar in the HUD.
+- **Cursor, for real this time:** the game now owns its cursor — a
+  neon dot with a lagging ring in the current quantum state's colour,
+  growing over buttons and rippling on click. The shell skips its own
+  injection when it sees this cursor, so there is no double cursor.
+  (The old shell injection could miss on frame load, leaving no
+  cursor at all.)
+- **Competitive:** six rival pilots (VOLT 1,500 → ZENITH 50,000,
+  clearly labelled arcade bots, never real players) share one podium
+  board with your runs (gold/silver/bronze, your rows highlighted);
+  a live HUD rival tracker shows the next target and distance to it;
+  passing a rival mid-run pays a bonus and calls it out; new ⚔ Duel
+  mode — 90 seconds to beat the next rival above your record, with
+  a win/lose verdict.
+- **Pause hardening:** P/Esc now handled by capture-phase listeners
+  on window and document with a double-fire guard, and clicking the
+  pause backdrop resumes — after a live test still showed P failing
+  to resume on the v2.3 build despite the fix being in the shipped
+  script.
+
 ## What's in v2.3.0 — Quantum Drift overhaul
 
 - **Fixes:** P/Esc now resumes as well as pauses (the old code only checked

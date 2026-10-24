@@ -50,6 +50,74 @@ function rankFor(s){
   return 'DRIFTER';
 }
 
+/* ── RIVAL PILOTS (v2.4) ──
+   Arcade bots, labelled as such in the UI — never presented as real
+   players. They exist so the board is never empty and there is always
+   a named target to chase, beat, and overtake mid-run. */
+const RIVALS=[
+  {name:'VOLT',  score:1500},
+  {name:'NOVA',  score:4000},
+  {name:'ORION', score:9000},
+  {name:'VEGA',  score:18000},
+  {name:'QUASAR',score:30000},
+  {name:'ZENITH',score:50000},
+];
+let duelTarget=4000, passedRivals=new Set(), prevScore=0;
+function nextRival(s){for(const r of RIVALS)if(r.score>s)return r;return null;}
+function duelTargetFor(best){
+  const n=nextRival(best);
+  return n?n.score:60000;
+}
+
+/* ── IN-GAME CURSOR (v2.4) ──
+   The game owns its cursor now: a neon dot with a lagging ring that
+   takes the current quantum state's colour, grows over buttons and
+   ripples on click. The shell skips its own injection when it sees
+   this cursor, so there is never a double cursor. */
+let curX=-100,curY=-100,ringX=-100,ringY=-100;
+function initCursor(){
+  document.addEventListener('mousemove',e=>{curX=e.clientX;curY=e.clientY;});
+  document.addEventListener('mouseover',e=>{
+    const t=e.target,hot=t&&t.closest?!!t.closest('button,input,a'):false;
+    const ring=document.getElementById('qd-cursor-ring');if(ring)ring.classList.toggle('hot',hot);
+  });
+  document.addEventListener('mousedown',()=>{
+    const s=document.createElement('div');s.className='qd-ripple';
+    s.style.left=(curX-22)+'px';s.style.top=(curY-22)+'px';
+    document.body.appendChild(s);setTimeout(()=>s.remove(),500);
+  });
+}
+function updateCursor(){
+  ringX+=(curX-ringX)*0.18;ringY+=(curY-ringY)*0.18;
+  const dot=document.getElementById('qd-cursor-dot'),ring=document.getElementById('qd-cursor-ring');
+  if(!dot||!ring)return;
+  const col=player?QS[player.qi].col:'#00F5FF';
+  dot.style.transform=`translate(${curX-5}px,${curY-5}px)`;
+  ring.style.transform=`translate(${ringX-21}px,${ringY-21}px)`;
+  dot.style.background=col;dot.style.boxShadow=`0 0 10px ${col},0 0 24px ${col}`;
+  ring.style.borderColor=col;
+}
+
+/* ── NEBULA (v2.4) ── */
+let nebulas=[];
+function initNebulas(){
+  nebulas=Array.from({length:5},(_,i)=>({
+    x:Math.random(),y:Math.random()*0.45,r:0.18+Math.random()*0.28,
+    qi:i%3,drift:(Math.random()-0.5)*0.004,phase:Math.random()*Math.PI*2,
+  }));
+}
+function drawNebulas(dt){
+  for(const n of nebulas){
+    n.x+=n.drift*dt;n.phase+=dt*0.3;
+    if(n.x<-0.3)n.x=1.3;if(n.x>1.3)n.x=-0.3;
+    const rgb=QS[n.qi].rgb,pulse=0.05+0.02*Math.sin(n.phase);
+    const g=ctx.createRadialGradient(n.x*W,n.y*H,0,n.x*W,n.y*H,n.r*Math.max(W,H));
+    g.addColorStop(0,`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${pulse})`);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,HORIZON_Y);
+  }
+}
+
 /* ── QUANTUM STATES ── */
 const QS=[
   {name:'ALPHA',col:'#00F5FF',rgb:[0,245,255],  dark:'#001428',tint:'rgba(0,245,255,0.016)'},
@@ -158,6 +226,8 @@ function resetAll(){
   flashA=0;flashCol='#00F5FF';obsTimer=0;
   obstacles=[];particles=[];floats=[];speedLines=[];nmTrack=new Set();
   blitzLeft=BLITZ_SECS;maxMulti=1;runSaved=false;bestPaceShown=false;
+  passedRivals=new Set();prevScore=0;
+  duelTarget=duelTargetFor(highScore);
 }
 
 /* ── LEADERBOARD (local, top 8) ── */
@@ -173,24 +243,45 @@ function qualifies(score){
 }
 function renderBoard(elId,limit){
   const el=document.getElementById(elId);if(!el)return;
-  const b=loadBoard().slice(0,limit||8);
-  if(!b.length){el.innerHTML='<div class="board-empty">No runs yet — set the first record.</div>';return;}
-  el.innerHTML=b.map((e,i)=>`<div class="board-row"><span class="board-rank">${i+1}</span><span class="board-name">${e.name||'PILOT'}</span><span class="board-meta">${e.mode==='blitz'?'BLITZ':'ENDLESS'} · ${DIFFS[e.diff]?.label||'DRIFT'} · S${String(e.sector).padStart(2,'0')}</span><span class="board-score">${e.score.toLocaleString()}</span></div>`).join('');
+  /* v2.4: you vs the rival pilots, one combined podium board. Rivals
+     are marked BOT; your own entries are marked YOU. */
+  const mine=loadBoard().map(e=>({...e,bot:false,you:true}));
+  const bots=RIVALS.map(r=>({name:r.name,score:r.score,bot:true,you:false,mode:'rival',diff:'',sector:0}));
+  const all=[...mine,...bots].sort((a,b)=>b.score-a.score).slice(0,limit||8);
+  el.innerHTML=all.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
+    const tag=e.bot?'BOT':e.you?'YOU':'';
+    const meta=e.bot?'ARCADE RIVAL':`${e.mode==='blitz'?'BLITZ':e.mode==='duel'?'DUEL':'ENDLESS'} · ${DIFFS[e.diff]?.label||'DRIFT'}${e.sector?` · S${String(e.sector).padStart(2,'0')}`:''}`;
+    return `<div class="board-row ${e.you?'you':''} ${i<3?'podium-'+(i+1):''}"><span class="board-rank">${medal}</span><span class="board-name">${e.name||'PILOT'}</span><span class="board-tag">${tag}</span><span class="board-meta">${meta}</span><span class="board-score">${e.score.toLocaleString()}</span></div>`;
+  }).join('');
 }
 
 /* ── INPUT ── */
 const K={},KP={};
-/* v2.3 fix: pause/resume, mute, menu start and retry are handled HERE,
-   on the keydown event itself. The old code only checked P/Escape inside
-   processInput(), which only runs while STATE is PLAYING — so P could
-   pause the game but could never resume it. */
+/* v2.4 hardening: pause/resume is handled by CAPTURE-phase listeners
+   on both window and document, with a 250ms double-fire guard. The
+   v2.3 bubble-phase handler fixed the old one-way pause in theory,
+   but a live browser test still showed P failing to resume — key
+   delivery into a framed game is not always a clean single bubble, so
+   the pause key now catches the event at the earliest phase on both
+   targets, and a click on the pause backdrop also resumes. */
+let lastPauseToggle=0;
+function pauseKeyHandler(e){
+  if((e.code==='KeyP'||e.code==='Escape')&&(STATE==='PLAYING'||STATE==='PAUSED')){
+    const now=Date.now();
+    if(now-lastPauseToggle<250)return;
+    lastPauseToggle=now;
+    togglePause();
+  }
+}
+window.addEventListener('keydown',pauseKeyHandler,true);
+document.addEventListener('keydown',pauseKeyHandler,true);
 window.addEventListener('keydown',e=>{
   K[e.code]=true;
   const isBtn=e.target&&(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT');
   if(e.code==='Space'||e.code==='ArrowLeft'||e.code==='ArrowRight'||e.code==='ArrowUp'||e.code==='ArrowDown'){
     if(STATE==='PLAYING')e.preventDefault();
   }
-  if((e.code==='KeyP'||e.code==='Escape')&&(STATE==='PLAYING'||STATE==='PAUSED')){togglePause();return;}
   if(e.code==='KeyM'){toggleMute();return;}
   if(!isBtn&&STATE==='MENU'&&(e.code==='Space'||e.code==='Enter')){startGame();return;}
   if(!isBtn&&STATE==='GAMEOVER'&&(e.code==='Space'||e.code==='Enter')){startGame();return;}
@@ -249,11 +340,12 @@ function laneX(lane,t){
 }
 
 /* ── BACKGROUND ── */
-function drawBg(){
+function drawBg(dt){
   const qi=player?player.qi:0;
   const g=ctx.createLinearGradient(0,0,0,HORIZON_Y);
   g.addColorStop(0,'#020208');g.addColorStop(0.75,QS[qi].dark);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,HORIZON_Y);
+  if(dt)drawNebulas(dt);
   const hg=ctx.createLinearGradient(0,HORIZON_Y-80,0,HORIZON_Y+25);
   hg.addColorStop(0,'transparent');hg.addColorStop(0.5,qr(qi,0.13));hg.addColorStop(1,'transparent');
   ctx.fillStyle=hg;ctx.fillRect(0,HORIZON_Y-80,W,105);
@@ -313,6 +405,10 @@ function drawTrack(){
     ctx.beginPath();ctx.moveTo(W/2+camCurve,HORIZON_Y);ctx.lineTo(W/2+s*TRACK_HALF,PLAYER_Y);ctx.stroke();
     ctx.lineWidth=9;ctx.strokeStyle=qr(qi,0.06);
     ctx.beginPath();ctx.moveTo(W/2+camCurve,HORIZON_Y);ctx.lineTo(W/2+s*TRACK_HALF,PLAYER_Y);ctx.stroke();
+    /* v2.4: a bright rail core so the track edges read as neon rails. */
+    ctx.lineWidth=1.1;ctx.strokeStyle=qr(qi,0.85);ctx.shadowColor=QS[qi].col;ctx.shadowBlur=12;
+    ctx.beginPath();ctx.moveTo(W/2+camCurve,HORIZON_Y);ctx.lineTo(W/2+s*TRACK_HALF,PLAYER_Y);ctx.stroke();
+    ctx.shadowBlur=0;
   }
   ctx.setLineDash([8,14]);
   const cl=ctx.createLinearGradient(0,HORIZON_Y,0,PLAYER_Y);
@@ -418,53 +514,69 @@ function drawObstacles(){
     const ra=(a)=>`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
     ctx.save();ctx.translate(sx,sy);
     if(ghost)ctx.globalAlpha=0.14+0.05*Math.sin(ob.ap*2.4);
-    if(ob.ot.shape==='gate'||ob.ot.shape==='wall')rGate(0,0,bw,bh,col,ra,ghost);
+    if(ob.ot.shape==='gate'||ob.ot.shape==='wall')rGate(0,0,bw,bh,col,ra,ghost,ob.ap);
     else if(ob.ot.shape==='spike')rSpike(0,0,bw,bh,col,ra,ghost,ob.ap);
-    else if(ob.ot.shape==='cube')rCube(0,0,bw,bh,ob.ap);
+    else if(ob.ot.shape==='cube')rCube(0,0,bw,bh,ob.ap,ob.id);
     else if(ob.ot.shape==='orb')rOrb(0,0,bw*0.52,col,ra,ob.ap);
     ctx.restore();
   }
 }
-function rGate(x,y,w,h,col,ra,ghost){
+/* v2.4 models: gates are now neon portals (rotating dashed rings),
+   spikes are faceted crystals, cubes are tumbling asteroids. The
+   hitbox is unchanged — only the drawing changed. */
+function rGate(x,y,w,h,col,ra,ghost,ap){
+  const rx=w*0.5,ry=h*0.5;
   ctx.shadowColor=col;ctx.shadowBlur=ghost?4:20;
-  ctx.fillStyle=ra(ghost?0.09:0.42);ctx.fillRect(x-w/2,y-h/2,w,h);
-  ctx.strokeStyle=ra(ghost?0.22:0.88);ctx.lineWidth=1.5;ctx.strokeRect(x-w/2,y-h/2,w,h);
+  ctx.fillStyle=ra(ghost?0.05:0.20);
+  ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=ra(ghost?0.22:0.9);ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.stroke();
   if(!ghost){
-    for(let s=0;s<6;s++)if(s%2===0){ctx.fillStyle=ra(0.11);ctx.fillRect(x-w/2+s*w/6,y-h/2,w/6,h);}
-    const cl=7,cors=[[-w/2,-h/2],[w/2,-h/2],[-w/2,h/2],[w/2,h/2]];
-    ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1;
-    for(const[cx,cy]of cors){
-      const sx=Math.sign(cx),sy=Math.sign(cy);
-      ctx.beginPath();ctx.moveTo(x+cx,y+cy+sy*cl);ctx.lineTo(x+cx,y+cy);ctx.lineTo(x+cx+sx*cl,y+cy);ctx.stroke();
-    }
+    ctx.save();ctx.translate(x,y);ctx.rotate(ap*0.4);
+    ctx.setLineDash([6,8]);ctx.strokeStyle=ra(0.55);ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.ellipse(0,0,rx*0.72,ry*0.72,0,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.beginPath();ctx.arc(x,y,Math.max(2,rx*0.06),0,Math.PI*2);ctx.fill();
   }
   ctx.shadowBlur=0;
 }
 function rSpike(x,y,w,h,col,ra,ghost,ap){
   const pulse=1+(ghost?0:Math.sin(ap*2)*0.09),pw=w*pulse,ph=h*pulse;
   ctx.shadowColor=col;ctx.shadowBlur=ghost?4:22;
-  ctx.beginPath();ctx.moveTo(x,y-ph*0.54);ctx.lineTo(x+pw*0.5,y+ph*0.1);
-  ctx.lineTo(x+pw*0.24,y+ph*0.54);ctx.lineTo(x-pw*0.24,y+ph*0.54);ctx.lineTo(x-pw*0.5,y+ph*0.1);ctx.closePath();
-  const g=ctx.createRadialGradient(x,y,0,x,y,pw*0.5);
-  g.addColorStop(0,ghost?ra(0.14):'rgba(255,255,255,0.8)');
-  g.addColorStop(0.4,ra(ghost?0.07:0.55));g.addColorStop(1,ra(ghost?0.02:0.12));
+  /* Faceted crystal: tall shard with inner facet lines. */
+  ctx.beginPath();
+  ctx.moveTo(x,y-ph*0.62);ctx.lineTo(x+pw*0.34,y-ph*0.1);ctx.lineTo(x+pw*0.42,y+ph*0.42);
+  ctx.lineTo(x-pw*0.42,y+ph*0.42);ctx.lineTo(x-pw*0.34,y-ph*0.1);ctx.closePath();
+  const g=ctx.createLinearGradient(x,y-ph*0.62,x,y+ph*0.42);
+  g.addColorStop(0,ghost?ra(0.14):'rgba(255,255,255,0.85)');
+  g.addColorStop(0.45,ra(ghost?0.07:0.55));g.addColorStop(1,ra(ghost?0.02:0.12));
   ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=ra(ghost?0.22:0.9);ctx.lineWidth=1.5;ctx.stroke();
-  if(!ghost&&sector>=4){
-    ctx.strokeStyle=ra(0.28);ctx.lineWidth=1;
-    for(let i=0;i<4;i++){const a=i*Math.PI/2+ap*0.55;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*pw*0.72,y+Math.sin(a)*ph*0.72);ctx.stroke();}
+  if(!ghost){
+    ctx.strokeStyle=ra(0.5);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,y-ph*0.62);ctx.lineTo(x,y+ph*0.42);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-pw*0.34,y-ph*0.1);ctx.lineTo(x+pw*0.34,y-ph*0.1);ctx.stroke();
   }
   ctx.shadowBlur=0;
 }
-function rCube(x,y,w,h,ap){
-  const col='#FF8800',rgb=[255,136,0],ra=(a)=>`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`,d=w*0.26;
+function rCube(x,y,w,h,ap,seed){
+  const col='#FF8800',rgb=[255,136,0],ra=(a)=>`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+  const s=seed||0,rot=ap*0.5;
   ctx.shadowColor=col;ctx.shadowBlur=24;
-  ctx.fillStyle=ra(0.5);ctx.fillRect(x-w/2,y-h/2,w,h);
-  ctx.strokeStyle=ra(0.9);ctx.lineWidth=1.5;ctx.strokeRect(x-w/2,y-h/2,w,h);
-  ctx.beginPath();ctx.moveTo(x-w/2,y-h/2);ctx.lineTo(x-w/2+d,y-h/2-d*0.5);ctx.lineTo(x+w/2+d,y-h/2-d*0.5);ctx.lineTo(x+w/2,y-h/2);ctx.closePath();
-  ctx.fillStyle=ra(0.32);ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.moveTo(x+w/2,y-h/2);ctx.lineTo(x+w/2+d,y-h/2-d*0.5);ctx.lineTo(x+w/2+d,y+h/2-d*0.5);ctx.lineTo(x+w/2,y+h/2);ctx.closePath();
-  ctx.fillStyle=ra(0.20);ctx.fill();ctx.stroke();
-  const cr=w*0.14*(1+Math.sin(ap*3)*0.22),cg=ctx.createRadialGradient(x,y,0,x,y,cr);
+  /* Tumbling asteroid: irregular polygon, stable per obstacle (seeded
+     by its id) so it rotates instead of wobbling. */
+  ctx.beginPath();
+  for(let i=0;i<8;i++){
+    const a=rot+i*Math.PI/4;
+    const r=w*(0.42+0.14*Math.sin(s+i*2.7));
+    const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r*0.7;
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+  const g=ctx.createRadialGradient(x-w*0.2,y-h*0.2,0,x,y,w*0.55);
+  g.addColorStop(0,ra(0.65));g.addColorStop(1,ra(0.25));
+  ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=ra(0.9);ctx.lineWidth=1.5;ctx.stroke();
+  const cr=w*0.13*(1+Math.sin(ap*3)*0.22),cg=ctx.createRadialGradient(x,y,0,x,y,cr);
   cg.addColorStop(0,'white');cg.addColorStop(0.4,ra(0.95));cg.addColorStop(1,'transparent');
   ctx.fillStyle=cg;ctx.beginPath();ctx.arc(x,y,cr,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
 }
@@ -530,31 +642,42 @@ function drawPlayer(){
     ctx.fillStyle='#00FFFF';drawHull(x+off,y,sw,sh,0);ctx.restore();
   }
   ctx.save();ctx.translate(x,y);ctx.rotate(player.tilt*Math.PI/180);
-  const fh=sh*(0.38+Math.random()*0.22);
-  const fg=ctx.createLinearGradient(0,sh*0.28,0,sh*0.28+fh);
+  /* v2.4 ship model: sleeker arrow hull, swept side pods, and an
+     engine flame that grows with speed. */
+  const spdF=0.5+speed/MAX_SPD;
+  const fh=sh*(0.42+Math.random()*0.24)*spdF;
+  const fg=ctx.createLinearGradient(0,sh*0.30,0,sh*0.30+fh);
   fg.addColorStop(0,'white');fg.addColorStop(0.3,col);fg.addColorStop(1,'transparent');
-  ctx.fillStyle=fg;ctx.beginPath();ctx.ellipse(0,sh*0.28,sw*0.09,fh,0,0,Math.PI*2);ctx.fill();
-  for(const xs of[-sw*0.3,sw*0.3]){
-    const sfg=ctx.createLinearGradient(0,sh*0.24,0,sh*0.24+fh*0.6);
+  ctx.fillStyle=fg;ctx.beginPath();ctx.ellipse(0,sh*0.30,sw*0.10,fh,0,0,Math.PI*2);ctx.fill();
+  for(const xs of[-sw*0.42,sw*0.42]){
+    const sfg=ctx.createLinearGradient(0,sh*0.26,0,sh*0.26+fh*0.6);
     sfg.addColorStop(0,col);sfg.addColorStop(1,'transparent');
-    ctx.fillStyle=sfg;ctx.beginPath();ctx.ellipse(xs,sh*0.24,sw*0.052,fh*0.6,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=sfg;ctx.beginPath();ctx.ellipse(xs,sh*0.26,sw*0.055,fh*0.6,0,0,Math.PI*2);ctx.fill();
   }
-  ctx.shadowColor=col;ctx.shadowBlur=24;
+  ctx.shadowColor=col;ctx.shadowBlur=26;
+  /* Side pods. */
+  for(const s of[-1,1]){
+    ctx.beginPath();ctx.ellipse(s*sw*0.52,sh*0.05,sw*0.16,sh*0.22,0,0,Math.PI*2);
+    const pg=ctx.createLinearGradient(0,-sh*0.2,0,sh*0.3);
+    pg.addColorStop(0,col);pg.addColorStop(1,QS[qi].dark);
+    ctx.fillStyle=pg;ctx.fill();ctx.strokeStyle=ra(0.5);ctx.lineWidth=0.8;ctx.stroke();
+  }
+  /* Main hull: sharp nose, wide swept rear. */
   ctx.beginPath();
-  ctx.moveTo(0,-sh*0.57);ctx.lineTo(sw*0.47,sh*0.18);ctx.lineTo(sw*0.22,sh*0.08);
-  ctx.lineTo(sw*0.10,sh*0.38);ctx.lineTo(-sw*0.10,sh*0.38);ctx.lineTo(-sw*0.22,sh*0.08);
-  ctx.lineTo(-sw*0.47,sh*0.18);ctx.closePath();
-  const hg=ctx.createLinearGradient(0,-sh*0.57,0,sh*0.38);
+  ctx.moveTo(0,-sh*0.72);ctx.lineTo(sw*0.30,sh*0.05);ctx.lineTo(sw*0.58,sh*0.28);
+  ctx.lineTo(sw*0.20,sh*0.22);ctx.lineTo(sw*0.12,sh*0.46);ctx.lineTo(-sw*0.12,sh*0.46);
+  ctx.lineTo(-sw*0.20,sh*0.22);ctx.lineTo(-sw*0.58,sh*0.28);ctx.lineTo(-sw*0.30,sh*0.05);
+  ctx.closePath();
+  const hg=ctx.createLinearGradient(0,-sh*0.72,0,sh*0.46);
   hg.addColorStop(0,'#FFFFFF');hg.addColorStop(0.22,col);hg.addColorStop(0.7,ra(0.6));hg.addColorStop(1,QS[qi].dark);
-  ctx.fillStyle=hg;ctx.fill();ctx.strokeStyle=ra(0.45);ctx.lineWidth=0.8;ctx.stroke();
-  ctx.strokeStyle=ra(0.7);ctx.lineWidth=0.8;
-  [[0,-sh*0.33,sw*0.38,sh*0.14],[0,-sh*0.33,-sw*0.38,sh*0.14],[0,-sh*0.1,0,sh*0.34]].forEach(([x1,y1,x2,y2])=>{
-    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-  });
-  ctx.beginPath();ctx.ellipse(0,-sh*0.12,sw*0.11,sh*0.20,0,0,Math.PI*2);
-  ctx.fillStyle='rgba(155,230,255,0.45)';ctx.fill();ctx.strokeStyle='rgba(200,245,255,0.8)';ctx.lineWidth=1;ctx.stroke();
-  ctx.beginPath();ctx.ellipse(-sw*0.03,-sh*0.17,sw*0.04,sh*0.06,-0.3,0,Math.PI*2);
-  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
+  ctx.fillStyle=hg;ctx.fill();ctx.strokeStyle=ra(0.5);ctx.lineWidth=0.8;ctx.stroke();
+  /* Spine + canopy. */
+  ctx.strokeStyle=ra(0.75);ctx.lineWidth=0.9;
+  ctx.beginPath();ctx.moveTo(0,-sh*0.55);ctx.lineTo(0,sh*0.42);ctx.stroke();
+  ctx.beginPath();ctx.ellipse(0,-sh*0.22,sw*0.12,sh*0.24,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(155,230,255,0.5)';ctx.fill();ctx.strokeStyle='rgba(200,245,255,0.85)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(-sw*0.04,-sh*0.30,sw*0.045,sh*0.07,-0.3,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fill();
   ctx.shadowBlur=0;ctx.restore();
 }
 function drawHull(x,y,sw,sh){
@@ -629,8 +752,15 @@ function updateHUD(){
   document.getElementById('h-sector').textContent=String(sector).padStart(2,'0');
   const nameEl=document.getElementById('h-sector-name');if(nameEl)nameEl.textContent='· '+sectorName(sector);
   const timeEl=document.getElementById('h-time');if(timeEl){
-    timeEl.textContent=mode==='blitz'?`⏱ ${Math.ceil(blitzLeft)}s`:`${DIFFS[difficulty].label} · ${mode==='blitz'?'BLITZ':'ENDLESS'}`;
+    if(mode==='blitz')timeEl.textContent=`⏱ BLITZ ${Math.ceil(blitzLeft)}s`;
+    else if(mode==='duel')timeEl.textContent=`⚔ DUEL ${Math.ceil(blitzLeft)}s · TARGET ${duelTarget.toLocaleString()}`;
+    else timeEl.textContent=`${DIFFS[difficulty].label} · ENDLESS`;
   }
+  const rivalEl=document.getElementById('h-rival');if(rivalEl){
+    const n=nextRival(score);
+    rivalEl.textContent=n?`NEXT RIVAL: ${n.name} · ${n.score.toLocaleString()} (${(n.score-score).toLocaleString()} to go)`:'👑 LEADING THE PACK — NO RIVAL AHEAD';
+  }
+  const progEl=document.getElementById('h-sector-prog');if(progEl)progEl.style.width=(sectorTimer/SECTOR_SECS*100)+'%';
   document.getElementById('h-multi').textContent=`x${multi.toFixed(1)}`;
   document.getElementById('speed-num').textContent=String(Math.floor(speed/8)).padStart(3,'0');
   const ef=document.getElementById('ef');ef.style.width=player.energy+'%';
@@ -725,7 +855,7 @@ function doGameOver(reason){
   document.getElementById('go-sec').textContent=String(sector).padStart(2,'0')+' · '+sectorName(sector);
   const rankEl=document.getElementById('go-rank');if(rankEl)rankEl.textContent='RANK: '+rankFor(score);
   const mmEl=document.getElementById('go-multi');if(mmEl)mmEl.textContent='MAX MULTI ×'+maxMulti.toFixed(1);
-  const rsEl=document.getElementById('go-reason');if(rsEl)rsEl.textContent=reason||(mode==='blitz'?'TIME UP':'ENERGY DEPLETED');
+  const rsEl=document.getElementById('go-reason');if(rsEl)rsEl.textContent=reason||(mode==='blitz'?'TIME UP':mode==='duel'?`DUEL LOST — TARGET ${duelTarget.toLocaleString()} MISSED`:'ENERGY DEPLETED');
   document.getElementById('go-rec').classList.toggle('hidden',!isRec);
   const saveRow=document.getElementById('go-save-row');
   if(saveRow)saveRow.style.display=qualifies(score)?'flex':'none';
@@ -777,10 +907,25 @@ function update(dt){
   if(multi>maxMulti)maxMulti=multi;
   if(!bestPaceShown&&highScore>0&&score>highScore){bestPaceShown=true;addFloat('NEW RECORD PACE!',player.lane,0.82,'#C7FF4D');}
   sectorTimer+=dt;if(sectorTimer>=SECTOR_SECS){sectorTimer=0;sector++;triggerSector();}
-  if(mode==='blitz'){
+  if(mode==='blitz'||mode==='duel'){
     blitzLeft-=dt;
-    if(blitzLeft<=0){blitzLeft=0;doGameOver('TIME UP — BLITZ COMPLETE');return;}
+    if(blitzLeft<=0){
+      blitzLeft=0;
+      if(mode==='duel')doGameOver(score>=duelTarget?`DUEL WON — TARGET ${duelTarget.toLocaleString()} BEATEN`:`DUEL LOST — TARGET ${duelTarget.toLocaleString()} MISSED`);
+      else doGameOver('TIME UP — BLITZ COMPLETE');
+      return;
+    }
   }
+  /* v2.4 rival chase: passing a rival's score mid-run pays a bonus
+     and calls it out — the board is a race, not just a list. */
+  for(const r of RIVALS){
+    if(prevScore<r.score&&score>=r.score&&!passedRivals.has(r.name)){
+      passedRivals.add(r.name);
+      const bonus=Math.round(500*DIFFS[difficulty].score);score+=bonus;
+      sfx('sector');addFloat(`OVERTTOOK ${r.name}! +${bonus}`,player.lane,0.82,'#C7FF4D');
+    }
+  }
+  prevScore=score;
   camPhase+=dt*(0.18+sector*0.028);
   const cmag=Math.min(sector*0.48,2.6),tcurve=Math.sin(camPhase)*TRACK_HALF*0.21*cmag;
   camCurve+=(tcurve-camCurve)*dt*1.75;
@@ -792,14 +937,14 @@ function update(dt){
 /* ── RENDER ── */
 function render(dt){
   ctx.save();if(shakeMag>0.3)ctx.translate(shakeX,shakeY);ctx.clearRect(-32,-32,W+64,H+64);
-  drawBg();drawCity(camCurve);drawStars(dt,camCurve);drawTrack();
+  drawBg(dt);drawCity(camCurve);drawStars(dt,camCurve);drawTrack();
   drawObstacles();drawSpeedLines();drawPlayer();drawParticles();
   drawFlash();drawQTint();drawVignette();ctx.restore();
 }
 function renderMenuBG(dt){
   ctx.clearRect(0,0,W,H);
   const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#020208');g.addColorStop(0.5,'#08082A');g.addColorStop(1,'#04041A');
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(dt,0);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawNebulas(dt);drawStars(dt,0);
   const t=Date.now()*0.00038;
   for(let gx=0;gx<W;gx+=58){ctx.strokeStyle=`rgba(0,245,255,${0.018+0.008*Math.sin(t+gx*0.012)})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
   for(let gy=0;gy<H;gy+=58){ctx.strokeStyle=`rgba(0,245,255,${0.018+0.008*Math.sin(t+gy*0.012)})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
@@ -816,6 +961,7 @@ function loop(ts){
   if(STATE==='PLAYING'){update(dt);render(dt);}
   else if(STATE==='MENU'||STATE==='GAMEOVER'){renderMenuBG(dt);updateFloats(dt);for(const s of stars)s.tw+=s.ts*dt;}
   else if(STATE==='PAUSED')render(0);
+  updateCursor();
   syncKP();requestAnimationFrame(loop);
 }
 
@@ -849,10 +995,12 @@ function setSeg(group,value){
   const desc=document.getElementById('diff-desc');
   if(desc&&group==='diff')desc.textContent=DIFFS[value].desc;
   const modeDesc=document.getElementById('mode-desc');
-  if(modeDesc&&group==='mode')modeDesc.textContent=value==='blitz'?`90-second sprint — highest score wins.`:`Endless run — survive as deep as you can.`;
+  if(modeDesc&&group==='mode')modeDesc.textContent=value==='blitz'?`90-second sprint — highest score wins.`:(value==='duel'?`90 seconds to beat the next rival above your record — win or lose, no draws.`:`Endless run — survive as deep as you can.`);
 }
 window.addEventListener('DOMContentLoaded',()=>{
-  resize();initStars();goMenu();
+  resize();initStars();initNebulas();initCursor();goMenu();
+  const pauseScr=document.getElementById('pause-scr');
+  if(pauseScr)pauseScr.addEventListener('click',e=>{if(e.target===pauseScr&&STATE==='PAUSED')togglePause();});
   document.getElementById('btn-start').addEventListener('click',startGame);
   document.getElementById('btn-retry').addEventListener('click',startGame);
   document.getElementById('btn-menu').addEventListener('click',goMenu);

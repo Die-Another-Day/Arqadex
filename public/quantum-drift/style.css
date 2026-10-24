@@ -36,6 +36,34 @@ html, body {
   height:100vh;
 }
 
+/* ── In-game cursor (v2.4) ────────────────────────
+   The game owns its cursor: neon dot + lagging ring in the current
+   quantum state's colour, growing over buttons, rippling on click.
+   Hidden on touch devices, where there is no cursor to show. */
+#qd-cursor-dot, #qd-cursor-ring {
+  position:fixed; top:0; left:0; pointer-events:none; z-index:2147483647;
+}
+#qd-cursor-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 10px var(--cyan), 0 0 24px var(--cyan);
+}
+#qd-cursor-ring {
+  width:42px; height:42px; border-radius:50%;
+  border:1.5px solid var(--cyan); opacity:0.7;
+  transition:width .18s, height .18s, opacity .18s;
+}
+#qd-cursor-ring.hot { width:62px; height:62px; opacity:1; }
+.qd-ripple {
+  position:fixed; width:44px; height:44px; border-radius:50%;
+  border:2px solid var(--cyan); pointer-events:none; z-index:2147483647;
+  animation:qd-rip .5s ease-out forwards;
+}
+@keyframes qd-rip { from { transform:scale(.4); opacity:.9; } to { transform:scale(1.9); opacity:0; } }
+@media (pointer:coarse) {
+  #qd-cursor-dot, #qd-cursor-ring { display:none; }
+}
+
 /* ── UI Overlay ─────────────────────────────────── */
 #ui {
   position:fixed;
@@ -247,16 +275,17 @@ html, body {
   flex-direction:column;
   align-items:center;
   text-align:center;
-  background:rgba(5,5,20,0.9);
+  background:linear-gradient(160deg, rgba(10,10,38,0.94), rgba(5,5,20,0.92) 60%, rgba(20,5,28,0.94));
   backdrop-filter:blur(28px);
   -webkit-backdrop-filter:blur(28px);
-  border:1px solid rgba(0,245,255,0.1);
-  border-radius:22px;
+  border:1px solid rgba(0,245,255,0.16);
+  border-radius:24px;
   padding:46px 54px;
-  max-width:560px;
+  max-width:580px;
   width:90%;
   position:relative;
   overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.03) inset, 0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0,245,255,0.06);
 }
 .panel::before {
   content:'';
@@ -304,6 +333,11 @@ html, body {
   -webkit-text-fill-color:transparent;
   background-clip:text;
   filter:drop-shadow(0 0 24px rgba(0,245,255,0.5));
+  animation:logoshine 5s ease-in-out infinite;
+}
+@keyframes logoshine {
+  0%,100% { filter:drop-shadow(0 0 24px rgba(0,245,255,0.5)); }
+  50% { filter:drop-shadow(0 0 44px rgba(255,45,166,0.55)); }
 }
 .logo-ver {
   font-family:var(--mono);
@@ -427,10 +461,36 @@ html, body {
   padding:5px 0;
   border-bottom:1px solid rgba(255,255,255,0.05);
 }
-.board-rank { color:var(--lime); font-weight:700; width:18px; }
+.board-rank { color:var(--lime); font-weight:700; width:26px; text-align:center; }
 .board-name { color:var(--text); font-weight:700; letter-spacing:1px; }
+.board-tag {
+  font-family:var(--orb); font-size:8px; letter-spacing:1px;
+  border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:2px 6px;
+  color:rgba(255,255,255,0.45);
+}
+.board-row.you { background:rgba(0,245,255,0.07); border-radius:8px; padding-left:6px; padding-right:6px; }
+.board-row.you .board-tag { color:var(--cyan); border-color:rgba(0,245,255,0.4); }
+.board-row.podium-1 { background:linear-gradient(90deg, rgba(255,215,0,0.12), transparent); }
+.board-row.podium-2 { background:linear-gradient(90deg, rgba(192,192,192,0.10), transparent); }
+.board-row.podium-3 { background:linear-gradient(90deg, rgba(205,127,50,0.12), transparent); }
 .board-meta { color:rgba(255,255,255,0.3); font-size:9px; flex:1; text-align:left; }
 .board-score { color:var(--cyan); font-weight:700; }
+.board-note {
+  font-family:var(--mono); font-size:10px; color:rgba(255,255,255,0.3);
+  margin-bottom:8px; line-height:1.6;
+}
+
+/* ── HUD rival + sector progress (v2.4) ────────── */
+.hud-pill.rival { color:var(--lime); border-color:rgba(199,255,77,0.25); }
+.sector-prog {
+  width:100%; height:3px; background:rgba(255,255,255,0.08);
+  border-radius:2px; overflow:hidden; margin-top:6px;
+}
+#h-sector-prog { height:100%; width:0%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); transition:width .3s; }
+.pause-hint {
+  font-family:var(--mono); font-size:11px; color:rgba(255,255,255,0.35);
+  margin-bottom:22px;
+}
 
 /* ── Game-over extras (v2.3) ───────────────────── */
 .rank-badge {

@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="qd-cursor-dot"></div>
+  <div id="qd-cursor-ring"></div>
   <canvas id="c"></canvas>
   <div id="ui">
     <div class="scanlines"></div>
@@ -35,7 +37,9 @@
             <div class="q-pip" id="qp-2">γ</div>
           </div>
           <div id="sector-badge">SECTOR <span id="h-sector">01</span> <span id="h-sector-name"></span></div>
+          <div class="sector-prog"><div id="h-sector-prog"></div></div>
           <div id="h-time" class="hud-pill">DRIFT · ENDLESS</div>
+          <div id="h-rival" class="hud-pill rival">NEXT RIVAL: VOLT</div>
         </div>
         <div class="hud-panel right">
           <div class="hud-label">MULTI</div>
@@ -81,7 +85,7 @@
         <div class="logo">
           <div class="logo-top">QUANTUM</div>
           <div class="logo-bot">DRIFT</div>
-          <div class="logo-ver">BUILD 2.0 // DRIFT OVERHAUL</div>
+          <div class="logo-ver">BUILD 3.0 // RIVAL SEASON</div>
         </div>
         <p class="flavor">Pilot through superposition states.<br>Exist in multiple realities simultaneously—<br>until observed.</p>
         <div class="ctrl-grid">
@@ -102,6 +106,7 @@
         <div class="seg-row">
           <button class="seg sel" data-seg="mode" data-val="endless">ENDLESS</button>
           <button class="seg" data-seg="mode" data-val="blitz">BLITZ · 90s</button>
+          <button class="seg" data-seg="mode" data-val="duel">⚔ DUEL · 90s</button>
         </div>
         <div id="mode-desc" class="seg-desc">Endless run — survive as deep as you can.</div>
         <button class="btn primary" id="btn-start">INITIALIZE SEQUENCE</button>
@@ -118,7 +123,8 @@
           <span class="hud-label">CAREER</span>
           <span id="stats-disp">—</span>
         </div>
-        <div class="board-title">🏆 LOCAL LEADERBOARD — TOP 8</div>
+        <div class="board-title">🏆 LEADERBOARD — YOU vs RIVAL PILOTS</div>
+        <div class="board-note">Rivals are arcade bots, not real players. Beat them, overtake them mid-run, and climb the podium.</div>
         <div id="menu-board" class="board"></div>
         <div class="wallet-bar">
           <div class="w-dot"></div>
@@ -156,6 +162,7 @@
       <div class="panel sm">
         <div class="eyebrow">SIMULATION</div>
         <div class="big-title sm">PAUSED</div>
+        <div class="pause-hint">Press P / Esc, or click outside this panel, to resume</div>
         <div class="btn-col">
           <button class="btn primary" id="btn-resume">RESUME</button>
           <button class="btn secondary" id="btn-quit">EXIT TO GRID</button>
