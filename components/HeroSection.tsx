@@ -79,7 +79,7 @@ export default function HeroSection() {
         style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', animation: 'scan 12s linear infinite', zIndex: 2 }}
       />
 
-      <div className="relative z-10 max-w-5xl w-full mx-auto text-center">
+      <div className="relative z-10 max-w-7xl w-full mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -97,17 +97,23 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="font-black leading-[0.9] tracking-tight w-full mx-auto text-center"
+          className="font-black leading-[1.05] tracking-tight w-full mx-auto text-center"
           style={{
             fontFamily: 'var(--font-syne)',
             color: 'var(--text)',
-            // Was clamp(4rem, 14vw, 10rem): the 4rem floor made the word wider
-            // than a phone-width container, so the final X ran off the right
-            // edge (the section hides overflow, so no scrollbar ever showed
-            // it). 13vw with a 2.75rem floor keeps it on one centred line
-            // from ~320px phones up to desktop, and textAlign is inline so
-            // no stylesheet rule can quietly left-align it again.
-            fontSize: 'clamp(2.75rem, 13vw, 10rem)',
+            // Measured, not guessed: Syne 800 "ARQADEX" advances 8.464em
+            // (fontTools on the actual woff2). At the old 10rem cap that is
+            // 1,354px — wider than the old 1,024px container, so the word
+            // only ever looked centred by overflowing its box equally.
+            // 10vw keeps it inside the padded viewport at every phone
+            // width (320px: 32px font -> 271px word vs 272px content width),
+            // the 8rem cap keeps it inside the widened 1,280px container
+            // on desktop (128px -> 1,083px word), and the 1.9rem floor is
+            // only for viewports narrower than that. textAlign is inline
+            // so no stylesheet rule can quietly left-align it again.
+            // leading 1.05 (was 0.9) stops Syne's Q tail dropping into
+            // the subtitle line below.
+            fontSize: 'clamp(1.9rem, 10vw, 8rem)',
             textAlign: 'center',
             whiteSpace: 'nowrap',
           }}

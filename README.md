@@ -6,6 +6,18 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.2.2 — hero title actually fits its box
+
+- v2.2.1 only lowered the phone floor and did not fix the wide view. The
+  real measurement: Syne 800 "ARQADEX" advances 8.464em, so at the old
+  10rem cap the word was 1,354px wide inside a 1,024px container — it
+  only looked centred by overflowing its box. The title is now sized
+  from that measurement: `clamp(1.9rem, 10vw, 8rem)` inside a widened
+  1,280px hero container, so the word fits its box at every width
+  (320px phone through desktop) and its centre is the box's centre.
+- Line height raised from 0.9 to 1.05 so Syne's Q tail no longer drops
+  into the subtitle line.
+
 ## What's in v2.2.1 — hero centering fix
 
 - The ARQADEX hero title was wider than a phone-width container (its size
