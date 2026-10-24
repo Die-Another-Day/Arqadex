@@ -1,548 +1,242 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { motion, useInView } from 'framer-motion'
-import { Lock, Loader } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Lock, Search, Star, X, Zap } from 'lucide-react'
+import { GAMES, ALL_TAGS, type Game } from '@/lib/games'
+import { getFavorites, toggleFavorite, recordPlay } from '@/lib/arcade'
 
-const UPCOMING_GAMES = [
-  {
-    id: 'baldys-escape',
-    title: 'BALDYS ESCAPE',
-    url: 'baldys-escape',
-    description: 'Navigate corrupted digital landscapes. Reality is fragmented. Speed is you.' ,
-    tags: ['RUNNER', 'GLITCH', 'JUMP'],
-    color: '#C7FF4D',
-    accent: 'rgba(199, 255, 77, 0.15)',
-    border: 'rgba(199, 255, 77, 0.3)',
-    progress: 100,
-    eta: 'LIVE',
-    shape: 'hex',
-  },
-{
-  id: 'merge-ball',
-  title: 'MERGE BALL',
-  url: 'merge-ball',
-  description:
-    'Physics-driven chaotic merge experience with neon arcade aesthetics. Drop, collide, and evolve unstable quantum spheres.',
-  tags: ['PHYSICS', 'CASUAL', 'NEON'],
-  color: '#00F5FF',
-  accent: 'rgba(0, 245, 255, 0.15)',
-  border: 'rgba(0, 245, 255, 0.3)',
-  progress: 100,
-  eta: 'LIVE',
-  shape: 'merge',
-},
-  {
-    id: 'signal-collapse',
-    title: 'SIGNAL COLLAPSE',
-    url: 'signal-collapse',
-    description:'Trace corrupted signals through collapsing neon infrastructure before the entire network fails.',
-    tags: ['PUZZLE', 'NETWORK', 'DARK'],
-    color: '#FF3410',
-    accent: 'rgba(0, 245, 255, 0.15)',
-    border: 'rgba(0, 245, 255, 0.3)',
-    progress: 100,
-    eta: 'LIVE',
-    shape: 'combat',
-  },
-
-{
-  id: 'vi-battle',
-  title: 'VI-BATTLE',
-  url: 'vi-battle',
-  description:
-    'Voice-controlled neural combat simulator where phonetic commands directly control real-time cybernetic warfare.',
-  tags: ['VOICE', 'COMBAT', 'AI'],
-  color: '#FF3D81',
-  accent: 'rgba(255, 61, 129, 0.15)',
-  border: 'rgba(255, 62, 129, 0.3)',
-  progress: 100,
-  eta: 'LIVE',
-  shape: 'duel',
-},
-  {
-    id: 'quantum-drift',
-    title: 'QUANTUM DRIFT',
-    url: 'quantum-drift',
-    description: 'Pilot through superposition states. Exist in multiple paths simultaneously until observed.',
-    tags: ['PHYSICS', 'QUANTUM', 'RACING'],
-    color: '#7A5CFF',
-    accent: 'rgba(122, 92, 255, 0.15)',
-    border: 'rgba(122, 92, 255, 0.3)',
-    progress: 100,
-    eta: 'LIVE',
-    shape: 'circle',
-  },
- {
-    id: 'ctrl',
-    title: 'CTRL',
-    description: 'Control systems pushed to the breaking point. Every action triggers an unpredictable cascade.',
-    tags: ['CONTROL', 'CHAOS', 'REACTION'],
-    color: '#FF2DA6',
-    accent: 'rgba(255, 45, 166, 0.15)',
-    border: 'rgba(255, 45, 166, 0.3)',
-    progress: 72,
-    eta: 'Q2 2025',
-    shape: 'triangle',
-  },
-
-]
-
-// Unique shape previews per game
-function GamePreview({ game }: { game: typeof UPCOMING_GAMES[0] }) {
+function ShapePreview({ game }: { game: Game }) {
+  const c = game.color
   return (
-    <div
-      className="relative w-full aspect-video rounded-lg overflow-hidden"
-      style={{ background: `radial-gradient(ellipse at center, ${game.accent}, transparent 70%)` }}
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `linear-gradient(${game.color}08 1px, transparent 1px), linear-gradient(90deg, ${game.color}08 1px, transparent 1px)`,
-          backgroundSize: '20px 20px',
-        }}
-      />
-      {/* Shape preview */}
+    <div className="relative w-full aspect-video rounded-lg overflow-hidden" style={{ background: `radial-gradient(ellipse at center, ${c}22, transparent 70%)` }}>
+      <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(${c}14 1px, transparent 1px), linear-gradient(90deg, ${c}14 1px, transparent 1px)`, backgroundSize: '20px 20px' }} />
       <div className="absolute inset-0 flex items-center justify-center">
-        {game.shape === 'triangle' && (
-          <div className="relative w-16 h-16 float">
-            <div
-              className="absolute inset-0"
-              style={{
-                borderLeft: '32px solid transparent',
-                borderRight: '32px solid transparent',
-                borderBottom: `56px solid ${game.color}40`,
-                filter: `drop-shadow(0 0 20px ${game.color}80)`,
-              }}
-            />
-          </div>
-        )}
         {game.shape === 'hex' && (
-          <div
-            className="w-16 h-14 float"
-            style={{
-              background: `${game.color}30`,
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-              boxShadow: `0 0 30px ${game.color}60`,
-            }}
-          />
+          <div className="w-16 h-14 float" style={{ background: `${c}44`, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', filter: `drop-shadow(0 0 20px ${c}88)` }} />
         )}
         {game.shape === 'circle' && (
-          <div
-            className="w-16 h-16 rounded-full float-delay-1"
-            style={{
-              border: `2px solid ${game.color}60`,
-              boxShadow: `0 0 30px ${game.color}40, inset 0 0 20px ${game.color}20`,
-            }}
-          />
+          <div className="w-16 h-16 rounded-full float" style={{ border: `2px solid ${c}99`, boxShadow: `0 0 30px ${c}66, inset 0 0 20px ${c}33` }} />
         )}
-{game.shape === 'combat' && (
-  <div className="relative w-20 h-20 float">
-    {/* Outer radar ring */}
-    <div
-      className="absolute inset-0 rounded-full"
-      style={{
-        border: `2px solid ${game.color}40`,
-        boxShadow: `0 0 25px ${game.color}50`,
-      }}
-    />
-
-    {/* Inner ring */}
-    <div
-      className="absolute inset-3 rounded-full"
-      style={{
-        border: `1px solid ${game.color}60`,
-      }}
-    />
-
-    {/* Core */}
-    <div
-      className="absolute inset-[34%] rounded-full"
-      style={{
-        background: game.color,
-        filter: `blur(4px)`,
-        boxShadow: `0 0 20px ${game.color}`,
-      }}
-    />
-
-    {/* Pulse line */}
-    <div
-      className="absolute left-1/2 top-1/2 origin-left"
-      style={{
-        width: '35px',
-        height: '1px',
-        background: game.color,
-        transform: 'rotate(35deg)',
-        boxShadow: `0 0 10px ${game.color}`,
-      }}
-    />
-  </div>
-)}
-{game.shape === 'merge' && (
-  <div className="relative w-24 h-24">
-    <div
-      className="absolute w-12 h-12 rounded-full float"
-      style={{
-        background: '#00F5FF80',
-        left: '0px',
-        top: '20px',
-        boxShadow: '0 0 25px #00F5FF',
-      }}
-    />
-
-    <div
-      className="absolute w-10 h-10 rounded-full float-delay-1"
-      style={{
-        background: '#FF3D8180',
-        right: '8px',
-        top: '0px',
-        boxShadow: '0 0 25px #FF3D81',
-      }}
-    />
-
-    <div
-      className="absolute w-8 h-8 rounded-full float-delay-2"
-      style={{
-        background: '#8B5CF680',
-        left: '40px',
-        bottom: '0px',
-        boxShadow: '0 0 20px #8B5CF6',
-      }}
-    />
-  </div>
-)}
-{game.shape === 'duel' && (
-  <div className="relative w-24 h-20 flex items-center justify-center">
-    
-    {/* Left fighter */}
-    <div
-      className="absolute left-2 top-1/2 -translate-y-1/2 float"
-      style={{
-        width: 0,
-        height: 0,
-        borderTop: '14px solid transparent',
-        borderBottom: '14px solid transparent',
-        borderRight: '22px solid #00F5FF',
-        filter: 'drop-shadow(0 0 12px #00F5FF)',
-      }}
-    />
-
-    {/* Right fighter */}
-    <div
-      className="absolute right-2 top-1/2 -translate-y-1/2 float-delay-1"
-      style={{
-        width: 0,
-        height: 0,
-        borderTop: '14px solid transparent',
-        borderBottom: '14px solid transparent',
-        borderLeft: '22px solid #FF3D81',
-        filter: 'drop-shadow(0 0 12px #FF3D81)',
-      }}
-    />
-
-    {/* Clash spark */}
-    <div
-      className="absolute w-3 h-3 rounded-full animate-pulse"
-      style={{
-        background: '#FFFFFF',
-        boxShadow: `
-          0 0 8px #FFFFFF,
-          0 0 18px #00F5FF,
-          0 0 18px #FF3D81
-        `,
-      }}
-    />
-
-    {/* Energy slash */}
-    <div
-      className="absolute w-10 h-[2px] rotate-12"
-      style={{
-        background:
-          'linear-gradient(to right, #00F5FF, #FFFFFF, #FF3D81)',
-        opacity: 0.8,
-        boxShadow: '0 0 12px rgba(255,255,255,0.8)',
-      }}
-    />
-  </div>
-)}
-{game.shape === 'notdule' && (
-  <div className="relative w-24 h-16 flex items-center justify-between">
-    
-    {/* Left fighter */}
-    <div className="relative">
-      <div
-        className="w-8 h-8 rounded-full float"
-        style={{
-          background: '#00F5FF',
-          boxShadow: '0 0 20px #00F5FF',
-        }}
-      />
-      <div
-        className="absolute top-3 left-8 w-8 h-[2px]"
-        style={{
-          background: 'linear-gradient(to right, #00F5FF, transparent)',
-        }}
-      />
-    </div>
-
-    {/* Right fighter */}
-    <div className="relative">
-      <div
-        className="w-8 h-8 rounded-full float-delay-1"
-        style={{
-          background: '#FF3D81',
-          boxShadow: '0 0 20px #FF3D81',
-        }}
-      />
-      <div
-        className="absolute top-3 right-8 w-8 h-[2px]"
-        style={{
-          background: 'linear-gradient(to left, #FF3D81, transparent)',
-        }}
-      />
-    </div>
-
-    {/* Center clash */}
-    <div
-      className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full"
-      style={{
-        background: '#FFFFFF',
-        transform: 'translate(-50%, -50%)',
-        boxShadow: '0 0 20px #FFFFFF',
-      }}
-    />
-  </div>
-)}
-        {game.shape === 'wave' && (
-          <div
-            className="w-20 h-8 float-delay-2"
-            style={{
-              background: `${game.color}20`,
-              borderRadius: '50% 50% 50% 50% / 30% 30% 70% 70%',
-              boxShadow: `0 0 20px ${game.color}40`,
-            }}
-          />
+        {game.shape === 'triangle' && (
+          <div className="w-0 h-0 float" style={{ borderLeft: '32px solid transparent', borderRight: '32px solid transparent', borderBottom: `56px solid ${c}66`, filter: `drop-shadow(0 0 20px ${c}88)` }} />
+        )}
+        {game.shape === 'radar' && (
+          <div className="relative w-20 h-20 float">
+            <div className="absolute inset-0 rounded-full" style={{ border: `2px solid ${c}66`, boxShadow: `0 0 25px ${c}77` }} />
+            <div className="absolute inset-3 rounded-full" style={{ border: `1px solid ${c}99` }} />
+            <div className="absolute inset-[34%] rounded-full" style={{ background: c, filter: 'blur(4px)', boxShadow: `0 0 20px ${c}` }} />
+          </div>
+        )}
+        {game.shape === 'merge' && (
+          <div className="relative w-24 h-24">
+            <div className="absolute w-12 h-12 rounded-full float" style={{ background: '#00F5FF88', left: 0, top: 20, boxShadow: '0 0 25px #00F5FF' }} />
+            <div className="absolute w-10 h-10 rounded-full float-delay-1" style={{ background: '#FF3D8188', right: 8, top: 0, boxShadow: '0 0 25px #FF3D81' }} />
+            <div className="absolute w-8 h-8 rounded-full float-delay-2" style={{ background: '#8B5CF688', left: 40, bottom: 0, boxShadow: '0 0 20px #8B5CF6' }} />
+          </div>
+        )}
+        {game.shape === 'duel' && (
+          <div className="relative w-24 h-20 flex items-center justify-center">
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 float" style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: `22px solid ${c}`, filter: `drop-shadow(0 0 12px ${c})` }} />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 float-delay-1" style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: `22px solid ${c}`, filter: `drop-shadow(0 0 12px ${c})` }} />
+            <div className="absolute w-3 h-3 rounded-full animate-pulse" style={{ background: '#fff', boxShadow: `0 0 8px #fff, 0 0 18px ${c}` }} />
+          </div>
+        )}
+        {game.shape === 'bolt' && (
+          <Zap className="w-16 h-16 float" style={{ color: c, filter: `drop-shadow(0 0 20px ${c})` }} fill={c} />
         )}
       </div>
-      {/* Lock overlay */}
       <div className="absolute inset-0 flex items-end justify-end p-3">
-        <Lock className="w-3 h-3" style={{ color: `${game.color}40` }} />
+        {game.status === 'IN_DEV' && <Lock className="w-3 h-3" style={{ color: `${c}66` }} />}
       </div>
-      {/* Corner decorations */}
-      <div className="absolute top-2 left-2 w-4 h-4" style={{ borderLeft: `1px solid ${game.color}30`, borderTop: `1px solid ${game.color}30` }} />
-      <div className="absolute bottom-2 right-2 w-4 h-4" style={{ borderRight: `1px solid ${game.color}30`, borderBottom: `1px solid ${game.color}30` }} />
+      <div className="absolute top-2 left-2 w-4 h-4" style={{ borderLeft: `1px solid ${c}44`, borderTop: `1px solid ${c}44` }} />
+      <div className="absolute bottom-2 right-2 w-4 h-4" style={{ borderRight: `1px solid ${c}44`, borderBottom: `1px solid ${c}44` }} />
     </div>
-  )
-}
-
-function GameCard({ game, index }: { game: typeof UPCOMING_GAMES[0]; index: number }) {
-  const [hovered, setHovered] = useState(false)
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 })
-  const cardRef = useRef<HTMLDivElement>(null)
-
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = cardRef.current?.getBoundingClientRect()
-    if (!rect) return
-    setMousePos({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    })
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      ref={cardRef}
-      className="relative rounded-xl overflow-hidden group cursor-none"
-      onMouseMove={onMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: 'rgba(13, 13, 34, 0.6)',
-        border: `1px solid ${hovered ? game.border : 'rgba(255,255,255,0.06)'}`,
-        transition: 'border-color 0.3s, transform 0.3s',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-      }}
-      data-cursor="hover"
-    >
-      {/* Mouse glow */}
-      {hovered && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(300px at ${mousePos.x}% ${mousePos.y}%, ${game.color}08, transparent 50%)`,
-          }}
-        />
-      )}
-
-      {/* Top progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `rgba(255,255,255,0.05)` }}>
-        <motion.div
-          className="h-full"
-          style={{ background: game.color, boxShadow: `0 0 8px ${game.color}` }}
-          initial={{ width: 0 }}
-          whileInView={{ width: `${game.progress}%` }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, delay: 0.3 + index * 0.1 }}
-        />
-      </div>
-
-      <div className="p-5">
-        {/* Preview */}
-        <GamePreview game={game} />
-
-        {/* Status + ETA */}
-        <div className="flex items-center justify-between mt-4 mb-3">
-          <div
-            className="flex items-center gap-1.5 px-2 py-1 rounded text-xs"
-            style={{
-              background: `${game.color}10`,
-              border: `1px solid ${game.color}30`,
-              color: game.color,
-              fontFamily: 'var(--font-orbitron)',
-            }}
-          >
-            <Loader className="w-2.5 h-2.5 animate-spin" />
-            {game.url ? 'LIVE' : 'COMING SOON'}
-          </div>
-          <span
-            className="text-xs text-silver/30"
-            style={{ fontFamily: 'var(--font-orbitron)' }}
-          >
-            ETA {game.eta}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3
-          className="font-orbitron text-xl font-black mb-2 transition-colors duration-300"
-          style={{
-            fontFamily: 'var(--font-orbitron)',
-            color: hovered ? game.color : 'rgba(240, 240, 255, 0.9)',
-          }}
-        >
-          {game.title}
-        </h3>
-
-        {/* Description */}
-        <p className="text-silver/40 text-sm leading-relaxed mb-4">
-          {game.description}
-        </p>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5">
-          {game.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 text-xs rounded"
-              style={{
-                border: `1px solid ${game.color}15`,
-                color: `${game.color}50`,
-                fontFamily: 'var(--font-orbitron)',
-                background: `${game.color}05`,
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-silver/30" style={{ fontFamily: 'var(--font-orbitron)' }}>
-              DEV PROGRESS
-            </span>
-            <span className="text-xs font-bold" style={{ color: game.color, fontFamily: 'var(--font-orbitron)' }}>
-              {game.progress}%
-            </span>
-          </div>
-          <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: `linear-gradient(90deg, ${game.color}80, ${game.color})` }}
-              initial={{ width: 0 }}
-              whileInView={{ width: `${game.progress}%` }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.5, delay: 0.5 + index * 0.1 }}
-            />
-          </div>
-        </div>
-
-        {game.url && (
-          <a
-            href={game.url}
-          
-           
-            className="mt-4 block text-center py-2 rounded text-xs font-bold tracking-widest"
-            style={{
-              background: `${game.color}15`,
-              border: `1px solid ${game.color}40`,
-              color: game.color,
-              fontFamily: 'var(--font-orbitron)',
-            }}
-          >
-            PLAY NOW ↗
-          </a>
-        )}
-      </div>
-    </motion.div>
   )
 }
 
 export default function GameGrid() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const [query, setQuery] = useState('')
+  const [tag, setTag] = useState<string>('ALL')
+  const [onlyFavs, setOnlyFavs] = useState(false)
+  const [sort, setSort] = useState<'featured' | 'az' | 'progress'>('featured')
+  const [favorites, setFavorites] = useState<string[]>(() => getFavorites())
+
+  const filtered = useMemo(() => {
+    let list = [...GAMES]
+    const q = query.trim().toLowerCase()
+    if (q) list = list.filter((g) => `${g.title} ${g.tagline} ${g.tags.join(' ')} ${g.mood}`.toLowerCase().includes(q))
+    if (tag !== 'ALL') list = list.filter((g) => g.tags.includes(tag))
+    if (onlyFavs) list = list.filter((g) => favorites.includes(g.id))
+    if (sort === 'az') list.sort((a, b) => a.title.localeCompare(b.title))
+    if (sort === 'progress') list.sort((a, b) => b.progress - a.progress)
+    return list
+  }, [query, tag, onlyFavs, sort, favorites])
+
+  const clearFilters = () => { setQuery(''); setTag('ALL'); setOnlyFavs(false) }
 
   return (
-    <section className="py-20 px-6" id="upcoming">
+    <section className="py-20 px-6" id="games">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div ref={ref}>
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7 }}
-            className="flex items-center gap-4 mb-4"
-          >
-            <div className="w-8 h-px bg-pink/50" />
-            <span
-              className="text-xs tracking-widest text-pink/50"
-              style={{ fontFamily: 'var(--font-orbitron)' }}
-            >
-              IN DEVELOPMENT
-            </span>
-          </motion.div>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-8 h-px" style={{ background: 'var(--accent2)' }} />
+          <span className="text-xs tracking-widest" style={{ color: 'var(--accent2)', fontFamily: 'var(--font-orbitron)' }}>
+            THE ARCADE
+          </span>
+        </div>
+        <h2 className="font-syne text-5xl md:text-7xl font-black mb-4" style={{ color: 'var(--text)', fontFamily: 'var(--font-syne)' }}>
+          ALL GAMES
+        </h2>
+        <p className="max-w-lg mb-10" style={{ color: 'var(--muted)' }}>
+          Search, filter by vibe, star your favourites. Favourites and plays are saved in this browser only.
+        </p>
 
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="font-syne text-5xl md:text-7xl font-black text-white mb-4"
-            style={{ fontFamily: 'var(--font-syne)' }}
+        {/* Controls */}
+        <div className="flex flex-wrap gap-3 mb-4">
+          <label className="flex items-center gap-2 flex-1 min-w-[220px] px-4 py-3 rounded-lg" style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}>
+            <Search className="w-4 h-4 shrink-0" style={{ color: 'var(--accent)' }} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search games, tags, moods…"
+              className="w-full bg-transparent outline-none text-sm placeholder:opacity-50"
+              style={{ color: 'var(--text)' }}
+            />
+            {query && (
+              <button onClick={() => setQuery('')} aria-label="Clear search"><X className="w-4 h-4" style={{ color: 'var(--muted)' }} /></button>
+            )}
+          </label>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+            className="px-4 py-3 rounded-lg text-sm outline-none"
+            style={{ background: 'var(--panel)', border: '1px solid var(--border)', color: 'var(--text)' }}
+            aria-label="Sort games"
           >
-            COMING SOON
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={{ delay: 0.3 }}
-            className="text-silver/40 max-w-lg mb-16"
+            <option value="featured">Sort: Featured</option>
+            <option value="az">Sort: A–Z</option>
+            <option value="progress">Sort: Most complete</option>
+          </select>
+          <button
+            onClick={() => setOnlyFavs((v) => !v)}
+            className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-bold"
+            style={{
+              background: onlyFavs ? 'color-mix(in srgb, var(--accent) 18%, transparent)' : 'var(--panel)',
+              border: `1px solid ${onlyFavs ? 'var(--accent)' : 'var(--border)'}`,
+              color: onlyFavs ? 'var(--accent)' : 'var(--muted)',
+            }}
           >
-            The arcade expands. Each experiment pushing further into the unknown.
-          </motion.p>
+            <Star className="w-4 h-4" fill={onlyFavs ? 'currentColor' : 'none'} /> FAVOURITES ONLY
+          </button>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {UPCOMING_GAMES.map((game, i) => (
-            <GameCard key={game.id} game={game} index={i} />
+        {/* Tag chips */}
+        <div className="flex flex-wrap gap-1.5 mb-8">
+          {['ALL', ...ALL_TAGS].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTag(t)}
+              className="px-3 py-1.5 text-xs rounded-full transition-colors"
+              style={{
+                border: `1px solid ${tag === t ? 'var(--accent)' : 'var(--border)'}`,
+                color: tag === t ? 'var(--accent)' : 'var(--muted)',
+                background: tag === t ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
+                fontFamily: 'var(--font-orbitron)',
+              }}
+            >
+              {t}
+            </button>
           ))}
         </div>
+
+        <p className="text-xs tracking-widest mb-4" style={{ color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>
+          SHOWING {filtered.length} OF {GAMES.length}
+          {(query || tag !== 'ALL' || onlyFavs) && (
+            <button onClick={clearFilters} className="ml-3 underline underline-offset-4" style={{ color: 'var(--accent)' }}>Clear filters</button>
+          )}
+        </p>
+
+        {filtered.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center" style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}>
+            <p className="font-orbitron font-bold mb-2" style={{ color: 'var(--text)', fontFamily: 'var(--font-orbitron)' }}>NO EXPERIMENTS MATCH</p>
+            <p className="text-sm mb-5" style={{ color: 'var(--muted)' }}>
+              {onlyFavs ? 'You haven\'t starred anything yet — tap the star on a game card.' : 'Try a different search or tag.'}
+            </p>
+            <button onClick={clearFilters} className="px-6 py-3 rounded-lg text-xs font-bold tracking-widest" style={{ background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-orbitron)' }}>
+              CLEAR FILTERS
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((game, i) => {
+              const isFav = favorites.includes(game.id)
+              return (
+                <motion.article
+                  key={game.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.6, delay: (i % 3) * 0.08 }}
+                  className="relative rounded-xl overflow-hidden group"
+                  style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}
+                >
+                  <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'var(--border)' }}>
+                    <motion.div className="h-full" style={{ background: game.color, boxShadow: `0 0 8px ${game.color}` }} initial={{ width: 0 }} whileInView={{ width: `${game.progress}%` }} viewport={{ once: true }} transition={{ duration: 1.2, delay: 0.3 }} />
+                  </div>
+                  <div className="p-5">
+                    <ShapePreview game={game} />
+                    <div className="flex items-center justify-between mt-4 mb-3">
+                      <span className="flex items-center gap-1.5 px-2 py-1 rounded text-xs" style={{ background: `${game.color}14`, border: `1px solid ${game.color}44`, color: game.color, fontFamily: 'var(--font-orbitron)' }}>
+                        {game.status === 'LIVE' ? <><span className="w-1.5 h-1.5 rounded-full status-live" style={{ background: game.color }} /> LIVE</> : 'IN THE LAB'}
+                      </span>
+                      <button
+                        onClick={() => setFavorites(toggleFavorite(game.id))}
+                        aria-label={isFav ? `Remove ${game.title} from favourites` : `Save ${game.title} as favourite`}
+                        className="p-1.5 rounded-full transition-transform hover:scale-110"
+                        style={{ color: isFav ? game.color : 'var(--muted)' }}
+                      >
+                        <Star className="w-5 h-5" fill={isFav ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
+                    <h3 className="font-orbitron text-xl font-black mb-1" style={{ color: 'var(--text)', fontFamily: 'var(--font-orbitron)' }}>{game.title}</h3>
+                    <p className="text-xs mb-3" style={{ color: 'var(--muted)' }}>{game.players} · {game.mood}</p>
+                    <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--muted)' }}>{game.tagline}</p>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {game.tags.map((t) => (
+                        <button key={t} onClick={() => setTag(t)} className="px-2 py-0.5 text-xs rounded" style={{ border: `1px solid ${game.color}22`, color: `${game.color}`, background: `${game.color}0d`, fontFamily: 'var(--font-orbitron)' }}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs" style={{ color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>DEV PROGRESS</span>
+                        <span className="text-xs font-bold" style={{ color: game.color, fontFamily: 'var(--font-orbitron)' }}>{game.progress}%</span>
+                      </div>
+                      <div className="h-1 rounded-full overflow-hidden mb-4" style={{ background: 'var(--border)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${game.progress}%`, background: `linear-gradient(90deg, ${game.color}88, ${game.color})` }} />
+                      </div>
+                      {game.url ? (
+                        <a
+                          href={game.url}
+                          onClick={() => recordPlay(game.id)}
+                          className="block text-center py-2.5 rounded text-xs font-bold tracking-widest transition-transform hover:scale-[1.01]"
+                          style={{ background: `${game.color}18`, border: `1px solid ${game.color}55`, color: game.color, fontFamily: 'var(--font-orbitron)' }}
+                        >
+                          PLAY NOW ↗
+                        </a>
+                      ) : (
+                        <p className="text-center py-2.5 rounded text-xs tracking-widest" style={{ border: '1px dashed var(--border)', color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>
+                          STILL COOKING IN THE LAB
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.article>
+              )
+            })}
+          </div>
+        )}
       </div>
     </section>
   )

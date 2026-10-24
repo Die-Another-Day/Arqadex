@@ -1,62 +1,56 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
-import { ArrowDown, Download, ChevronRight } from 'lucide-react'
-const SUBTITLE = 'Experimental Web Games & Interactive Chaos'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowDown, Download, Shuffle, Play, Zap, ChevronRight } from 'lucide-react'
+import { GAMES, LIVE_GAMES, pickRandomGame, type Game } from '@/lib/games'
+import { recordPlay } from '@/lib/arcade'
+
+const WORDS = ['EXPERIMENTAL', 'CHAOTIC', 'NEON', 'PLAYABLE', 'UNHINGED', 'PROCEDURAL']
 
 export default function HeroSection() {
-  const [typed, setTyped] = useState('')
-  const [showCursor, setShowCursor] = useState(true)
-  const mouseRef = useRef({ x: 0, y: 0 })
-  const titleRef = useRef<HTMLDivElement>(null)
-  const [tilt, setTilt] = useState({ x: 0, y: 0 })
-  const heroRef = useRef<HTMLElement>(null)
+  const [wordIndex, setWordIndex] = useState(0)
+  const [spinning, setSpinning] = useState(false)
+  const [spinTitle, setSpinTitle] = useState('???')
+  const [picked, setPicked] = useState<Game | null>(null)
+  const spinRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Typewriter effect
   useEffect(() => {
-    let i = 0
-    const delay = setTimeout(() => {
-      const interval = setInterval(() => {
-        if (i < SUBTITLE.length) {
-          setTyped(SUBTITLE.slice(0, i + 1))
-          i++
-        } else {
-          clearInterval(interval)
-        }
-      }, 40)
-      return () => clearInterval(interval)
-    }, 1200)
-
-    const cursorInterval = setInterval(() => setShowCursor((v) => !v), 530)
-    return () => {
-      clearTimeout(delay)
-      clearInterval(cursorInterval)
-    }
+    const id = setInterval(() => setWordIndex((i) => (i + 1) % WORDS.length), 2200)
+    return () => clearInterval(id)
   }, [])
 
-  // Parallax tilt
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      const w = window.innerWidth
-      const h = window.innerHeight
-      const x = (e.clientX / w - 0.5) * 12
-      const y = (e.clientY / h - 0.5) * 8
-      setTilt({ x: -y, y: x })
-    }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
-  }, [])
+  useEffect(() => () => { if (spinRef.current) clearInterval(spinRef.current) }, [])
+
+  const spin = () => {
+    if (spinning) return
+    setSpinning(true)
+    setPicked(null)
+    let ticks = 0
+    spinRef.current = setInterval(() => {
+      ticks += 1
+      const g = LIVE_GAMES[Math.floor(Math.random() * LIVE_GAMES.length)]
+      setSpinTitle(g.title)
+      if (ticks >= 14) {
+        if (spinRef.current) clearInterval(spinRef.current)
+        const final = pickRandomGame()
+        setSpinTitle(final.title)
+        setPicked(final)
+        setSpinning(false)
+      }
+    }, 70)
+  }
 
   const scrollToGames = () => {
     document.getElementById('games')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const installApp = () => {
-    if (typeof window !== 'undefined' && (window as any).__installPrompt) {
-      (window as any).__installPrompt.prompt()
-      ;(window as any).__installPrompt.userChoice.then(() => {
-        ;(window as any).__installPrompt = null
+    if (typeof window !== 'undefined' && (window as unknown as { __installPrompt?: { prompt: () => void; userChoice: Promise<unknown> } }).__installPrompt) {
+      const prompt = (window as unknown as { __installPrompt: { prompt: () => void; userChoice: Promise<unknown> } }).__installPrompt
+      prompt.prompt()
+      prompt.userChoice.then(() => {
+        ;(window as unknown as { __installPrompt: unknown }).__installPrompt = null
         const btn = document.getElementById('arqadex-install-btn')
         if (btn) btn.style.display = 'none'
       })
@@ -64,254 +58,168 @@ export default function HeroSection() {
   }
 
   return (
-    <section
-      ref={heroRef}
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'var(--bg-void)' }}
-    >
-      {/* Animated grid */}
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6 pt-28 pb-16" style={{ background: 'var(--bg)' }}>
       <div className="absolute inset-0 grid-bg opacity-40" />
-
-      {/* Radial gradient glow orbs */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 60% 50% at 30% 30%, rgba(122, 92, 255, 0.08) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 40% at 70% 60%, rgba(0, 245, 255, 0.06) 0%, transparent 60%),
-            radial-gradient(ellipse 40% 50% at 50% 80%, rgba(255, 45, 166, 0.05) 0%, transparent 60%)
+            radial-gradient(ellipse 60% 50% at 30% 30%, color-mix(in srgb, var(--accent3) 10%, transparent) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 40% at 70% 60%, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 50% at 50% 80%, color-mix(in srgb, var(--accent2) 7%, transparent) 0%, transparent 60%)
           `,
         }}
       />
-
-      {/* Horizontal scan line */}
       <div
         className="absolute left-0 right-0 h-px pointer-events-none"
-        style={{
-          background: 'linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent)',
-          animation: 'scan 12s linear infinite',
-          zIndex: 2,
-        }}
+        style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', animation: 'scan 12s linear infinite', zIndex: 2 }}
       />
 
-      {/* Floating geometric decorations */}
-      <motion.div
-        className="absolute top-32 left-12 w-24 h-24 border border-cyan/10 rounded-lg rotate-12 float"
-        animate={{ rotate: [12, 20, 12] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-40 right-16 w-16 h-16 border border-pink/10 rounded-full float-delay-2"
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute top-48 right-32 w-8 h-8 bg-purple/10 rotate-45"
-        animate={{ rotate: [45, 90, 45], opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-64 left-24 w-4 h-4 bg-lime/20"
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-      />
-
-      {/* Corner brackets */}
-      <div className="absolute top-32 left-8 md:left-16 w-10 h-10 border-l-2 border-t-2 border-cyan/30" />
-      <div className="absolute top-32 right-8 md:right-16 w-10 h-10 border-r-2 border-t-2 border-cyan/30" />
-      <div className="absolute bottom-20 left-8 md:left-16 w-10 h-10 border-l-2 border-b-2 border-pink/30" />
-      <div className="absolute bottom-20 right-8 md:right-16 w-10 h-10 border-r-2 border-b-2 border-pink/30" />
-
-      {/* Center content */}
-      <div
-        ref={titleRef}
-        className="relative z-10 flex flex-col items-center text-center px-6"
-        style={{
-          transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-          transition: 'transform 0.15s ease-out',
-        }}
-      >
-        {/* Pre-title badge */}
+      <div className="relative z-10 max-w-5xl w-full text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 20 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="mb-8 flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-cyan/20"
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8 inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass"
+          style={{ border: '1px solid var(--border)' }}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-cyan status-live" />
-          <span
-            className="text-xs text-cyan/70 tracking-widest"
-            style={{ fontFamily: 'var(--font-orbitron)' }}
-          >
-            EXPERIMENT // ONLINE
+          <div className="w-1.5 h-1.5 rounded-full status-live" style={{ background: 'var(--accent)' }} />
+          <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
+            EXPERIMENT // ONLINE · V2.0
           </span>
         </motion.div>
 
-        {/* Main title */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-4"
-        >
-          <h1
-            className="glitch-text font-orbitron text-7xl md:text-9xl lg:text-[11rem] font-black tracking-tighter leading-none"
-            data-text="ARCADE"
-            style={{
-              fontFamily: 'var(--font-orbitron)',
-              background: 'linear-gradient(135deg, #F0F0FF 30%, rgba(0,245,255,0.8) 60%, rgba(122,92,255,0.8) 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(0 0 60px rgba(0,245,255,0.3))',
-            }}
-          >
-            ARCADE
-          </h1>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-10 flex items-end gap-4"
-        >
-          <h2
-            className="font-orbitron text-5xl md:text-7xl lg:text-8xl font-black tracking-widest leading-none"
-            style={{
-              fontFamily: 'var(--font-orbitron)',
-              color: 'transparent',
-              WebkitTextStroke: '1px rgba(0,245,255,0.4)',
-            }}
-          >
-            LAB
-          </h2>
-          <div className="mb-2 px-2 py-0.5 border border-pink/40 rounded text-pink text-xs font-bold tracking-widest"
-            style={{ fontFamily: 'var(--font-orbitron)' }}>
-            v0.1
-          </div>
-        </motion.div>
-
-        {/* Typewriter subtitle */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mb-12 h-8 flex items-center"
-        >
-          <p
-            className="text-lg md:text-xl text-silver/70"
-            style={{ fontFamily: 'var(--font-space-mono)' }}
-          >
-            {typed}
-            <span
-              className="ml-0.5 inline-block w-0.5 h-5 bg-cyan align-middle"
-              style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}
-            />
-          </p>
-        </motion.div>
-
-        {/* CTA Buttons */}
-        <motion.div
+        <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0, duration: 0.7 }}
-          className="flex flex-col sm:flex-row gap-4 items-center"
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="font-black leading-[0.9] tracking-tight"
+          style={{ fontFamily: 'var(--font-syne)', color: 'var(--text)', fontSize: 'clamp(4rem, 14vw, 10rem)' }}
         >
-          <button
-            onClick={scrollToGames}
-            className="magnetic-btn group relative px-8 py-4 rounded-lg overflow-hidden"
-            style={{
-              background: 'linear-gradient(135deg, rgba(0,245,255,0.15), rgba(122,92,255,0.15))',
-              border: '1px solid rgba(0,245,255,0.4)',
-            }}
-            data-cursor="hover"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan/20 to-purple/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span
-              className="relative flex items-center gap-2 text-cyan font-bold tracking-widest text-sm"
-              style={{ fontFamily: 'var(--font-orbitron)' }}
-            >
-              ENTER ARCADE
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
+          ARQA<span style={{ color: 'var(--accent)' }}>DEX</span>
+        </motion.h1>
 
-
-	  <button
-            id="arqadex-install-btn"
-            onClick={installApp}
-            className="magnetic-btn group px-8 py-4 rounded-lg border border-white/10 hover:border-cyan/40 transition-all duration-300"
-            style={{ background: 'rgba(255,255,255,0.03)', display: 'none' }}
-            data-cursor="hover"
-          >
-            <span
-              className="flex items-center gap-2 text-silver/60 group-hover:text-cyan font-bold tracking-widest text-sm transition-colors"
-              style={{ fontFamily: 'var(--font-orbitron)' }}
-            >
-              <Download className="w-4 h-4" />
-              INSTALL ARQADEX
-            </span>
-          </button>
-        </motion.div>
-
-        {/* Stats row */}
-        <motion.div
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="mt-14 flex items-center gap-8 md:gap-14"
+          transition={{ delay: 0.3 }}
+          className="mt-4 text-lg md:text-2xl font-bold tracking-wide"
+          style={{ color: 'var(--muted)' }}
         >
+          <span style={{ color: 'var(--accent2)' }}>{WORDS[wordIndex]}</span> WEB GAMES &amp; INTERACTIVE CHAOS
+        </motion.p>
+        <p className="mt-4 max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--muted)' }}>
+          A digital sandbox where ideas exist before they have names. Every game is an experiment,
+          every mechanic is a hypothesis — and the interesting failures live here too.
+        </p>
+
+        {/* Stats */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-6 md:gap-10">
           {[
-            { value: '01', label: 'LIVE GAMES' },
-            { value: '04', label: 'IN DEVELOPMENT' },
+            { value: String(GAMES.length), label: 'EXPERIMENTS' },
+            { value: String(LIVE_GAMES.length), label: 'LIVE NOW' },
+            { value: '01', label: 'IN THE LAB' },
             { value: '∞', label: 'CHAOS LEVEL' },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div
-                className="font-orbitron text-2xl font-black text-cyan mb-1"
-                style={{ fontFamily: 'var(--font-orbitron)' }}
-              >
-                {stat.value}
-              </div>
-              <div
-                className="text-xs text-silver/40 tracking-widest"
-                style={{ fontFamily: 'var(--font-orbitron)' }}
-              >
-                {stat.label}
-              </div>
+          ].map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="font-orbitron text-2xl md:text-3xl font-black" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>{s.value}</div>
+              <div className="text-[11px] tracking-widest mt-1" style={{ color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>{s.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Random picker — the slot machine */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-10 mx-auto max-w-2xl rounded-2xl p-5 md:p-6 text-left"
+          style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}
+        >
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs tracking-widest" style={{ color: 'var(--muted)', fontFamily: 'var(--font-pixel)' }}>
+              ▸ INSERT COIN — CAN&apos;T DECIDE?
+            </p>
+            <button
+              onClick={spin}
+              disabled={spinning}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold tracking-widest transition-transform hover:scale-[1.03] disabled:opacity-60"
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-orbitron)' }}
+            >
+              <Shuffle className="w-4 h-4" />
+              {spinning ? 'ROLLING…' : 'FEELING LUCKY'}
+            </button>
+          </div>
+          <div
+            className="mt-4 rounded-xl px-4 py-4 text-center font-orbitron font-black tracking-widest text-lg md:text-2xl truncate"
+            style={{ background: 'var(--bg)', border: '1px dashed var(--border)', color: picked ? picked.color : 'var(--text)', fontFamily: 'var(--font-orbitron)' }}
+          >
+            {spinning ? spinTitle : picked ? picked.title : '??? — PRESS FEELING LUCKY'}
+          </div>
+          <AnimatePresence>
+            {picked && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-4 flex items-center gap-3 flex-wrap">
+                <p className="flex-1 min-w-[200px] text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{picked.tagline}</p>
+                {picked.url && (
+                  <a
+                    href={picked.url}
+                    onClick={() => recordPlay(picked.id)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold tracking-widest shrink-0"
+                    style={{ background: `${picked.color}22`, border: `1px solid ${picked.color}66`, color: picked.color, fontFamily: 'var(--font-orbitron)' }}
+                  >
+                    <Play className="w-3.5 h-3.5" /> PLAY NOW
+                  </a>
+                )}
+                <button onClick={spin} className="text-xs tracking-widest underline underline-offset-4" style={{ color: 'var(--muted)' }}>
+                  Spin again
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
+
+        {/* Main actions */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <button
+            onClick={scrollToGames}
+            className="group px-8 py-4 rounded-lg text-sm font-bold tracking-widest transition-transform hover:scale-[1.02]"
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-orbitron)' }}
+          >
+            <span className="flex items-center gap-2">BROWSE THE ARCADE <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>
+          </button>
+          <a
+            href="/reflex/"
+            className="px-8 py-4 rounded-lg text-sm font-bold tracking-widest transition-colors"
+            style={{ border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'var(--font-orbitron)' }}
+          >
+            <span className="flex items-center gap-2"><Zap className="w-4 h-4" style={{ color: 'var(--accent)' }} /> TRY REFLEX RUSH</span>
+          </a>
+          <button
+            id="arqadex-install-btn"
+            onClick={installApp}
+            className="px-8 py-4 rounded-lg text-sm font-bold tracking-widest transition-colors"
+            style={{ border: '1px solid var(--border)', color: 'var(--muted)', fontFamily: 'var(--font-orbitron)', display: 'none' }}
+          >
+            <span className="flex items-center gap-2"><Download className="w-4 h-4" /> INSTALL APP</span>
+          </button>
+        </div>
+
+        <button onClick={scrollToGames} className="mt-12 inline-flex flex-col items-center gap-2" style={{ color: 'var(--muted)' }} aria-label="Scroll to games">
+          <span className="text-[11px] tracking-widest" style={{ fontFamily: 'var(--font-orbitron)' }}>SCROLL</span>
+          <ArrowDown className="w-4 h-4 animate-bounce" />
+        </button>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer"
-        onClick={scrollToGames}
-      >
-        <span
-          className="text-xs text-silver/30 tracking-widest"
-          style={{ fontFamily: 'var(--font-orbitron)' }}
-        >
-          SCROLL
-        </span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <ArrowDown className="w-4 h-4 text-cyan/40" />
-        </motion.div>
-      </motion.div>
-
-      {/* Bottom gradient fade */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-        style={{ background: 'linear-gradient(transparent, var(--bg-void))' }}
-      />
+      {/* Ticker */}
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden py-3" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="ticker-track flex gap-10 whitespace-nowrap text-xs tracking-widest" style={{ color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>
+          {[...GAMES, ...GAMES].map((g, i) => (
+            <span key={`${g.id}-${i}`}>
+              {g.title} <span style={{ color: g.color }}>●</span> {g.status === 'LIVE' ? 'LIVE' : 'IN LAB'}
+            </span>
+          ))}
+        </div>
+      </div>
     </section>
   )
 }

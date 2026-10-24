@@ -1,0 +1,69 @@
+# ARQADEX — Experimental Web Games
+
+A browser arcade lab. Physics-driven chaos, procedural systems, voice combat,
+reflex experiments and interactive madness — all playable on the web, no installs,
+no accounts, no tracking.
+
+Live site: **https://arqadex.site**
+
+## What's in v2.0
+
+- **A real arcade browser** — search, filter by tag, sort, and star favourites.
+  CTRL is the one game still in the lab (72%); everything else is live.
+- **4 switchable themes** — Neon Void, Synthwave, Matrix and Daylight. Pick one in
+  the nav bar; it is saved in your browser and applied before first paint.
+- **Command palette** — press `Ctrl/⌘K` anywhere to search games, jump to a
+  section, switch theme, or play a random game.
+- **Feeling Lucky slot machine** on the hero — spin and it picks a live game for you.
+- **Your Cabinet** — favourites, recently played, play counts and your best
+  Reflex Rush time, stored only in `localStorage` on your own device.
+- **Reflex Rush** (`/reflex/`) — a built-in reaction-time game. Wait for the
+  flash, tap fast, beat your best. False starts count.
+- **Open submissions** (`/submit/`) — creators can pitch an experimental game.
+
+## Games
+
+| Game | What it is | Status |
+| --- | --- | --- |
+| Protocol Zero | Reflex / psycho sim, featured release | Live |
+| Baldys Escape | Glitch runner | Live |
+| Merge Ball | Physics merge chaos | Live |
+| Signal Collapse | Puzzle / network collapse | Live |
+| VI-Battle | Voice-controlled combat | Live |
+| Quantum Drift | Quantum physics racing | Live |
+| Multiplayer Psych | Social dynamics as game loops | Live |
+| Reflex Rush | Built-in reaction test | Live |
+| CTRL | Control systems at breaking point | In the lab (72%) |
+
+## Run it locally
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # static export into out/
+```
+
+The site is a static Next.js export (`output: 'export'` in `next.config.ts`),
+so the built `out/` folder can be hosted anywhere static — the live site is
+served from this repo's build.
+
+## Add a game
+
+1. Drop the playable game files under `public/<game-slug>/` (an `index.html`
+   entry point), or add a Next route under `app/<game-slug>/` that embeds them
+   in an iframe, like `app/signal-collapse/page.tsx` does.
+2. Add one entry to the `GAMES` array in `lib/games.ts` — title, tagline, tags,
+   colour, status and `url`. Leave `url` off and the game shows as in-development
+   instead of a dead link.
+3. It appears automatically in the arcade browser, the command palette, the
+   random picker, the footer live list and the cabinet.
+
+## Project layout
+
+- `app/` — pages: home, `/reflex/`, `/submit/`, and iframe wrappers for the
+  static games (`/signal-collapse/`, `/vi-battle/`, `/multiplayer-psych/`).
+- `components/` — nav, hero, featured game, game browser, cabinet, lab, about, footer.
+- `lib/games.ts` — the single source of truth for every game.
+- `lib/arcade.ts` — themes, favourites, recents, play counts, best reflex time
+  (all `localStorage`, nothing leaves the browser).
+- `public/` — the playable static games, PWA manifest and service worker.

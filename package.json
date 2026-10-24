@@ -1,6 +1,6 @@
 {
-  "name": "arcade-lab",
-  "version": "0.1.0",
+  "name": "arqadex",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

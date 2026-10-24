@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'ARCADE LAB — Experimental Web Games',
-  description: 'An experimental digital arcade. Physics-driven chaos, procedural systems, and interactive madness.',
-  keywords: ['arcade', 'indie games', 'experimental', 'web games', 'interactive', 'cyberpunk'],
+  title: 'ARQADEX — Experimental Web Games',
+  description: 'An experimental digital arcade. Physics-driven chaos, procedural systems, and interactive madness. Search, favourite, and play in your browser — no installs, no accounts.',
+  keywords: ['arcade', 'indie games', 'experimental', 'web games', 'interactive', 'cyberpunk', 'arqadex'],
   openGraph: {
-    title: 'ARCADE LAB',
+    title: 'ARQADEX',
     description: 'Experimental Web Games & Interactive Chaos',
     type: 'website',
   },
@@ -36,7 +36,7 @@ export default function RootLayout({
 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Press+Start+2P&display=swap"
           rel="stylesheet"
         />
         <style>{`
@@ -44,8 +44,19 @@ export default function RootLayout({
             --font-syne: 'Syne', sans-serif;
             --font-orbitron: 'Orbitron', monospace;
             --font-space-mono: 'Space Mono', monospace;
+            --font-pixel: 'Press Start 2P', monospace;
           }
         `}</style>
+        {/* Set the saved theme before first paint so the page never flashes the wrong look. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var t = localStorage.getItem('arqadex:theme');
+            var ok = ['neon', 'synthwave', 'matrix', 'daylight'].indexOf(JSON.parse(t || '"neon"')) >= 0;
+            document.documentElement.dataset.theme = ok ? JSON.parse(t) : 'neon';
+          } catch (e) {
+            document.documentElement.dataset.theme = 'neon';
+          }
+        `}} />
 
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
@@ -67,7 +78,7 @@ export default function RootLayout({
         `}} />
 
       </head>
-      <body className="bg-void antialiased" suppressHydrationWarning>
+      <body className="antialiased" style={{ background: 'var(--bg)', color: 'var(--text)' }} suppressHydrationWarning>
         {children}
       </body>
     </html>

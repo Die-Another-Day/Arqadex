@@ -371,3 +371,140 @@ body {
 [data-framer-component-type] {
   cursor: none;
 }
+
+/* ─── v2 Theme System ─────────────────────────────────── */
+/* Every component reads these variables, so switching data-theme
+   on <html> re-skins the whole arcade instantly. Neon is the default
+   (it matches the original :root values above). */
+:root,
+[data-theme='neon'] {
+  --bg: #050510;
+  --bg2: #0a0a1e;
+  --panel: rgba(13, 13, 34, 0.65);
+  --text: #f0f0ff;
+  --muted: #8a8ab0;
+  --accent: #00f5ff;
+  --accent2: #ff2da6;
+  --accent3: #7a5cff;
+  --on-accent: #04121a;
+  --border: rgba(255, 255, 255, 0.09);
+  --bg-void: #050510;
+  --bg-void2: #080818;
+  --bg-void3: #0d0d22;
+  --accent-cyan: #00f5ff;
+  --accent-pink: #ff2da6;
+  --accent-purple: #7a5cff;
+  --accent-lime: #c7ff4d;
+  --text-primary: #f0f0ff;
+  --text-secondary: #8888aa;
+  --border-glow: rgba(0, 245, 255, 0.2);
+}
+
+[data-theme='synthwave'] {
+  --bg: #150422;
+  --bg2: #22103a;
+  --panel: rgba(34, 16, 58, 0.7);
+  --text: #fff1f7;
+  --muted: #c9a8d8;
+  --accent: #ff71ce;
+  --accent2: #ff9a3d;
+  --accent3: #01cdfe;
+  --on-accent: #2a0a22;
+  --border: rgba(255, 113, 206, 0.22);
+  --bg-void: #150422;
+  --bg-void2: #1d0a30;
+  --bg-void3: #2a1245;
+  --accent-cyan: #01cdfe;
+  --accent-pink: #ff71ce;
+  --accent-purple: #b967ff;
+  --accent-lime: #ffef5c;
+  --text-primary: #fff1f7;
+  --text-secondary: #c9a8d8;
+  --border-glow: rgba(255, 113, 206, 0.3);
+}
+
+[data-theme='matrix'] {
+  --bg: #010805;
+  --bg2: #03130a;
+  --panel: rgba(3, 25, 12, 0.7);
+  --text: #d6ffe4;
+  --muted: #5fae7d;
+  --accent: #00ff66;
+  --accent2: #aaff00;
+  --accent3: #00d4ff;
+  --on-accent: #01120a;
+  --border: rgba(0, 255, 102, 0.2);
+  --bg-void: #010805;
+  --bg-void2: #02120a;
+  --bg-void3: #041f10;
+  --accent-cyan: #00ff66;
+  --accent-pink: #aaff00;
+  --accent-purple: #00d4ff;
+  --accent-lime: #aaff00;
+  --text-primary: #d6ffe4;
+  --text-secondary: #5fae7d;
+  --border-glow: rgba(0, 255, 102, 0.25);
+}
+
+[data-theme='daylight'] {
+  --bg: #fdf6ec;
+  --bg2: #fffdf7;
+  --panel: rgba(255, 255, 255, 0.85);
+  --text: #1a1033;
+  --muted: #6b5f7a;
+  --accent: #ff2d78;
+  --accent2: #ff7a00;
+  --accent3: #6d28d9;
+  --on-accent: #ffffff;
+  --border: rgba(26, 16, 51, 0.12);
+  --bg-void: #fdf6ec;
+  --bg-void2: #fff3e0;
+  --bg-void3: #ffffff;
+  --accent-cyan: #ff2d78;
+  --accent-pink: #ff7a00;
+  --accent-purple: #6d28d9;
+  --accent-lime: #1a9e5c;
+  --text-primary: #1a1033;
+  --text-secondary: #6b5f7a;
+  --border-glow: rgba(255, 45, 120, 0.2);
+}
+
+[data-theme='daylight'] .scanlines,
+[data-theme='daylight'] .noise-overlay {
+  opacity: 0.015;
+}
+
+[data-theme='daylight'] .grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 45, 120, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 45, 120, 0.05) 1px, transparent 1px);
+}
+
+.glass {
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+}
+
+/* Hero ticker */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-track {
+  animation: ticker-scroll 40s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Touch devices: the custom cursor is desktop-only, restore the real one. */
+@media (pointer: coarse) {
+  html, body, [data-framer-component-type] {
+    cursor: auto;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
