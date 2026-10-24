@@ -1,10 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Maximize, Minimize, RefreshCw, Palette, Loader2 } from 'lucide-react'
+import { ArrowLeft, Maximize, Minimize, RefreshCw, Palette, Loader2, Trophy, Info, X, Clock, Play } from 'lucide-react'
 import CustomCursor from '@/components/CustomCursor'
 import { ThemeProvider, useTheme } from '@/components/theme'
-import { THEMES, recordPlay, type ThemeId } from '@/lib/arcade'
+import { THEMES, recordPlay, getPlays, getVault, addVaultScore, getBestVaultScore, ARCADE_EVENT, type ThemeId, type VaultEntry } from '@/lib/arcade'
+import { GAMES } from '@/lib/games'
 
 /**
  * GameShell — the frame every game plays inside.
@@ -19,6 +20,10 @@ import { THEMES, recordPlay, type ThemeId } from '@/lib/arcade'
  *     coloured from the active theme.
  * If the game document refuses injection (cross-origin, sandbox), the
  * shell still works — the frame, tint and header just carry the theme.
+ *
+ * v2.2 adds a third thing: a drawer with a live session timer, the
+ * game's own description, and the Score Vault — player-entered scores
+ * for games that cannot report their scores back to the arcade.
  */
 const IFRAME_FILTER: Record<ThemeId, string> = {
   neon: 'none',
@@ -97,16 +102,44 @@ function injectGameCursor(iframe: HTMLIFrameElement, theme: ThemeId) {
   }
 }
 
+function fmtElapsed(ms: number) {
+  const s = Math.floor(ms / 1000)
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
+
 function ShellInner({ gameId, title, src }: { gameId: string; title: string; src: string }) {
   const { theme, setTheme } = useTheme()
   const [loaded, setLoaded] = useState(false)
   const [isFull, setIsFull] = useState(false)
+  const [drawer, setDrawer] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const [score, setScore] = useState('')
+  const [note, setNote] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [vault, setVault] = useState<VaultEntry[]>([])
   const wrapRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [frameKey, setFrameKey] = useState(0)
+  const startedAt = useRef(Date.now())
+
+  const game = GAMES.find((g) => g.id === gameId)
+  const plays = getPlays()[gameId] ?? 0
+  const best = getBestVaultScore(gameId)
 
   useEffect(() => {
     recordPlay(gameId)
+  }, [gameId])
+
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Date.now() - startedAt.current), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const refresh = () => setVault(getVault().filter((e) => e.gameId === gameId))
+    refresh()
+    window.addEventListener(ARCADE_EVENT, refresh)
+    return () => window.removeEventListener(ARCADE_EVENT, refresh)
   }, [gameId])
 
   useEffect(() => {
@@ -132,6 +165,16 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
     }
   }, [])
 
+  const saveScore = () => {
+    const n = Number(score)
+    if (!Number.isFinite(n)) return
+    addVaultScore(gameId, n, note)
+    setScore('')
+    setNote('')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
+
   const current = THEMES.find((t) => t.id === theme) ?? THEMES[0]
 
   return (
@@ -149,6 +192,9 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
             {title}
           </h1>
         </div>
+        <span className="hidden md:inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] tracking-widest" style={{ border: '1px solid var(--border)', color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>
+          <Clock className="w-3 h-3" /> {fmtElapsed(elapsed)}
+        </span>
         <span
           className="hidden sm:inline-block px-2 py-1 rounded text-[10px] tracking-widest"
           style={{ border: '1px solid var(--border)', color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}
@@ -156,12 +202,20 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
           THEME: {current.label}
         </span>
         <button
+          onClick={() => setDrawer((v) => !v)}
+          title="About this game & Score Vault"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold tracking-widest transition-transform hover:scale-105"
+          style={{ background: drawer ? 'var(--accent)' : 'color-mix(in srgb, var(--accent) 14%, transparent)', color: drawer ? 'var(--on-accent)' : 'var(--accent)', border: '1px solid var(--border)' }}
+        >
+          <Trophy className="w-4 h-4" /> <span className="hidden sm:inline">VAULT</span>
+        </button>
+        <button
           onClick={cycleTheme}
           title="Cycle theme — the game re-tints with it"
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold tracking-widest transition-transform hover:scale-105"
           style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
         >
-          <Palette className="w-4 h-4" /> THEME
+          <Palette className="w-4 h-4" /> <span className="hidden sm:inline">THEME</span>
         </button>
         <button
           onClick={() => setFrameKey((k) => k + 1)}
@@ -180,6 +234,84 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
           {isFull ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
         </button>
       </header>
+
+      {drawer && (
+        <div className="shrink-0 max-h-[45vh] overflow-y-auto px-4 py-4" style={{ background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}>
+          <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-orbitron font-bold flex items-center gap-2" style={{ fontFamily: 'var(--font-orbitron)' }}>
+                  <Info className="w-4 h-4" style={{ color: 'var(--accent)' }} /> ABOUT THIS EXPERIMENT
+                </h2>
+                <button onClick={() => setDrawer(false)} aria-label="Close drawer" className="p-1" style={{ color: 'var(--muted)' }}><X className="w-4 h-4" /></button>
+              </div>
+              {game && <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--muted)' }}>{game.tagline}</p>}
+              {game && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {game.tags.map((t) => (
+                    <span key={t} className="px-2 py-0.5 text-xs rounded" style={{ border: '1px solid var(--border)', color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>{t}</span>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+                Session: {fmtElapsed(elapsed)} in this frame · {plays} play{plays === 1 ? '' : 's'} counted from the arcade
+                {game ? ` · ${game.players} · ${game.mood}` : ''}. Controls live inside the game itself — check its own
+                menu or tutorial first.
+              </p>
+            </div>
+            <div>
+              <h2 className="font-orbitron font-bold flex items-center gap-2 mb-2" style={{ fontFamily: 'var(--font-orbitron)' }}>
+                <Trophy className="w-4 h-4" style={{ color: 'var(--accent2)' }} /> SCORE VAULT
+              </h2>
+              <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--muted)' }}>
+                These games don&apos;t report scores back to the arcade, so the vault runs on trust:
+                type the final score you saw in the game. It stays in this browser only.
+              </p>
+              <div className="flex gap-2 mb-2">
+                <input
+                  value={score}
+                  onChange={(e) => setScore(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="Your final score"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                />
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Note (optional)"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                />
+                <button onClick={saveScore} disabled={score.trim() === '' || !Number.isFinite(Number(score))} className="px-4 py-2 rounded-lg text-xs font-bold tracking-widest disabled:opacity-40" style={{ background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-orbitron)' }}>
+                  {saved ? 'SAVED ✓' : 'SAVE'}
+                </button>
+              </div>
+              {best ? (
+                <p className="text-sm mb-2" style={{ color: 'var(--text)' }}>
+                  Your best here: <b style={{ color: 'var(--accent)' }}>{best.score.toLocaleString()}</b>
+                  {best.note ? ` — ${best.note}` : ''}
+                </p>
+              ) : (
+                <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>No vault score yet for this game.</p>
+              )}
+              {vault.length > 0 && (
+                <ul className="space-y-1">
+                  {vault.slice(0, 5).map((e, i) => (
+                    <li key={`${e.at}-${i}`} className="flex justify-between gap-3 text-xs" style={{ color: 'var(--muted)' }}>
+                      <span>{e.score.toLocaleString()}{e.note ? ` — ${e.note}` : ''}</span>
+                      <span>{new Date(e.at).toLocaleDateString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <a href="/#cabinet" className="inline-flex items-center gap-1 text-xs font-bold mt-3" style={{ color: 'var(--accent)' }}>
+                <Play className="w-3 h-3" /> See all vault bests in Your Cabinet →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="relative flex-1 min-h-0" style={{ background: '#000' }}>
         {!loaded && (

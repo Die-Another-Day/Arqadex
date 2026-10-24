@@ -1,10 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Lock, Search, Star, X, Zap } from 'lucide-react'
 import { GAMES, ALL_TAGS, type Game } from '@/lib/games'
-import { getFavorites, toggleFavorite, recordPlay } from '@/lib/arcade'
+import { getFavorites, toggleFavorite, recordPlay, getBestVaultScore, ARCADE_EVENT } from '@/lib/arcade'
 
 function ShapePreview({ game }: { game: Game }) {
   const c = game.color
@@ -61,6 +61,12 @@ export default function GameGrid() {
   const [onlyFavs, setOnlyFavs] = useState(false)
   const [sort, setSort] = useState<'featured' | 'az' | 'progress'>('featured')
   const [favorites, setFavorites] = useState<string[]>(() => getFavorites())
+  // Re-render cards when a vault score is saved in a game frame.
+  useEffect(() => {
+    const refresh = () => setFavorites(getFavorites())
+    window.addEventListener(ARCADE_EVENT, refresh)
+    return () => window.removeEventListener(ARCADE_EVENT, refresh)
+  }, [])
 
   const filtered = useMemo(() => {
     let list = [...GAMES]
@@ -199,7 +205,7 @@ export default function GameGrid() {
                       </button>
                     </div>
                     <h3 className="font-orbitron text-xl font-black mb-1" style={{ color: 'var(--text)', fontFamily: 'var(--font-orbitron)' }}>{game.title}</h3>
-                    <p className="text-xs mb-3" style={{ color: 'var(--muted)' }}>{game.players} · {game.mood}</p>
+                    <p className="text-xs mb-3" style={{ color: 'var(--muted)' }}>{game.players} · {game.mood}{(() => { const v = getBestVaultScore(game.id); return v ? ` · VAULT BEST ${v.score.toLocaleString()}` : '' })()}</p>
                     <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--muted)' }}>{game.tagline}</p>
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {game.tags.map((t) => (

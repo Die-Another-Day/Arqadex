@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowDown, Download, Shuffle, Play, Zap, ChevronRight } from 'lucide-react'
-import { GAMES, LIVE_GAMES, pickRandomGame, type Game } from '@/lib/games'
+import { GAMES, LIVE_GAMES, pickRandomGame, pickOfDay, type Game } from '@/lib/games'
 import { recordPlay } from '@/lib/arcade'
 
 const WORDS = ['EXPERIMENTAL', 'CHAOTIC', 'NEON', 'PLAYABLE', 'UNHINGED', 'PROCEDURAL']
@@ -13,7 +13,11 @@ export default function HeroSection() {
   const [spinning, setSpinning] = useState(false)
   const [spinTitle, setSpinTitle] = useState('???')
   const [picked, setPicked] = useState<Game | null>(null)
+  const [todays, setTodays] = useState<Game | null>(null)
   const spinRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Client-only, so the server render and the visitor's local date never disagree.
+  useEffect(() => { setTodays(pickOfDay()) }, [])
 
   useEffect(() => {
     const id = setInterval(() => setWordIndex((i) => (i + 1) % WORDS.length), 2200)
@@ -177,6 +181,33 @@ export default function HeroSection() {
             )}
           </AnimatePresence>
         </motion.div>
+
+        {/* Today's Pick — same game for everyone, changes at midnight */}
+        {todays && todays.url && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-4 mx-auto max-w-2xl rounded-2xl p-5 text-left flex items-center gap-4 flex-wrap"
+            style={{ background: 'var(--panel)', border: `1px solid ${todays.color}55` }}
+          >
+            <div className="flex-1 min-w-[220px]">
+              <p className="text-xs tracking-widest" style={{ color: todays.color, fontFamily: 'var(--font-orbitron)' }}>
+                ▸ TODAY&apos;S PICK — CHANGES AT MIDNIGHT
+              </p>
+              <p className="font-orbitron font-black text-lg mt-1" style={{ color: 'var(--text)', fontFamily: 'var(--font-orbitron)' }}>{todays.title}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{todays.tagline}</p>
+            </div>
+            <a
+              href={todays.url}
+              onClick={() => recordPlay(todays.id)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold tracking-widest shrink-0"
+              style={{ background: `${todays.color}22`, border: `1px solid ${todays.color}66`, color: todays.color, fontFamily: 'var(--font-orbitron)' }}
+            >
+              <Play className="w-3.5 h-3.5" /> PLAY TODAY&apos;S PICK
+            </a>
+          </motion.div>
+        )}
 
         {/* Main actions */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

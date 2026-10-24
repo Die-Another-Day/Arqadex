@@ -100,10 +100,39 @@ export function clearCabinet() {
     window.localStorage.removeItem(RECENT_KEY)
     window.localStorage.removeItem(PLAYS_KEY)
     window.localStorage.removeItem(REFLEX_KEY)
+    window.localStorage.removeItem(AIM_KEY)
+    window.localStorage.removeItem(VAULT_KEY)
     window.dispatchEvent(new Event(ARCADE_EVENT))
   } catch {
     // ignore
   }
+}
+
+const VAULT_KEY = 'arqadex:vault'
+
+export type VaultEntry = { gameId: string; score: number; note: string; at: number }
+
+/**
+ * Score Vault — player-entered scores. The static games do not report
+ * their scores back to the arcade, so the vault runs on trust: you type
+ * the final score you saw in the game, and the arcade remembers your
+ * best per game. Reflex Rush and Aim Trainer are different — their
+ * bests are recorded automatically by the games themselves.
+ */
+export function getVault(): VaultEntry[] {
+  return read<VaultEntry[]>(VAULT_KEY, [])
+}
+
+export function addVaultScore(gameId: string, score: number, note = ''): VaultEntry[] {
+  const next = [{ gameId, score, note: note.slice(0, 60), at: Date.now() }, ...getVault()].slice(0, 100)
+  write(VAULT_KEY, next)
+  return next
+}
+
+export function getBestVaultScore(gameId: string): VaultEntry | null {
+  const entries = getVault().filter((e) => e.gameId === gameId)
+  if (entries.length === 0) return null
+  return entries.reduce((best, e) => (e.score > best.score ? e : best), entries[0])
 }
 
 const AIM_KEY = 'arqadex:aim-best'

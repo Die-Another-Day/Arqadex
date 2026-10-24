@@ -170,3 +170,14 @@ export function pickRandomGame(excludeId?: string): Game {
   const pool = LIVE_GAMES.filter((g) => g.id !== excludeId)
   return pool[Math.floor(Math.random() * pool.length)]
 }
+
+/**
+ * Today's Pick — deterministic, so everyone sees the same game on the
+ * same day and it changes at midnight (local date, YYYY-MM-DD).
+ */
+export function pickOfDay(date = new Date()): Game {
+  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0
+  return LIVE_GAMES[hash % LIVE_GAMES.length]
+}

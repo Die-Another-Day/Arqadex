@@ -748,6 +748,13 @@ function startL4(){
 function startL5(){
   show('s-assess');setProgress(100);hideHUD();
   const prof=buildProfile();
+  // v2.2 — keep completed profiles in this browser so the intro screen
+  // can show the last run, and the player can copy their profile out.
+  try{
+    const prev=JSON.parse(localStorage.getItem('pz_profiles')||'[]');
+    prev.unshift(prof);
+    localStorage.setItem('pz_profiles',JSON.stringify(prev.slice(0,5)));
+  }catch(e){}
   renderAssessment(prof);
 }
 
@@ -873,6 +880,8 @@ function renderAssessment(p){
 </div>
 <div class="a-replay a-section" id="a7">
   <button class="btn-primary" id="btn-replay">RUN EXPERIMENT AGAIN</button>
+  <button class="btn-primary" id="btn-copy-profile" style="margin-top:12px">COPY PROFILE</button>
+  <div class="body-mono dim" style="margin-top:10px">Profile saved in this browser — it will show on the intro screen next time.</div>
 </div>`;
 
   // Reveal sections with staggered animation
@@ -888,6 +897,18 @@ function renderAssessment(p){
   setTimeout(()=>{
     const btn=document.getElementById('btn-replay');
     if(btn)btn.onclick=()=>{location.reload();};
+    const copy=document.getElementById('btn-copy-profile');
+    if(copy)copy.onclick=()=>{
+      const text='PROTOCOL ZERO — SUBJECT PROFILE '+p.id+' ('+p.date+', '+p.diff+')\n'
+        +'REFLEX: '+p.reflex.cls+' ('+p.reflex.avgT+'ms avg)\n'
+        +'MORAL: '+p.moral.cls+'\n'
+        +'LOOP: '+p.loop.cls+' (max depth '+p.loop.maxDepth+')\n'
+        +'SIGNAL: '+p.signal.cls+' ('+p.signal.locks+'/'+p.signal.rounds+' locks)\n'
+        +p.composite;
+      const done=()=>{copy.textContent='COPIED ✓';setTimeout(()=>{copy.textContent='COPY PROFILE';},2000);};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{copy.textContent='COPY FAILED — SELECT MANUALLY';});}
+      else{copy.textContent='COPY NOT SUPPORTED HERE';}
+    };
   },1500);
 }
 
@@ -895,6 +916,20 @@ function renderAssessment(p){
 window.addEventListener('DOMContentLoaded',()=>{
   show('s-boot');
   setTimeout(runBoot,200);
+  // v2.2 — show the last completed profile on the intro screen.
+  try{
+    const prev=JSON.parse(localStorage.getItem('pz_profiles')||'[]');
+    const last=prev[0];
+    const panel=document.querySelector('#s-intro .panel-center');
+    if(last&&panel){
+      const box=document.createElement('div');
+      box.style.cssText='margin-top:28px;padding:14px 16px;border:1px solid rgba(0,245,255,.35);text-align:left;font-family:monospace;font-size:12px;line-height:1.6;color:#9fb3c8';
+      box.innerHTML='<div style="color:#00F5FF;letter-spacing:.15em">LAST COMPLETED PROFILE — '+last.date+' · '+last.diff+'</div>'
+        +'<div>REFLEX: <span style="color:'+last.reflex.col+'">'+last.reflex.cls+'</span> · MORAL: <span style="color:'+last.moral.col+'">'+last.moral.cls+'</span></div>'
+        +'<div>LOOP: <span style="color:'+last.loop.col+'">'+last.loop.cls+'</span> · SIGNAL: <span style="color:'+last.signal.col+'">'+last.signal.cls+'</span></div>';
+      panel.appendChild(box);
+    }
+  }catch(e){}
 });
 
 })();

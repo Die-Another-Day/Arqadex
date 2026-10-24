@@ -6,6 +6,32 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.2 — the games themselves, upgraded
+
+- **Score Vault (every game)** — the game frame now has a VAULT panel with a
+  live session timer and the game's own description. The static games don't
+  report scores back to the arcade, so the vault is honestly player-entered:
+  you type the final score you saw, and the arcade remembers your best per
+  game. Vault bests surface on game cards and in Your Cabinet. Reflex Rush
+  and Aim Trainer stay automatic — their bests are recorded by the games.
+- **Today's Pick** — one game a day, the same for everyone, changing at
+  midnight (local date), on the home page under Feeling Lucky.
+- **Protocol Zero** — completed profiles are now saved in your browser (last
+  5), shown on the intro screen next time, and the final assessment screen
+  has a COPY PROFILE button.
+- **Signal Collapse** — sector progress now persists (Continue button and
+  best-moves on the title screen), a HINT button highlights the next node
+  on a shortest feasible path (BFS over position + repairs remaining), and
+  the win screen now also shows moves and time.
+- **Quantum Drift** — deepest sector reached is now saved and shown on the
+  main menu, and switching tabs mid-run auto-pauses instead of draining
+  the run.
+- **Baldys Escape, VI-Battle, Merge Ball, Multiplayer Psych** — no surgery
+  inside these: Baldys already has a 100-level save/star system, VI-Battle
+  and Merge Ball are compiled builds where edits risk breaking the game,
+  and Multiplayer Psych is simulated. All four get the universal shell
+  upgrades (Vault, timer, about panel, theme, cursor) instead.
+
 ## What's in v2.1
 
 - **Daylight is now the default theme** — bright arcade first, with Neon Void,

@@ -301,6 +301,9 @@ body::before {
   background:rgba(0,229,255,.1);
   box-shadow:0 0 22px rgba(0,229,255,.35);
 }
+.node.hint { outline:2px solid var(--cyan); box-shadow:0 0 18px rgba(0,229,255,.8); animation:hintpulse 1s ease-in-out infinite; }
+@keyframes hintpulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+#sc-progress { margin-top:14px; font-size:12px; letter-spacing:.12em; color:rgba(0,229,255,.75); }
 </style>
 </head>
 <body>
@@ -321,6 +324,8 @@ body::before {
     <span>DARK</span>
   </div>
   <button id="start-btn" onclick="initGame()">[ INITIALIZE SYSTEM ]</button>
+  <button id="continue-btn" onclick="continueGame()" style="display:none">[ CONTINUE — NEXT UNLOCKED SECTOR ]</button>
+  <div id="sc-progress"></div>
 </div>
 
 <!-- ════════════════ GAME ════════════════ -->
@@ -329,6 +334,7 @@ body::before {
     <div class="hud-block">SECTOR<span class="hud-val" id="hud-level">01</span></div>
     <div id="hud-status" class="lost">SIGNAL LOST</div>
     <div class="hud-block">REPAIRS<span class="hud-val" id="hud-repairs">3</span></div>
+    <div class="hud-block">MOVES<span class="hud-val" id="hud-moves">0</span></div>
   </div>
 
   <div id="grid-wrap">
@@ -356,6 +362,7 @@ body::before {
 
   <div id="btn-row">
     <button class="btn" onclick="resetLevel()">[ RESET LEVEL ]</button>
+    <button class="btn" onclick="showHint()">[ HINT ]</button>
     <button class="btn" onclick="goTitle()">[ ABORT MISSION ]</button>
   </div>
 </div>
@@ -371,6 +378,8 @@ body::before {
   <div class="win-stats">
     <div class="win-stat">REPAIRS USED<span id="ws-repairs">0</span></div>
     <div class="win-stat">NODES ACTIVATED<span id="ws-nodes">0</span></div>
+    <div class="win-stat">MOVES<span id="ws-moves">0</span></div>
+    <div class="win-stat">TIME<span id="ws-time">0s</span></div>
   </div>
   <button class="win-btn" id="win-btn" onclick="nextLevel()">[ NEXT SECTOR ]</button>
 </div>
@@ -428,7 +437,78 @@ let gridState    = [];   // [r][c] = { state: 'inactive'|'active'|'corrupted'|'b
 let repairs      = 0;
 let repairsUsed  = 0;
 let nodesActivated = 0;
+let moves        = 0;
+let levelStartT  = 0;
 let ld           = null; // shorthand levelData
+
+/* ── PROGRESS (localStorage, v2.2) ──────────────────────────── */
+const SC_KEY = 'signal_collapse_progress_v1';
+function scLoad() {
+  try { return JSON.parse(localStorage.getItem(SC_KEY)) || { unlocked: 0, best: {} }; }
+  catch (e) { return { unlocked: 0, best: {} }; }
+}
+function scSave(p) {
+  try { localStorage.setItem(SC_KEY, JSON.stringify(p)); } catch (e) {}
+}
+function showTitleProgress() {
+  const p = scLoad();
+  const el = $('sc-progress');
+  const btn = $('continue-btn');
+  if (!el || !btn) return;
+  if (p.unlocked > 0) {
+    const best = Object.keys(p.best).length
+      ? ' · BEST: ' + Object.keys(p.best).map((k) => 'S' + (+k + 1) + ' ' + p.best[k].moves + ' MOVES').join(' · ')
+      : '';
+    el.textContent = 'SECTORS RESTORED: ' + Math.min(p.unlocked, LEVELS.length) + ' / ' + LEVELS.length + best;
+    btn.style.display = '';
+  } else {
+    el.textContent = '';
+    btn.style.display = 'none';
+  }
+}
+function continueGame() {
+  const p = scLoad();
+  currentLevel = Math.min(p.unlocked, LEVELS.length - 1);
+  initGame();
+  loadLevel(currentLevel);
+}
+
+/* ── HINT: shortest path in (row, col, repairs-used) space ───── */
+function showHint() {
+  const sz = ld.size;
+  const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const seen = new Set();
+  const q = [{ r: ld.source[0], c: ld.source[1], used: 0, path: [] }];
+  seen.add(ld.source[0] + ',' + ld.source[1] + ',0');
+  let found = null;
+  while (q.length && !found) {
+    const cur = q.shift();
+    for (const [dr, dc] of dirs) {
+      const nr = cur.r + dr, nc = cur.c + dc;
+      if (nr < 0 || nr >= sz || nc < 0 || nc >= sz) continue;
+      const cell = gridState[nr][nc];
+      if (cell.state === 'blocked') continue;
+      let used = cur.used;
+      if (cell.state === 'corrupted' && !cell.repaired) used++;
+      if (used > repairs) continue;
+      const key = nr + ',' + nc + ',' + used;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const path = cur.path.concat([[nr, nc]]);
+      if (nr === ld.dest[0] && nc === ld.dest[1]) { found = path; break; }
+      q.push({ r: nr, c: nc, used, path });
+    }
+  }
+  document.querySelectorAll('.node.hint').forEach((n) => n.classList.remove('hint'));
+  if (!found) { showToast('NO PATH WITH REMAINING REPAIRS'); return; }
+  const next = found.find(([r, c]) => {
+    const cell = gridState[r][c];
+    return !(cell.state === 'active' || cell.state === 'source' || cell.state === 'dest');
+  });
+  if (!next) { showToast('SIGNAL ALREADY ACTIVE'); return; }
+  const node = document.querySelector(`.node[data-r="${next[0]}"][data-c="${next[1]}"]`);
+  if (node) node.classList.add('hint');
+}
 
 const PAD  = 16;
 const GAP  = 8;
@@ -445,6 +525,7 @@ function goTitle() {
   $('game-screen').style.display   = 'none';
   $('win-overlay').classList.remove('show');
   $('title-screen').style.display  = 'flex';
+  showTitleProgress();
 }
 
 /* ── LEVEL LOAD ─── */
@@ -453,8 +534,11 @@ function loadLevel(idx) {
   repairs      = ld.repairs;
   repairsUsed  = 0;
   nodesActivated = 0;
+  moves        = 0;
+  levelStartT  = Date.now();
   $('hud-level').textContent   = String(idx+1).padStart(2,'0');
   $('hud-repairs').textContent = repairs;
+  $('hud-moves').textContent   = 0;
   $('win-overlay').classList.remove('show');
   buildGrid();
   draw();
@@ -531,6 +615,8 @@ function onNodeClick(r,c) {
     return; // repaired stays repaired
   }
 
+  moves++;
+  $('hud-moves').textContent = moves;
   refreshNodes();
   draw();
   checkSignal(true);
@@ -611,12 +697,22 @@ function animateWin(vis) {
 
 function showWin() {
   const isLast = currentLevel >= LEVELS.length-1;
+  const timeSec = Math.max(1, Math.round((Date.now() - levelStartT) / 1000));
+  const p = scLoad();
+  p.unlocked = Math.max(p.unlocked, Math.min(currentLevel + 1, LEVELS.length));
+  const prev = p.best[currentLevel];
+  if (!prev || moves < prev.moves || (moves === prev.moves && timeSec < prev.timeSec)) {
+    p.best[currentLevel] = { moves, timeSec, repairsUsed };
+  }
+  scSave(p);
   $('win-eyebrow').textContent = `${ld.name} — COMPLETE`;
   $('win-title').textContent   = isLast ? 'NETWORK RESTORED' : 'SIGNAL RESTORED';
   $('win-sub').textContent     = isLast ? 'COLLAPSE AVERTED — ALL SECTORS ONLINE' : 'PATH INTEGRITY CONFIRMED';
   $('win-btn').textContent     = isLast ? '[ PLAY AGAIN ]' : '[ NEXT SECTOR ]';
   $('ws-repairs').textContent  = repairsUsed;
   $('ws-nodes').textContent    = nodesActivated;
+  $('ws-moves').textContent    = moves;
+  $('ws-time').textContent     = timeSec + 's';
   $('win-overlay').classList.add('show');
 }
 
@@ -700,6 +796,8 @@ function showToast(msg) {
     },70);
   }, 3800);
 })();
+
+showTitleProgress();
 </script>
 </body>
 </html>

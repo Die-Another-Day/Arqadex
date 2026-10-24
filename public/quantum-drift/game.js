@@ -621,6 +621,11 @@ function doGameOver(){
   if(STATE!=='PLAYING')return;STATE='GAMEOVER';stopEng();sfx('gameover');
   const isRec=score>highScore;
   if(isRec){highScore=score;localStorage.setItem('qd_hs',highScore);}
+  // v2.2 — deepest sector reached, kept across visits.
+  try{
+    const prev=parseInt(localStorage.getItem('qd_best_sector')||'0');
+    if(sector>prev)localStorage.setItem('qd_best_sector',String(sector));
+  }catch(e){}
   document.getElementById('go-score').textContent=score.toLocaleString();
   document.getElementById('go-sec').textContent=String(sector).padStart(2,'0');
   document.getElementById('go-rec').classList.toggle('hidden',!isRec);
@@ -708,6 +713,9 @@ function goMenu(){
   STATE='MENU';stopEng();showScreen('menu');
   highScore=parseInt(localStorage.getItem('qd_hs')||'0');
   document.getElementById('best-disp').textContent=highScore>0?highScore.toLocaleString():'—';
+  const bestSec=parseInt(localStorage.getItem('qd_best_sector')||'0');
+  const bsEl=document.getElementById('best-sector');
+  if(bsEl)bsEl.textContent=bestSec>0?String(bestSec).padStart(2,'0'):'—';
   const rh=()=>Math.random().toString(16).slice(2,6).toUpperCase();
   document.getElementById('w-addr').textContent=`0x${rh()}...${rh()} // SPECTATOR MODE`;
 }
@@ -718,6 +726,10 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('btn-menu').addEventListener('click',goMenu);
   document.getElementById('btn-resume').addEventListener('click',()=>{if(STATE==='PAUSED')togglePause();});
   document.getElementById('btn-quit').addEventListener('click',goMenu);
+  // v2.2 — switching tabs mid-run pauses instead of draining a run.
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden&&STATE==='PLAYING')togglePause();
+  });
   requestAnimationFrame(loop);
 });
 })();
