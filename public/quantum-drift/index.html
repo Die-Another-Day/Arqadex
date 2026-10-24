@@ -26,6 +26,7 @@
         <div class="hud-panel">
           <div class="hud-label">SCORE</div>
           <div id="h-score" class="hud-val">0</div>
+          <div id="h-best" class="hud-sub">BEST —</div>
         </div>
         <div class="hud-center-col">
           <div id="q-pips">
@@ -33,7 +34,8 @@
             <div class="q-pip" id="qp-1">β</div>
             <div class="q-pip" id="qp-2">γ</div>
           </div>
-          <div id="sector-badge">SECTOR <span id="h-sector">01</span></div>
+          <div id="sector-badge">SECTOR <span id="h-sector">01</span> <span id="h-sector-name"></span></div>
+          <div id="h-time" class="hud-pill">DRIFT · ENDLESS</div>
         </div>
         <div class="hud-panel right">
           <div class="hud-label">MULTI</div>
@@ -59,6 +61,16 @@
         <span><span class="ks">1·2·3</span> STATE</span>
         <span><span class="ks">SPC</span> SHIELD</span>
         <span><span class="ks">P</span> PAUSE</span>
+        <span><span class="ks">M</span> MUTE</span>
+      </div>
+      <div id="touch-bar">
+        <button class="tb" id="tb-left">◀</button>
+        <button class="tb state" id="tb-a">α</button>
+        <button class="tb state" id="tb-b">β</button>
+        <button class="tb state" id="tb-g">γ</button>
+        <button class="tb shield" id="tb-shield">SHIELD</button>
+        <button class="tb" id="tb-right">▶</button>
+        <button class="tb" id="tb-pause">⏸</button>
       </div>
     </div>
 
@@ -69,7 +81,7 @@
         <div class="logo">
           <div class="logo-top">QUANTUM</div>
           <div class="logo-bot">DRIFT</div>
-          <div class="logo-ver">BUILD 1.0 // ALPHA STATE</div>
+          <div class="logo-ver">BUILD 2.0 // DRIFT OVERHAUL</div>
         </div>
         <p class="flavor">Pilot through superposition states.<br>Exist in multiple realities simultaneously—<br>until observed.</p>
         <div class="ctrl-grid">
@@ -78,8 +90,22 @@
           <div class="ci"><span class="kb">SPACE</span><span>Temporal Shield (40 charge)</span></div>
           <div class="ci"><span class="kb">P</span><span>Pause / Resume</span></div>
         </div>
-        <div class="tip-box">💡 Same-state obstacles = <span class="col-c">SOLID</span> &nbsp;·&nbsp; Different-state = <span class="col-g">GHOST</span></div>
+        <div class="tip-box">💡 Same-state obstacles = <span class="col-c">SOLID</span> &nbsp;·&nbsp; Different-state = <span class="col-g">GHOST</span> &nbsp;·&nbsp; Orange cubes are <span style="color:#FF8800">ALWAYS SOLID</span> &nbsp;·&nbsp; Orbs charge you up</div>
+        <div class="seg-label">DIFFICULTY</div>
+        <div class="seg-row">
+          <button class="seg" data-seg="diff" data-val="cruiser">CRUISER</button>
+          <button class="seg sel" data-seg="diff" data-val="drift">DRIFT</button>
+          <button class="seg" data-seg="diff" data-val="quantum">QUANTUM</button>
+        </div>
+        <div id="diff-desc" class="seg-desc">The classic run.</div>
+        <div class="seg-label">MODE</div>
+        <div class="seg-row">
+          <button class="seg sel" data-seg="mode" data-val="endless">ENDLESS</button>
+          <button class="seg" data-seg="mode" data-val="blitz">BLITZ · 90s</button>
+        </div>
+        <div id="mode-desc" class="seg-desc">Endless run — survive as deep as you can.</div>
         <button class="btn primary" id="btn-start">INITIALIZE SEQUENCE</button>
+        <button class="btn secondary" id="mute-btn">SOUND: ON</button>
         <div class="best-row">
           <span class="hud-label">QUANTUM RECORD</span>
           <span id="best-disp">—</span>
@@ -88,6 +114,12 @@
           <span class="hud-label">DEEPEST SECTOR</span>
           <span id="best-sector">—</span>
         </div>
+        <div class="best-row">
+          <span class="hud-label">CAREER</span>
+          <span id="stats-disp">—</span>
+        </div>
+        <div class="board-title">🏆 LOCAL LEADERBOARD — TOP 8</div>
+        <div id="menu-board" class="board"></div>
         <div class="wallet-bar">
           <div class="w-dot"></div>
           <span id="w-addr">0x4A2f...C3d8 // SPECTATOR MODE</span>
@@ -104,7 +136,14 @@
           <div><div class="hud-label">QUANTUM SCORE</div><div id="go-score" class="score-val c">0</div></div>
           <div><div class="hud-label">SECTOR REACHED</div><div id="go-sec" class="score-val p">01</div></div>
         </div>
+        <div id="go-rank" class="rank-badge">RANK: DRIFTER</div>
+        <div class="go-meta"><span id="go-multi">MAX MULTI ×1.0</span> · <span id="go-reason">ENERGY DEPLETED</span></div>
         <div id="go-rec" class="record hidden">⚡ NEW QUANTUM RECORD ⚡</div>
+        <div id="go-save-row" class="save-row" style="display:none">
+          <input id="go-name" maxlength="12" placeholder="CALLSIGN (e.g. NOVA)" autocomplete="off">
+          <button class="btn primary small" id="btn-save-score">SAVE TO BOARD</button>
+        </div>
+        <div id="go-board" class="board"></div>
         <div class="btn-col">
           <button class="btn primary" id="btn-retry">REINITIALIZE</button>
           <button class="btn secondary" id="btn-menu">MAIN GRID</button>

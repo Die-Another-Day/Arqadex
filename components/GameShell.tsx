@@ -332,6 +332,10 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
           onLoad={(e) => {
             setLoaded(true)
             injectGameCursor(e.currentTarget, theme)
+            // Quantum Drift (and other keyboard games) only receive keys
+            // when the frame has focus — give it focus on load so the
+            // first keypress works without an extra click.
+            try { e.currentTarget.focus() } catch {}
           }}
           allow="autoplay; fullscreen; gamepad; microphone"
         />

@@ -6,6 +6,30 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.3.0 — Quantum Drift overhaul
+
+- **Fixes:** P/Esc now resumes as well as pauses (the old code only checked
+  them while playing, so pause was a one-way door); game-over screen
+  shows immediately instead of after a 900ms empty starfield; ship
+  stays in its lane after a window resize; Space/arrows no longer
+  scroll the page mid-run; audio context resumes on start.
+- **Touch, finally playable:** on-screen lane, state, shield and pause
+  buttons (touch devices previously had no way to shift state, shield
+  or pause — the core mechanic was keyboard-only), plus swipe up to
+  cycle state and swipe down to shield. GameShell now focuses the
+  game frame on load so the first keypress works.
+- **Levels:** sectors are named levels (Neon Gateway, Pulse Fields,
+  Rift Yard, Ghost Foundry, Wall of Echoes, Entropy Deep, then The
+  Long Dark), shown in the HUD, sector flash and game-over screen.
+- **Difficulty + modes:** Cruiser / Drift / Quantum difficulty
+  (speed, damage, spawn rate, score multiplier) and Endless vs
+  90-second Blitz mode with a live HUD timer.
+- **Competitive:** local top-8 leaderboard with callsign entry on a
+  qualifying run (mode + difficulty + sector recorded), rank tiers
+  (Drifter → Pilot → Ace Pilot → Quantum Ace → Multiverse Legend),
+  max-multiplier and career stats on the menu, live best score and
+  "NEW RECORD PACE" callout in the HUD.
+
 ## What's in v2.2.2 — hero title actually fits its box
 
 - v2.2.1 only lowered the phone floor and did not fix the wide view. The

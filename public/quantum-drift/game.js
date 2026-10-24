@@ -18,6 +18,9 @@ function resize() {
   HORIZON_Y  = H * 0.40;
   PLAYER_Y   = H * 0.83;
   TRACK_HALF = W * 0.355;
+  /* v2.3: keep the ship in its lane after a resize instead of letting
+     it drift across the track from stale coordinates. */
+  if(player)player.screenX=laneX(player.targetLane,1.0);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -27,6 +30,25 @@ const LANES=3, LANE_LERP=8, TILT_MAX=18, SECTOR_SECS=28;
 const BASE_SPD=300, SPD_PER_SECTOR=85, MAX_SPD=1800;
 const SHIFT_MS=290, SHIFT_COOL_MS=700, SHIELD_COST=40, SHIELD_MS=3200;
 const OVERLOAD_MULTI=10, OVERLOAD_MS=5000;
+const BLITZ_SECS=90;
+
+/* ── DIFFICULTY + MODE (v2.3 overhaul) ── */
+const DIFFS={
+  cruiser:{label:'CRUISER', speed:0.8, damage:0.7, score:0.8, spawn:1.25, desc:'Slower, gentler — learn the states.'},
+  drift:  {label:'DRIFT',   speed:1.0, damage:1.0, score:1.0, spawn:1.0,  desc:'The classic run.'},
+  quantum:{label:'QUANTUM', speed:1.25,damage:1.3, score:1.5, spawn:0.8,  desc:'Faster, harder, richer.'},
+};
+let difficulty='drift', mode='endless';
+let blitzLeft=BLITZ_SECS, maxMulti=1, runSaved=false, bestPaceShown=false;
+const SECTOR_NAMES=['NEON GATEWAY','PULSE FIELDS','RIFT YARD','GHOST FOUNDRY','WALL OF ECHOES','ENTROPY DEEP'];
+function sectorName(n){return n<=SECTOR_NAMES.length?SECTOR_NAMES[n-1]:`THE LONG DARK ${n}`;}
+function rankFor(s){
+  if(s>=30000)return 'MULTIVERSE LEGEND';
+  if(s>=15000)return 'QUANTUM ACE';
+  if(s>=5000)return 'ACE PILOT';
+  if(s>=1000)return 'PILOT';
+  return 'DRIFTER';
+}
 
 /* ── QUANTUM STATES ── */
 const QS=[
@@ -119,6 +141,7 @@ let STATE='MENU';
 let score,highScore,multi,sector,sectorTimer,speed,trackScroll;
 let camCurve,camPhase,shakeX,shakeY,shakeMag,flashA,flashCol,obsTimer;
 let obstacles,particles,floats,speedLines,nmTrack,player;
+let muted=false;
 
 function makePlayer(){
   return{lane:1,targetLane:1,screenX:0,tilt:0,qi:0,
@@ -134,24 +157,86 @@ function resetAll(){
   camCurve=0;camPhase=0;shakeX=shakeY=shakeMag=0;
   flashA=0;flashCol='#00F5FF';obsTimer=0;
   obstacles=[];particles=[];floats=[];speedLines=[];nmTrack=new Set();
+  blitzLeft=BLITZ_SECS;maxMulti=1;runSaved=false;bestPaceShown=false;
+}
+
+/* ── LEADERBOARD (local, top 8) ── */
+const BOARD_KEY='qd_board_v1';
+function loadBoard(){
+  try{const b=JSON.parse(localStorage.getItem(BOARD_KEY));return Array.isArray(b)?b:[];}catch(e){return [];}
+}
+function saveBoard(b){try{localStorage.setItem(BOARD_KEY,JSON.stringify(b));}catch(e){}}
+function qualifies(score){
+  if(score<=0)return false;
+  const b=loadBoard();
+  return b.length<8||score>b[b.length-1].score;
+}
+function renderBoard(elId,limit){
+  const el=document.getElementById(elId);if(!el)return;
+  const b=loadBoard().slice(0,limit||8);
+  if(!b.length){el.innerHTML='<div class="board-empty">No runs yet — set the first record.</div>';return;}
+  el.innerHTML=b.map((e,i)=>`<div class="board-row"><span class="board-rank">${i+1}</span><span class="board-name">${e.name||'PILOT'}</span><span class="board-meta">${e.mode==='blitz'?'BLITZ':'ENDLESS'} · ${DIFFS[e.diff]?.label||'DRIFT'} · S${String(e.sector).padStart(2,'0')}</span><span class="board-score">${e.score.toLocaleString()}</span></div>`).join('');
 }
 
 /* ── INPUT ── */
 const K={},KP={};
-window.addEventListener('keydown',e=>{K[e.code]=true;});
+/* v2.3 fix: pause/resume, mute, menu start and retry are handled HERE,
+   on the keydown event itself. The old code only checked P/Escape inside
+   processInput(), which only runs while STATE is PLAYING — so P could
+   pause the game but could never resume it. */
+window.addEventListener('keydown',e=>{
+  K[e.code]=true;
+  const isBtn=e.target&&(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT');
+  if(e.code==='Space'||e.code==='ArrowLeft'||e.code==='ArrowRight'||e.code==='ArrowUp'||e.code==='ArrowDown'){
+    if(STATE==='PLAYING')e.preventDefault();
+  }
+  if((e.code==='KeyP'||e.code==='Escape')&&(STATE==='PLAYING'||STATE==='PAUSED')){togglePause();return;}
+  if(e.code==='KeyM'){toggleMute();return;}
+  if(!isBtn&&STATE==='MENU'&&(e.code==='Space'||e.code==='Enter')){startGame();return;}
+  if(!isBtn&&STATE==='GAMEOVER'&&(e.code==='Space'||e.code==='Enter')){startGame();return;}
+});
 window.addEventListener('keyup',e=>{K[e.code]=false;});
 function jp(c){return K[c]&&!KP[c];}
 function syncKP(){Object.assign(KP,K);}
-let tSX=null;
-canvas.addEventListener('touchstart',e=>{tSX=e.touches[0].clientX;e.preventDefault();},{passive:false});
+function toggleMute(){
+  muted=!muted;
+  if(audioOK&&masterGain)masterGain.gain.value=muted?0:0.42;
+  const el=document.getElementById('mute-btn');if(el)el.textContent=muted?'SOUND: OFF':'SOUND: ON';
+  if(STATE==='PLAYING'&&Array.isArray(floats))addFloat(muted?'SOUND OFF':'SOUND ON',player?player.lane:1,0.82,muted?'#FF8800':'#C7FF4D');
+}
+function moveLane(dir){
+  if(!player||STATE!=='PLAYING')return;
+  const next=player.targetLane+dir;
+  if(next<0||next>2)return;
+  player.targetLane=next;player.drifting=true;player.driftT=0;player.charge=Math.min(100,player.charge+3);
+}
+function shiftToState(qi){
+  if(!player||STATE!=='PLAYING')return;
+  if(qi===player.qi||player.shifting||player.coolMs>0)return;
+  player.shifting=true;player.shiftTo=qi;player.shiftMs=SHIFT_MS;player.coolMs=SHIFT_COOL_MS;
+  flashA=0.52;flashCol=QS[qi].col;sfx('shift');burst(player.screenX,PLAYER_Y-H*0.054,QS[qi].col,8);
+}
+function activateShield(){
+  if(!player||STATE!=='PLAYING')return;
+  if(player.charge<SHIELD_COST||player.shielded||player.shifting)return;
+  player.charge-=SHIELD_COST;player.shielded=true;player.shieldMs=SHIELD_MS;
+  sfx('shield');burst(player.screenX,PLAYER_Y-H*0.054,QS[player.qi].col,14);addFloat('TEMPORAL SHIELD',player.lane,0.82,'#C7FF4D');
+}
+let tSX=null,tSY=null;
+canvas.addEventListener('touchstart',e=>{tSX=e.touches[0].clientX;tSY=e.touches[0].clientY;e.preventDefault();},{passive:false});
 canvas.addEventListener('touchend',e=>{
   if(tSX===null)return;
-  const dx=e.changedTouches[0].clientX-tSX;
+  const dx=e.changedTouches[0].clientX-tSX,dy=e.changedTouches[0].clientY-tSY;
   if(Math.abs(dx)>32&&player){
-    if(dx<0&&player.targetLane>0)player.targetLane--;
-    if(dx>0&&player.targetLane<2)player.targetLane++;
+    if(dx<0&&player.targetLane>0)moveLane(-1);
+    if(dx>0&&player.targetLane<2)moveLane(1);
+  } else if(Math.abs(dy)>32&&player){
+    /* v2.3: touch players could not use the core mechanic before — swipe
+       up cycles quantum state, swipe down fires the shield. */
+    if(dy<0)shiftToState((player.qi+1)%3);
+    else activateShield();
   }
-  tSX=null;
+  tSX=null;tSY=null;
 },{passive:false});
 
 /* ── PROJECTION ── */
@@ -248,7 +333,7 @@ const OT=[
   {shape:'wall', qs:0,pk:false,wR:0.58,hR:0.06,pts:0},{shape:'wall',qs:1,pk:false,wR:0.58,hR:0.06,pts:0},
   {shape:'wall', qs:2,pk:false,wR:0.58,hR:0.06,pts:0},
 ];
-function spawnInterval(){return Math.max(0.32,1.95-(sector-1)*0.16+Math.random()*0.28);}
+function spawnInterval(){return Math.max(0.30,(1.95-(sector-1)*0.16+Math.random()*0.28)*DIFFS[difficulty].spawn);}
 function spawnWave(){
   const r=Math.random(),qi=player.qi;
   let ti,lane;
@@ -301,7 +386,7 @@ function updateObstacles(dt){
 }
 function doCollision(ob){
   if(player.shielded){sfx('shieldhit');burst(obX(ob),obY(ob),QS[player.qi].col,10);return;}
-  player.energy=Math.max(0,player.energy-(20+sector*1.4));
+  player.energy=Math.max(0,player.energy-(20+sector*1.4)*DIFFS[difficulty].damage);
   player.invincible=true;player.invMs=1500;
   multi=1;shakeMag=22;flashA=0.55;flashCol='#FF2020';
   sfx('hit');burst(obX(ob),obY(ob),'#FF4400',20);addFloat('COLLISION!',ob.lane,ob.z,'#FF4444');
@@ -309,7 +394,7 @@ function doCollision(ob){
 }
 function doPickup(ob){
   const same=ob.ot.qs===player.qi;
-  const pts=(same?200:75)*Math.round(multi);
+  const pts=Math.round((same?200:75)*Math.round(multi)*DIFFS[difficulty].score);
   score+=pts;
   if(same){player.energy=Math.min(100,player.energy+10);player.charge=Math.min(100,player.charge+10);multi=Math.min(OVERLOAD_MULTI,multi+0.5);}
   else{player.charge=Math.min(100,player.charge+4);}
@@ -318,7 +403,7 @@ function doPickup(ob){
   if(multi>=OVERLOAD_MULTI&&!player.overload)triggerOverload();
 }
 function doNearMiss(ob){
-  const bonus=Math.round(80*multi);score+=bonus;multi=Math.min(OVERLOAD_MULTI,multi+0.3);
+  const bonus=Math.round(80*multi*DIFFS[difficulty].score);score+=bonus;multi=Math.min(OVERLOAD_MULTI,multi+0.3);
   player.charge=Math.min(100,player.charge+7);sfx('nearmiss');addFloat('QUANTUM SLIP!',ob.lane,0.83,'#C7FF4D');
 }
 
@@ -540,7 +625,12 @@ function updateFloats(dt){
 /* ── HUD ── */
 function updateHUD(){
   document.getElementById('h-score').textContent=score.toLocaleString();
+  const bestEl=document.getElementById('h-best');if(bestEl)bestEl.textContent='BEST '+Math.max(highScore,score).toLocaleString();
   document.getElementById('h-sector').textContent=String(sector).padStart(2,'0');
+  const nameEl=document.getElementById('h-sector-name');if(nameEl)nameEl.textContent='· '+sectorName(sector);
+  const timeEl=document.getElementById('h-time');if(timeEl){
+    timeEl.textContent=mode==='blitz'?`⏱ ${Math.ceil(blitzLeft)}s`:`${DIFFS[difficulty].label} · ${mode==='blitz'?'BLITZ':'ENDLESS'}`;
+  }
   document.getElementById('h-multi').textContent=`x${multi.toFixed(1)}`;
   document.getElementById('speed-num').textContent=String(Math.floor(speed/8)).padStart(3,'0');
   const ef=document.getElementById('ef');ef.style.width=player.energy+'%';
@@ -606,6 +696,7 @@ const SF_SUBS=['QUANTUM INSTABILITY INCREASING',
 function triggerSector(){
   const el=document.getElementById('sf');
   document.getElementById('sf-num').textContent=String(sector).padStart(2,'0');
+  const lbl=document.getElementById('sf-lbl');if(lbl)lbl.textContent='SECTOR · '+sectorName(sector);
   document.getElementById('sf-sub').textContent=
     SF_SUBS[Math.min(sector-2,SF_SUBS.length-1)];
   el.classList.remove('hidden');
@@ -617,7 +708,7 @@ function triggerSector(){
 }
 
 /* ── GAME OVER ── */
-function doGameOver(){
+function doGameOver(reason){
   if(STATE!=='PLAYING')return;STATE='GAMEOVER';stopEng();sfx('gameover');
   const isRec=score>highScore;
   if(isRec){highScore=score;localStorage.setItem('qd_hs',highScore);}
@@ -626,10 +717,36 @@ function doGameOver(){
     const prev=parseInt(localStorage.getItem('qd_best_sector')||'0');
     if(sector>prev)localStorage.setItem('qd_best_sector',String(sector));
   }catch(e){}
+  try{
+    const st=JSON.parse(localStorage.getItem('qd_stats')||'{"runs":0,"total":0}');
+    st.runs++;st.total+=score;localStorage.setItem('qd_stats',JSON.stringify(st));
+  }catch(e){}
   document.getElementById('go-score').textContent=score.toLocaleString();
-  document.getElementById('go-sec').textContent=String(sector).padStart(2,'0');
+  document.getElementById('go-sec').textContent=String(sector).padStart(2,'0')+' · '+sectorName(sector);
+  const rankEl=document.getElementById('go-rank');if(rankEl)rankEl.textContent='RANK: '+rankFor(score);
+  const mmEl=document.getElementById('go-multi');if(mmEl)mmEl.textContent='MAX MULTI ×'+maxMulti.toFixed(1);
+  const rsEl=document.getElementById('go-reason');if(rsEl)rsEl.textContent=reason||(mode==='blitz'?'TIME UP':'ENERGY DEPLETED');
   document.getElementById('go-rec').classList.toggle('hidden',!isRec);
-  setTimeout(()=>showScreen('gameover'),900);
+  const saveRow=document.getElementById('go-save-row');
+  if(saveRow)saveRow.style.display=qualifies(score)?'flex':'none';
+  const nameInput=document.getElementById('go-name');if(nameInput)nameInput.value='';
+  const saveBtn=document.getElementById('btn-save-score');if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='SAVE TO BOARD';}
+  renderBoard('go-board',5);
+  /* v2.3 fix: show the game-over screen immediately. The old code waited
+     900ms while the loop had already switched to the menu background,
+     so players stared at an empty starfield wondering if the run ended. */
+  showScreen('gameover');
+}
+function saveRunScore(){
+  if(runSaved)return;
+  const name=(document.getElementById('go-name')?.value||'PILOT').toUpperCase().replace(/[^A-Z0-9 ]/g,'').slice(0,12)||'PILOT';
+  const b=loadBoard();
+  b.push({name,score,sector,mode,diff:difficulty,date:Date.now()});
+  b.sort((x,y)=>y.score-x.score);
+  saveBoard(b.slice(0,8));
+  runSaved=true;
+  const saveBtn=document.getElementById('btn-save-score');if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='SAVED ✓';}
+  renderBoard('go-board',5);renderBoard('menu-board',8);
 }
 function showScreen(name){
   ['menu','hud','gameover','pause-scr'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==name));
@@ -637,21 +754,16 @@ function showScreen(name){
 
 /* ── INPUT ── */
 function processInput(dt){
-  if((jp('ArrowLeft')||jp('KeyA'))&&player.targetLane>0){player.targetLane--;player.drifting=true;player.driftT=0;player.charge=Math.min(100,player.charge+3);}
-  if((jp('ArrowRight')||jp('KeyD'))&&player.targetLane<2){player.targetLane++;player.drifting=true;player.driftT=0;player.charge=Math.min(100,player.charge+3);}
+  if(jp('ArrowLeft')||jp('KeyA'))moveLane(-1);
+  if(jp('ArrowRight')||jp('KeyD'))moveLane(1);
   if(!K['ArrowLeft']&&!K['KeyA']&&!K['ArrowRight']&&!K['KeyD']){player.drifting=false;player.driftT=0;}
   const SKM={'Digit1':0,'KeyQ':0,'Digit2':1,'KeyW':1,'Digit3':2,'KeyE':2};
   for(const[code,qi]of Object.entries(SKM)){
-    if(jp(code)&&qi!==player.qi&&!player.shifting&&player.coolMs<=0){
-      player.shifting=true;player.shiftTo=qi;player.shiftMs=SHIFT_MS;player.coolMs=SHIFT_COOL_MS;
-      flashA=0.52;flashCol=QS[qi].col;sfx('shift');burst(player.screenX,PLAYER_Y-H*0.054,QS[qi].col,8);break;
-    }
+    if(jp(code)){shiftToState(qi);break;}
   }
-  if(jp('Space')&&player.charge>=SHIELD_COST&&!player.shielded&&!player.shifting){
-    player.charge-=SHIELD_COST;player.shielded=true;player.shieldMs=SHIELD_MS;
-    sfx('shield');burst(player.screenX,PLAYER_Y-H*0.054,QS[player.qi].col,14);addFloat('TEMPORAL SHIELD',player.lane,0.82,'#C7FF4D');
-  }
-  if(jp('KeyP')||jp('Escape'))togglePause();
+  if(jp('Space'))activateShield();
+  /* Note: P/Escape pause-resume lives in the keydown handler above,
+     not here — processInput only runs while PLAYING. */
 }
 function togglePause(){
   if(STATE==='PLAYING'){STATE='PAUSED';stopEng();document.getElementById('pause-scr').classList.remove('hidden');}
@@ -660,9 +772,15 @@ function togglePause(){
 
 /* ── UPDATE ── */
 function update(dt){
-  const tgtSpd=Math.min(MAX_SPD,BASE_SPD+(sector-1)*SPD_PER_SECTOR);speed+=(tgtSpd-speed)*dt*0.55;
-  trackScroll+=dt*speed*0.00095;score+=Math.round(speed*dt*0.038*multi);
+  const tgtSpd=Math.min(MAX_SPD,(BASE_SPD+(sector-1)*SPD_PER_SECTOR)*DIFFS[difficulty].speed);speed+=(tgtSpd-speed)*dt*0.55;
+  trackScroll+=dt*speed*0.00095;score+=Math.round(speed*dt*0.038*multi*DIFFS[difficulty].score);
+  if(multi>maxMulti)maxMulti=multi;
+  if(!bestPaceShown&&highScore>0&&score>highScore){bestPaceShown=true;addFloat('NEW RECORD PACE!',player.lane,0.82,'#C7FF4D');}
   sectorTimer+=dt;if(sectorTimer>=SECTOR_SECS){sectorTimer=0;sector++;triggerSector();}
+  if(mode==='blitz'){
+    blitzLeft-=dt;
+    if(blitzLeft<=0){blitzLeft=0;doGameOver('TIME UP — BLITZ COMPLETE');return;}
+  }
   camPhase+=dt*(0.18+sector*0.028);
   const cmag=Math.min(sector*0.48,2.6),tcurve=Math.sin(camPhase)*TRACK_HALF*0.21*cmag;
   camCurve+=(tcurve-camCurve)*dt*1.75;
@@ -704,6 +822,7 @@ function loop(ts){
 /* ── BOOT ── */
 function startGame(){
   initAudio();
+  if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});
   resetAll();player.screenX=laneX(1,1.0);
   STATE='PLAYING';
   showScreen('hud');
@@ -715,9 +834,22 @@ function goMenu(){
   document.getElementById('best-disp').textContent=highScore>0?highScore.toLocaleString():'—';
   const bestSec=parseInt(localStorage.getItem('qd_best_sector')||'0');
   const bsEl=document.getElementById('best-sector');
-  if(bsEl)bsEl.textContent=bestSec>0?String(bestSec).padStart(2,'0'):'—';
+  if(bsEl)bsEl.textContent=bestSec>0?String(bestSec).padStart(2,'0')+' · '+sectorName(bestSec):'—';
   const rh=()=>Math.random().toString(16).slice(2,6).toUpperCase();
   document.getElementById('w-addr').textContent=`0x${rh()}...${rh()} // SPECTATOR MODE`;
+  renderBoard('menu-board',8);
+  const stEl=document.getElementById('stats-disp');
+  if(stEl){
+    try{const st=JSON.parse(localStorage.getItem('qd_stats')||'{"runs":0,"total":0}');stEl.textContent=`${st.runs} runs · ${st.total.toLocaleString()} lifetime pts`;}catch(e){stEl.textContent='';}
+  }
+}
+function setSeg(group,value){
+  if(group==='diff')difficulty=value;else mode=value;
+  document.querySelectorAll(`[data-seg="${group}"]`).forEach(b=>b.classList.toggle('sel',b.dataset.val===value));
+  const desc=document.getElementById('diff-desc');
+  if(desc&&group==='diff')desc.textContent=DIFFS[value].desc;
+  const modeDesc=document.getElementById('mode-desc');
+  if(modeDesc&&group==='mode')modeDesc.textContent=value==='blitz'?`90-second sprint — highest score wins.`:`Endless run — survive as deep as you can.`;
 }
 window.addEventListener('DOMContentLoaded',()=>{
   resize();initStars();goMenu();
@@ -726,6 +858,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('btn-menu').addEventListener('click',goMenu);
   document.getElementById('btn-resume').addEventListener('click',()=>{if(STATE==='PAUSED')togglePause();});
   document.getElementById('btn-quit').addEventListener('click',goMenu);
+  const saveBtn=document.getElementById('btn-save-score');
+  if(saveBtn)saveBtn.addEventListener('click',saveRunScore);
+  const muteBtn=document.getElementById('mute-btn');
+  if(muteBtn)muteBtn.addEventListener('click',()=>{initAudio();toggleMute();});
+  document.querySelectorAll('[data-seg]').forEach(b=>b.addEventListener('click',()=>setSeg(b.dataset.seg,b.dataset.val)));
+  /* Touch buttons — same actions as the keyboard, no new mechanics. */
+  const tb=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener('click',fn);};
+  tb('tb-left',()=>moveLane(-1));tb('tb-right',()=>moveLane(1));
+  tb('tb-a',()=>shiftToState(0));tb('tb-b',()=>shiftToState(1));tb('tb-g',()=>shiftToState(2));
+  tb('tb-shield',activateShield);tb('tb-pause',()=>{if(STATE==='PLAYING'||STATE==='PAUSED')togglePause();});
   // v2.2 — switching tabs mid-run pauses instead of draining a run.
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden&&STATE==='PLAYING')togglePause();
