@@ -6,6 +6,22 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.4.1 — Quantum Drift crash fix (the v2.4 features were dead on arrival)
+
+- **Root cause found by running the game in a real browser:** the v2.3
+  resize improvement referenced `player`, but `player` was only
+  declared 185 lines later — a temporal-dead-zone ReferenceError that
+  killed the whole script on load. No board, no cursor, no mode
+  buttons, no pause handling, and the score frozen at 0 were all the
+  same single crash, not five separate bugs. `player` is now declared
+  before resize() ever runs, and the fix was verified in headless
+  Chromium: 6 board rows, cursor dot/ring/ripple, Duel selecting with
+  its target, P pausing AND resuming, click-outside resuming.
+- **Bonus fix from the same run:** passive score was rounded per
+  frame (Math.round(0.18) = 0 at starting speed), so it sat at 0
+  until the first pickup. Score now accumulates as a float and is
+  floored only for display.
+
 ## What's in v2.4.0 — Quantum Drift: Rival Season (new look)
 
 - **New look:** redesigned ship (swept hull, side pods, speed-reactive

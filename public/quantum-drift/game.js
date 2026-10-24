@@ -11,6 +11,12 @@ const ctx    = canvas.getContext('2d');
 document.getElementById('overload').classList.add('hidden');
 document.getElementById('sf').classList.add('hidden');
 let W, H, HORIZON_Y, PLAYER_Y, TRACK_HALF;
+/* v2.4.1 fix: player must be declared BEFORE resize() runs. The v2.3
+   resize improvement referenced player, but player was only declared
+   185 lines later — a temporal-dead-zone ReferenceError that killed
+   the whole script on load (no board, no cursor, no mode buttons,
+   no pause handling). Declared here, initialised in resetAll. */
+let player=null;
 
 function resize() {
   W = canvas.width  = window.innerWidth;
@@ -208,7 +214,7 @@ function drawStars(dt,cv){
 let STATE='MENU';
 let score,highScore,multi,sector,sectorTimer,speed,trackScroll;
 let camCurve,camPhase,shakeX,shakeY,shakeMag,flashA,flashCol,obsTimer;
-let obstacles,particles,floats,speedLines,nmTrack,player;
+let obstacles,particles,floats,speedLines,nmTrack;
 let muted=false;
 
 function makePlayer(){
@@ -747,8 +753,8 @@ function updateFloats(dt){
 
 /* ── HUD ── */
 function updateHUD(){
-  document.getElementById('h-score').textContent=score.toLocaleString();
-  const bestEl=document.getElementById('h-best');if(bestEl)bestEl.textContent='BEST '+Math.max(highScore,score).toLocaleString();
+  document.getElementById('h-score').textContent=Math.floor(score).toLocaleString();
+  const bestEl=document.getElementById('h-best');if(bestEl)bestEl.textContent='BEST '+Math.max(highScore,Math.floor(score)).toLocaleString();
   document.getElementById('h-sector').textContent=String(sector).padStart(2,'0');
   const nameEl=document.getElementById('h-sector-name');if(nameEl)nameEl.textContent='· '+sectorName(sector);
   const timeEl=document.getElementById('h-time');if(timeEl){
@@ -758,7 +764,7 @@ function updateHUD(){
   }
   const rivalEl=document.getElementById('h-rival');if(rivalEl){
     const n=nextRival(score);
-    rivalEl.textContent=n?`NEXT RIVAL: ${n.name} · ${n.score.toLocaleString()} (${(n.score-score).toLocaleString()} to go)`:'👑 LEADING THE PACK — NO RIVAL AHEAD';
+    rivalEl.textContent=n?`NEXT RIVAL: ${n.name} · ${n.score.toLocaleString()} (${(n.score-Math.floor(score)).toLocaleString()} to go)`:'👑 LEADING THE PACK — NO RIVAL AHEAD';
   }
   const progEl=document.getElementById('h-sector-prog');if(progEl)progEl.style.width=(sectorTimer/SECTOR_SECS*100)+'%';
   document.getElementById('h-multi').textContent=`x${multi.toFixed(1)}`;
@@ -840,6 +846,7 @@ function triggerSector(){
 /* ── GAME OVER ── */
 function doGameOver(reason){
   if(STATE!=='PLAYING')return;STATE='GAMEOVER';stopEng();sfx('gameover');
+  score=Math.floor(score);
   const isRec=score>highScore;
   if(isRec){highScore=score;localStorage.setItem('qd_hs',highScore);}
   // v2.2 — deepest sector reached, kept across visits.
@@ -903,7 +910,10 @@ function togglePause(){
 /* ── UPDATE ── */
 function update(dt){
   const tgtSpd=Math.min(MAX_SPD,(BASE_SPD+(sector-1)*SPD_PER_SECTOR)*DIFFS[difficulty].speed);speed+=(tgtSpd-speed)*dt*0.55;
-  trackScroll+=dt*speed*0.00095;score+=Math.round(speed*dt*0.038*multi*DIFFS[difficulty].score);
+  /* v2.4.1: accumulate score as a float. The old code rounded per
+     frame (Math.round(0.18) = 0 at starting speed), so the score sat
+     at 0 until the first pickup landed. Display floors it. */
+  trackScroll+=dt*speed*0.00095;score+=speed*dt*0.038*multi*DIFFS[difficulty].score;
   if(multi>maxMulti)maxMulti=multi;
   if(!bestPaceShown&&highScore>0&&score>highScore){bestPaceShown=true;addFloat('NEW RECORD PACE!',player.lane,0.82,'#C7FF4D');}
   sectorTimer+=dt;if(sectorTimer>=SECTOR_SECS){sectorTimer=0;sector++;triggerSector();}
