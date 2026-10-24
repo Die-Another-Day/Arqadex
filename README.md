@@ -6,6 +6,23 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.1
+
+- **Daylight is now the default theme** — bright arcade first, with Neon Void,
+  Synthwave and Matrix one click away. A saved theme still wins for returning
+  visitors.
+- **Themes now reach inside the games** — every game plays inside the GameShell
+  frame, which re-tints the game itself per theme (plus a themed header, theme
+  switcher, reload and fullscreen). The custom cursor is injected into the
+  game's own document too, so it never drops back to the system arrow mid-game.
+- **A richer cursor everywhere** — click ripples, a fading motion trail,
+  a caret-bar shape over text fields, and per-theme personalities (square in
+  Matrix, soft daylight glow, extra synthwave bloom).
+- **Aim Trainer** (`/aim/`) — the second built-in game: 30-second rounds,
+  fast-fading targets, accuracy tracking and a best score in Your Cabinet.
+- **Livelier environment** — the ambient particle dust re-colours itself when
+  the theme changes, and theme switches cross-fade instead of snapping.
+
 ## What's in v2.0
 
 - **A real arcade browser** — search, filter by tag, sort, and star favourites.
@@ -33,6 +50,7 @@ Live site: **https://arqadex.site**
 | Quantum Drift | Quantum physics racing | Live |
 | Multiplayer Psych | Social dynamics as game loops | Live |
 | Reflex Rush | Built-in reaction test | Live |
+| Aim Trainer | Built-in 30-second aim test | Live |
 | CTRL | Control systems at breaking point | In the lab (72%) |
 
 ## Run it locally

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { applyTheme, getTheme, type ThemeId } from '@/lib/arcade'
 
 const ThemeContext = createContext<{ theme: ThemeId; setTheme: (t: ThemeId) => void }>({
-  theme: 'neon',
+  theme: 'daylight',
   setTheme: () => {},
 })
 
@@ -13,7 +13,7 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>('neon')
+  const [theme, setThemeState] = useState<ThemeId>('daylight')
 
   useEffect(() => {
     // Layout's inline script already set data-theme before paint;

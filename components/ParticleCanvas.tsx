@@ -14,12 +14,22 @@ interface Particle {
   maxLife: number
 }
 
-const COLORS = ['#00F5FF', '#FF2DA6', '#7A5CFF', '#C7FF4D']
+const FALLBACK_COLORS = ['#00F5FF', '#FF2DA6', '#7A5CFF', '#C7FF4D']
+
+/** The ambient dust follows the active theme — daylight gets warm sparks, matrix gets green rain. */
+function readPalette(): string[] {
+  if (typeof document === 'undefined') return FALLBACK_COLORS
+  const cs = getComputedStyle(document.documentElement)
+  const pick = (name: string) => cs.getPropertyValue(name).trim()
+  const palette = [pick('--accent'), pick('--accent2'), pick('--accent3'), pick('--accent-lime')].filter(Boolean)
+  return palette.length ? palette : FALLBACK_COLORS
+}
 
 export default function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouse = useRef({ x: -9999, y: -9999 })
   const particles = useRef<Particle[]>([])
+  const palette = useRef<string[]>(FALLBACK_COLORS)
   const raf = useRef<number>(0)
 
   useEffect(() => {
@@ -41,7 +51,7 @@ export default function ParticleCanvas() {
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       size: Math.random() * 1.5 + 0.5,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      color: palette.current[Math.floor(Math.random() * palette.current.length)],
       opacity: Math.random() * 0.5 + 0.1,
       life: 0,
       maxLife: Math.random() * 300 + 200,
@@ -136,6 +146,15 @@ export default function ParticleCanvas() {
       mouse.current = { x: e.clientX, y: e.clientY }
     }
 
+    palette.current = readPalette()
+    const observer = new MutationObserver(() => {
+      palette.current = readPalette()
+      particles.current.forEach((pt) => {
+        pt.color = palette.current[Math.floor(Math.random() * palette.current.length)]
+      })
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+
     window.addEventListener('resize', resize)
     window.addEventListener('mousemove', onMouseMove)
     resize()
@@ -143,6 +162,7 @@ export default function ParticleCanvas() {
     draw()
 
     return () => {
+      observer.disconnect()
       window.removeEventListener('resize', resize)
       window.removeEventListener('mousemove', onMouseMove)
       cancelAnimationFrame(raf.current)

@@ -8,10 +8,10 @@
 export type ThemeId = 'neon' | 'synthwave' | 'matrix' | 'daylight'
 
 export const THEMES: { id: ThemeId; label: string; hint: string }[] = [
+  { id: 'daylight', label: 'DAYLIGHT', hint: 'Bright arcade' },
   { id: 'neon', label: 'NEON VOID', hint: 'The classic lab' },
   { id: 'synthwave', label: 'SYNTHWAVE', hint: 'Sunset chrome' },
   { id: 'matrix', label: 'MATRIX', hint: 'Green terminal' },
-  { id: 'daylight', label: 'DAYLIGHT', hint: 'Bright arcade' },
 ]
 
 const FAV_KEY = 'arqadex:favorites'
@@ -43,8 +43,8 @@ function write(key: string, value: unknown) {
 }
 
 export function getTheme(): ThemeId {
-  const saved = read<string>(THEME_KEY, 'neon')
-  return THEMES.some((t) => t.id === saved) ? (saved as ThemeId) : 'neon'
+  const saved = read<string>(THEME_KEY, 'daylight')
+  return THEMES.some((t) => t.id === saved) ? (saved as ThemeId) : 'daylight'
 }
 
 export function applyTheme(id: ThemeId) {
@@ -104,4 +104,15 @@ export function clearCabinet() {
   } catch {
     // ignore
   }
+}
+
+const AIM_KEY = 'arqadex:aim-best'
+
+export function getBestAim(): number | null {
+  return read<number | null>(AIM_KEY, null)
+}
+
+export function setBestAim(score: number) {
+  const best = getBestAim()
+  if (best === null || score > best) write(AIM_KEY, score)
 }

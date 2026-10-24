@@ -1,10 +1,5 @@
-export default function VIBattlePage() {
-  return (
-    <main className="w-full h-screen overflow-hidden bg-black">
-      <iframe
-        src="/vi-battle-static/index.html"
-        className="w-full h-full border-0"
-      />
-    </main>
-  )
+import GameShell from '@/components/GameShell'
+
+export default function ViBattlePage() {
+  return <GameShell gameId="vi-battle" title="VI-BATTLE" src="/vi-battle-static/index.html" />
 }

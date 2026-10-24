@@ -33,6 +33,7 @@ html {
 }
 
 body {
+  transition: background-color 0.35s ease, color 0.35s ease;
   background-color: var(--bg-void);
   color: var(--text-primary);
   font-family: var(--font-syne);
@@ -40,11 +41,21 @@ body {
   cursor: none;
 }
 
-/* ─── Custom Cursor ───────────────────────────────────── */
+/* ─── Custom Cursor ─────────────────────────────────────
+   Every colour comes from the active theme, so the cursor re-skins
+   itself the moment the theme changes — no JS colour plumbing. */
+.cursor-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  overflow: hidden;
+}
+
 .cursor-dot {
   width: 8px;
   height: 8px;
-  background: var(--accent-cyan);
+  background: var(--accent);
   border-radius: 50%;
   position: fixed;
   top: 0;
@@ -52,15 +63,20 @@ body {
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
-  transition: transform 0.05s, width 0.2s, height 0.2s, background 0.2s;
-  box-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan);
+  transition: width 0.15s, height 0.15s, background 0.25s, box-shadow 0.25s;
+  box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
   mix-blend-mode: screen;
+}
+
+.cursor-dot.pressed {
+  width: 5px;
+  height: 5px;
 }
 
 .cursor-ring {
   width: 40px;
   height: 40px;
-  border: 1px solid rgba(0, 245, 255, 0.5);
+  border: 1.5px solid var(--accent);
   border-radius: 50%;
   position: fixed;
   top: 0;
@@ -68,15 +84,83 @@ body {
   pointer-events: none;
   z-index: 9998;
   transform: translate(-50%, -50%);
-  transition: transform 0.12s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
-  mix-blend-mode: screen;
+  transition: width 0.2s, height 0.2s, border-color 0.25s, border-radius 0.25s, opacity 0.2s;
+  opacity: 0.75;
 }
 
 .cursor-ring.hovering {
-  width: 60px;
-  height: 60px;
-  border-color: var(--accent-pink);
-  border-width: 1.5px;
+  width: 62px;
+  height: 62px;
+  border-color: var(--accent2);
+  border-width: 2px;
+  opacity: 1;
+}
+
+.cursor-ring.typing {
+  width: 3px;
+  height: 30px;
+  border-radius: 2px;
+  border-color: var(--accent2);
+  background: var(--accent2);
+  opacity: 0.9;
+}
+
+.cursor-ring.pressed {
+  width: 30px;
+  height: 30px;
+}
+
+.cursor-trail {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  transform: translate(-50%, -50%);
+  animation: cursor-trail-fade 0.65s ease-out forwards;
+}
+
+@keyframes cursor-trail-fade {
+  from { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, -24px))) scale(0.2); }
+}
+
+.cursor-ripple {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--accent2);
+  transform: translate(-50%, -50%);
+  animation: cursor-ripple-burst 0.5s ease-out forwards;
+}
+
+@keyframes cursor-ripple-burst {
+  from { transform: translate(-50%, -50%) scale(0.4); opacity: 0.9; }
+  to { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Per-theme cursor personalities. */
+[data-theme='matrix'] .cursor-dot,
+[data-theme='matrix'] .cursor-ring {
+  border-radius: 0;
+}
+
+[data-theme='matrix'] .cursor-trail {
+  border-radius: 0;
+}
+
+[data-theme='daylight'] .cursor-dot,
+[data-theme='daylight'] .cursor-ring,
+[data-theme='daylight'] .cursor-trail {
+  mix-blend-mode: normal;
+}
+
+[data-theme='daylight'] .cursor-dot {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 12px var(--accent);
+}
+
+[data-theme='synthwave'] .cursor-dot {
+  box-shadow: 0 0 12px var(--accent), 0 0 30px var(--accent2);
 }
 
 /* ─── Noise Overlay ───────────────────────────────────── */
@@ -363,7 +447,7 @@ body {
 /* ─── Responsive Utilities ────────────────────────────── */
 @media (max-width: 768px) {
   html { cursor: auto; }
-  .cursor-dot, .cursor-ring { display: none; }
+  .cursor-dot, .cursor-ring, .cursor-layer { display: none; }
   .noise-overlay { opacity: 0.02; }
 }
 
@@ -449,14 +533,14 @@ body {
 [data-theme='daylight'] {
   --bg: #fdf6ec;
   --bg2: #fffdf7;
-  --panel: rgba(255, 255, 255, 0.85);
+  --panel: rgba(255, 255, 255, 0.88);
   --text: #1a1033;
   --muted: #6b5f7a;
   --accent: #ff2d78;
   --accent2: #ff7a00;
   --accent3: #6d28d9;
   --on-accent: #ffffff;
-  --border: rgba(26, 16, 51, 0.12);
+  --border: rgba(26, 16, 51, 0.16);
   --bg-void: #fdf6ec;
   --bg-void2: #fff3e0;
   --bg-void3: #ffffff;

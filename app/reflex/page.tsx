@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Zap, Trophy, RotateCcw, Timer } from 'lucide-react'
 import { getBestReflex, setBestReflex, recordPlay } from '@/lib/arcade'
+import CustomCursor from '@/components/CustomCursor'
 
 type Phase = 'idle' | 'waiting' | 'ready' | 'too-soon' | 'result'
 
@@ -65,6 +66,7 @@ export default function ReflexRushPage() {
 
   return (
     <main className="min-h-screen px-6 py-10" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+      <CustomCursor />
       <div className="max-w-3xl mx-auto">
         <a href="/" className="inline-flex items-center gap-2 text-sm mb-8" style={{ color: 'var(--muted)' }}>
           <ArrowLeft className="w-4 h-4" /> Back to the arcade
