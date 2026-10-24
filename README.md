@@ -6,6 +6,18 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.2.1 — hero centering fix
+
+- The ARQADEX hero title was wider than a phone-width container (its size
+  had a 4rem floor), so on narrow screens the final X ran off the right
+  edge — and the section hides overflow, so no scrollbar ever revealed
+  it. The title now scales with `clamp(2.75rem, 13vw, 10rem)`, stays on
+  one line, and is centred with an inline `text-align: center` so no
+  stylesheet rule can quietly un-centre it again.
+- Also added the missing `@keyframes scan` the hero's scan line was
+  already referencing, so it sweeps down the hero instead of sitting at
+  the top.
+
 ## What's in v2.2 — the games themselves, upgraded
 
 - **Score Vault (every game)** — the game frame now has a VAULT panel with a

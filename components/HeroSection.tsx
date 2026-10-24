@@ -79,7 +79,7 @@ export default function HeroSection() {
         style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', animation: 'scan 12s linear infinite', zIndex: 2 }}
       />
 
-      <div className="relative z-10 max-w-5xl w-full text-center">
+      <div className="relative z-10 max-w-5xl w-full mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -97,8 +97,20 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="font-black leading-[0.9] tracking-tight"
-          style={{ fontFamily: 'var(--font-syne)', color: 'var(--text)', fontSize: 'clamp(4rem, 14vw, 10rem)' }}
+          className="font-black leading-[0.9] tracking-tight w-full mx-auto text-center"
+          style={{
+            fontFamily: 'var(--font-syne)',
+            color: 'var(--text)',
+            // Was clamp(4rem, 14vw, 10rem): the 4rem floor made the word wider
+            // than a phone-width container, so the final X ran off the right
+            // edge (the section hides overflow, so no scrollbar ever showed
+            // it). 13vw with a 2.75rem floor keeps it on one centred line
+            // from ~320px phones up to desktop, and textAlign is inline so
+            // no stylesheet rule can quietly left-align it again.
+            fontSize: 'clamp(2.75rem, 13vw, 10rem)',
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+          }}
         >
           ARQA<span style={{ color: 'var(--accent)' }}>DEX</span>
         </motion.h1>
