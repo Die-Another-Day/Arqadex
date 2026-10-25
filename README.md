@@ -22,6 +22,16 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.6.4 — traffic lever: one-tap share on every game
+
+Decision 2026-10-25: grow traffic first, ads later (no ad code, no ad account,
+no revenue until players exist). So this release adds distribution to the
+product itself: a SHARE button in every game shell header — native share sheet
+where the device offers one, clipboard copy otherwise, with COPIED! feedback.
+The link shared is the play page itself, so a friend opens the same game
+instantly. Verified in a real browser: button renders, click copies the play
+URL to the clipboard.
+
 ## What's in v2.6.3 — discoverability (first distribution push)
 
 - Social cards: proper Open Graph + Twitter cards (title "Play Instantly. No

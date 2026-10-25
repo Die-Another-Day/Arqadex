@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Maximize, Minimize, RefreshCw, Palette, Loader2, Trophy, Info, X, Clock, Play } from 'lucide-react'
+import { ArrowLeft, Maximize, Minimize, RefreshCw, Palette, Loader2, Trophy, Info, X, Clock, Play, Share2, Check } from 'lucide-react'
 import CustomCursor from '@/components/CustomCursor'
 import { ThemeProvider, useTheme } from '@/components/theme'
 import { THEMES, recordPlay, getPlays, getVault, addVaultScore, getBestVaultScore, ARCADE_EVENT, type ThemeId, type VaultEntry } from '@/lib/arcade'
@@ -116,6 +116,31 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
   const [loaded, setLoaded] = useState(false)
   const [isFull, setIsFull] = useState(false)
   const [drawer, setDrawer] = useState(false)
+  const [shared, setShared] = useState(false)
+
+  /* v2.6.4 — traffic lever: one-tap share from every game. The link copied
+     is this play page itself, so a friend opens the same game instantly.
+     Native share sheet where the device offers one, clipboard otherwise. */
+  const shareGame = useCallback(async () => {
+    const url = window.location.href
+    const text = `${title} on ARQADEX — play instantly, no downloads.`
+    try {
+      if (navigator.share) { await navigator.share({ title: `${title} — ARQADEX`, text, url }) }
+      else throw new Error('no native share')
+    } catch {
+      try { await navigator.clipboard.writeText(url) }
+      catch {
+        const ta = document.createElement('textarea')
+        ta.value = url
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+    }
+    setShared(true)
+    window.setTimeout(() => setShared(false), 2000)
+  }, [title])
   const [elapsed, setElapsed] = useState(0)
   const [score, setScore] = useState('')
   const [note, setNote] = useState('')
@@ -205,6 +230,14 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
         >
           THEME: {current.label}
         </span>
+        <button
+          onClick={shareGame}
+          title="Share this game — send a friend straight here"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold tracking-widest transition-transform hover:scale-105"
+          style={{ background: 'color-mix(in srgb, var(--accent) 14%, transparent)', color: 'var(--accent)', border: '1px solid var(--border)' }}
+        >
+          {shared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} <span className="hidden sm:inline">{shared ? 'COPIED!' : 'SHARE'}</span>
+        </button>
         <button
           onClick={() => setDrawer((v) => !v)}
           title="About this game & Score Vault"
