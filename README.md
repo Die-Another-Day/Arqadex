@@ -22,6 +22,24 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.8.0 — NEON OUTLAW Part 2: story, races, districts, life
+
+One upgrade, everything together. Story: you are KAI, a street racer new to Neon
+City; the Fixer (gold jacket, plaza) gives you a 4-job chain — FIRST WHEELS
+(drive to the docks garage), MIDNIGHT SPRINT (5-gate street race vs 2 rival AI
+cars with rubber-banding), HEAT RUN (3-star getaway, 90s), BEACH BLITZ (final
+race) — with cash rewards, saved progress, and an ALL JOBS DONE ending.
+Models: 14 walking pedestrians (they flee from speeding cars; running one over
+adds a wanted star), sport cars and vans with real stat differences (sport
+tops ~119 km/h vs sedan ~94), race gates, palms, park trees, dock containers
+and a crane. Environments: beach + ocean (south), docks (east), park + pond
+(north), and a taller downtown core. Better things: day/night cycle, synth
+engine hum + police siren + mission fanfare via WebAudio (N mutes, no audio
+assets), 4-star wanted with up to 4 cop cars, live objective line, and a
+district-aware minimap. Verified end-to-end in a real browser: full story
+chain completed ($300 → $1,300 → $2,100 → $3,300), rivals, police, peds,
+cinematic camera — zero page errors.
+
 ## What's in v2.7.0 — NEON OUTLAW Part 1: GTA-style open city
 
 Original GTA-inspired 3D open-city game (no Rockstar assets, names or map —

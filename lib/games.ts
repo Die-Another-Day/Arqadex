@@ -138,7 +138,7 @@ export const GAMES: Game[] = [
     id: 'neon-outlaw',
     title: 'NEON OUTLAW',
     tagline:
-      'Arqadex\'s first open-city game. Walk neon streets, jack a car, outrun the cops, and pull off the getaway — a GTA-style sandbox that runs in your browser, no downloads. Part 1: city, driving, wanted stars, and the first mission.',
+      'Arqadex\'s first open-city game. You are KAI, a street racer new to Neon City — do the Fixer\'s jobs, win street races against rival crews, and survive the heat. Walk neon streets, jack sports cars and vans, explore the beach, docks and park, and play the full story chain — a GTA-style sandbox in your browser, no downloads.',
     tags: ['OPEN WORLD', 'DRIVING', 'CINEMATIC'],
     color: '#FF2DA6',
     status: 'LIVE',
