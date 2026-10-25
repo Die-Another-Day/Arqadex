@@ -22,6 +22,21 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.6.1 — Neon Duel connection diagnostics (after live join failed)
+
+Live two-tab test on arqadex.site (25 Oct): host room opened fine, but the guest
+never connected — it timed out instead of reporting a relay error. Fixes:
+- PeerJS 1.5.4 → 1.5.5 (stability release).
+- Guest join now destroys a stale peer from a failed attempt before retrying,
+  clears its timeout on success, waits 12s (was 8s), and reports the actual
+  relay error type (peer-unavailable vs other) instead of one generic message.
+- Host and guest peers now auto-reconnect on 'disconnected', and PeerJS debug
+  logging is on so a live retest can read the real failure from the console.
+- The failure itself is still unexplained: signalling apparently worked (no
+  peer-unavailable error) but the data channel never opened — consistent with
+  a restricted test browser (blocked UDP/STUN) or a relay/NAT issue, not yet
+  proven to affect real phones. Real-device test still owed.
+
 ## What's in v2.6.0 — Phase 2: first real multiplayer game (NEON DUEL)
 
 - NEON DUEL, a reaction duel: create a room (couples = 2 players, group = up to 6),

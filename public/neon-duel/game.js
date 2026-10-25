@@ -10,7 +10,7 @@
 
   var $ = function (id) { return document.getElementById(id) }
   var screens = ['lobby', 'room', 'duel', 'results']
-  var peer = null, hostConn = null, conns = {}
+  var peer = null, hostConn = null, conns = {}, joinTimer = null
   var role = null // 'host' | 'guest' | 'bot'
   var me = { key: 'me', name: 'YOU' }
   var players = [] // {key, name, isHost}
@@ -178,7 +178,8 @@
     })
   }
   function hostPeer() {
-    peer = new Peer('arqadex-duel-' + roomCode)
+    peer = new Peer('arqadex-duel-' + roomCode, { debug: 2 })
+    peer.on('disconnected', function () { try { peer.reconnect() } catch (e) {} })
     peer.on('open', function () {
       role = 'host'
       players = [{ key: 'host', name: me.name, isHost: true }]
@@ -195,7 +196,7 @@
     })
     peer.on('error', function (err) {
       if (err.type === 'unavailable-id') { roomCode = makeCode(); hostPeer() }
-      else setStatus('lobby-status', 'Connection service error (' + err.type + ') — retry in a moment.')
+      else setStatus('lobby-status', 'Relay error (' + err.type + ') — if this keeps happening, try a different network. The room code may still work for others.')
     })
   }
   function onHostData(conn, msg) {
@@ -235,10 +236,15 @@
     me.name = callsign()
     var code = ($('join-code').value || '').trim().toUpperCase()
     if (!/^[A-Z]{4}$/.test(code)) { setStatus('lobby-status', 'Enter a 4-letter room code.'); return }
+    // A failed earlier attempt leaves a stale peer behind; its pending timers
+    // could overwrite the new attempt's status. Clean up first.
+    try { if (peer) peer.destroy() } catch (e) {}
+    if (joinTimer) { clearTimeout(joinTimer); joinTimer = null }
     roomCode = code
     setStatus('lobby-status', 'Joining room ' + code + '…')
     waitForPeer().then(function () {
-      peer = new Peer()
+      peer = new Peer({ debug: 2 })
+      peer.on('disconnected', function () { try { peer.reconnect() } catch (e) {} })
       peer.on('open', function () {
         hostConn = peer.connect('arqadex-duel-' + code, { reliable: true })
         hostConn.on('open', function () { hostConn.send({ t: 'hello', name: me.name }) })
@@ -248,12 +254,12 @@
           setStatus('lobby-status', 'Lost connection to the host — the room closed.')
           leaveRoom(true)
         })
-        setTimeout(function () {
-          if (role !== 'guest') setStatus('lobby-status', 'No room answered that code — check the code and retry.')
-        }, 8000)
+        joinTimer = setTimeout(function () {
+          if (role !== 'guest') setStatus('lobby-status', 'Reached the relay, but the host did not answer within 12s. The host may have closed the room, or this network may block direct connections — retry, or try on a different network.')
+        }, 12000)
       })
       peer.on('error', function (err) {
-        setStatus('lobby-status', 'Connection error (' + err.type + ') — the host may be offline or the code wrong.')
+        setStatus('lobby-status', 'Relay error (' + err.type + ') — ' + (err.type === 'peer-unavailable' ? 'no room with that code is open right now.' : 'the host may be offline or this network may block the relay.'))
       })
     }).catch(function () {
       setStatus('lobby-status', 'Could not load the connection library — check your connection and retry.')
@@ -262,6 +268,7 @@
   function onGuestData(msg) {
     if (msg.t === 'rejected') { setStatus('lobby-status', msg.reason); leaveRoom(true); return }
     if (msg.t === 'roster') {
+      if (joinTimer) { clearTimeout(joinTimer); joinTimer = null }
       players = msg.players
       role = 'guest'
       $('room-code').textContent = roomCode
@@ -372,6 +379,7 @@
     Object.keys(conns).forEach(function (k) { try { conns[k].close() } catch (e) {} })
     try { if (peer) peer.destroy() } catch (e) {}
     peer = null; hostConn = null; conns = {}; role = null; players = []
+    if (joinTimer) { clearTimeout(joinTimer); joinTimer = null }
     if (match) { match.timers.forEach(clearTimeout); match = null }
     roomCode = ''
     show('lobby')
