@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>NEON OUTLAW — ARQADEX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+  { "imports": { "three": "./three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <!-- cinematic letterbox bars -->
+  <div id="bar-top" class="bar hidden"></div>
+  <div id="bar-bottom" class="bar hidden"></div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="hud-left">
+      <div id="wanted">☆☆☆</div>
+      <div id="cash">$0</div>
+      <div id="mode">ON FOOT</div>
+    </div>
+    <canvas id="minimap" width="150" height="150"></canvas>
+    <div id="speed">0<span>KM/H</span></div>
+    <div id="mission-timer"></div>
+    <div id="banner"></div>
+    <div id="hint">WASD move/drive · E enter/exit car · C cinematic camera · V camera · M mission · P pause</div>
+  </div>
+
+  <!-- Start screen -->
+  <div id="start-screen">
+    <div class="eyebrow">ARQADEX PRESENTS · PART 1</div>
+    <h1>NEON<br><span>OUTLAW</span></h1>
+    <p class="tag">A GTA-style open city, in your browser. Walk the streets, steal a car, outrun the cops, pull off the getaway.</p>
+    <ul class="controls">
+      <li><b>WASD</b> walk / drive</li>
+      <li><b>E</b> enter / exit car</li>
+      <li><b>C</b> cinematic camera</li>
+      <li><b>V</b> change camera</li>
+      <li><b>M</b> start GETAWAY mission</li>
+      <li><b>Shift</b> run · <b>Space</b> jump</li>
+    </ul>
+    <button id="btn-start">START ENGINE</button>
+    <p class="foot">Original game. Not affiliated with Rockstar Games or Grand Theft Auto. All models are code-built low-poly originals — no copied assets.</p>
+  </div>
+
+  <!-- Busted / pause overlays -->
+  <div id="overlay" class="hidden">
+    <h2 id="overlay-title">BUSTED!</h2>
+    <p id="overlay-text"></p>
+    <button id="btn-respawn">GET BACK OUT THERE</button>
+  </div>
+
+  <!-- Touch controls -->
+  <div id="touch" class="hidden">
+    <div id="stick-base"><div id="stick-knob"></div></div>
+    <div id="touch-btns">
+      <button data-k="gas">GAS</button>
+      <button data-k="brake">BRK</button>
+      <button data-k="enter">ENTER</button>
+      <button data-k="cam">CAM</button>
+    </div>
+  </div>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

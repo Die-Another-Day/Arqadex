@@ -8,6 +8,7 @@ const STATIC_GAMES: Record<string, { title: string; src: string }> = {
   'merge-ball': { title: 'MERGE BALL', src: '/merge-ball/' },
   'quantum-drift': { title: 'QUANTUM DRIFT', src: '/quantum-drift/' },
   'neon-duel': { title: 'NEON DUEL', src: '/neon-duel/' },
+  'neon-outlaw': { title: 'NEON OUTLAW', src: '/neon-outlaw/' },
 }
 
 export function generateStaticParams() {

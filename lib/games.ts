@@ -135,6 +135,20 @@ export const GAMES: Game[] = [
     shape: 'duel',
   },
   {
+    id: 'neon-outlaw',
+    title: 'NEON OUTLAW',
+    tagline:
+      'Arqadex\'s first open-city game. Walk neon streets, jack a car, outrun the cops, and pull off the getaway — a GTA-style sandbox that runs in your browser, no downloads. Part 1: city, driving, wanted stars, and the first mission.',
+    tags: ['OPEN WORLD', 'DRIVING', 'CINEMATIC'],
+    color: '#FF2DA6',
+    status: 'LIVE',
+    progress: 100,
+    url: '/play/neon-outlaw',
+    players: 'SOLO',
+    mood: 'Outrun the heat',
+    shape: 'duel',
+  },
+  {
     id: 'reflex-rush',
     title: 'REFLEX RUSH',
     tagline:

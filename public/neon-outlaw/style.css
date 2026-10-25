@@ -1,0 +1,45 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: #050514; }
+body { font-family: 'Space Mono', monospace; color: #fff; -webkit-tap-highlight-color: transparent; }
+#game-container { position: fixed; inset: 0; }
+#game-container canvas { display: block; }
+.hidden { display: none !important; }
+
+/* letterbox */
+.bar { position: fixed; left: 0; right: 0; height: 9vh; background: #000; z-index: 30; pointer-events: none; }
+#bar-top { top: 0; } #bar-bottom { bottom: 0; }
+
+/* HUD */
+#hud { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
+#hud-left { position: absolute; top: 14px; left: 16px; }
+#wanted { font-size: 26px; letter-spacing: 4px; color: #FFD23F; text-shadow: 0 0 12px rgba(255,210,63,.8); }
+#cash { font-family: Orbitron, sans-serif; font-size: 20px; color: #4DFF88; margin-top: 2px; }
+#mode { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .2em; color: rgba(255,255,255,.6); margin-top: 2px; }
+#minimap { position: absolute; top: 14px; right: 16px; border: 2px solid rgba(0,245,255,.5); border-radius: 50%; background: rgba(5,5,20,.7); }
+#speed { position: absolute; right: 20px; bottom: 26px; font-family: Orbitron, sans-serif; font-size: 34px; font-weight: 900; }
+#speed span { font-size: 11px; margin-left: 4px; color: rgba(255,255,255,.6); }
+#mission-timer { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-family: Orbitron, sans-serif; font-size: 20px; color: #FF2DA6; }
+#banner { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); font-family: Orbitron, sans-serif; font-size: 30px; font-weight: 900; letter-spacing: .1em; text-align: center; text-shadow: 0 0 20px rgba(255,45,166,.8); white-space: nowrap; }
+#hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,.45); white-space: nowrap; }
+
+/* Start + overlays */
+#start-screen, #overlay { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(ellipse at 50% 30%, rgba(255,45,166,.18), rgba(5,5,20,.92) 70%); padding: 20px; }
+.eyebrow { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .3em; color: #00F5FF; margin-bottom: 12px; }
+#start-screen h1 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 72px; line-height: .9; }
+#start-screen h1 span { color: transparent; -webkit-text-stroke: 2px #FF2DA6; }
+.tag { max-width: 520px; color: rgba(255,255,255,.65); margin: 16px 0; line-height: 1.6; font-size: 14px; }
+.controls { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; max-width: 560px; margin-bottom: 20px; font-size: 12px; color: rgba(255,255,255,.6); }
+.controls b { color: #00F5FF; }
+#btn-start, #btn-respawn { font-family: Orbitron, sans-serif; font-weight: 900; letter-spacing: .2em; font-size: 15px; padding: 16px 34px; border-radius: 12px; border: 1px solid rgba(255,45,166,.6); background: rgba(255,45,166,.18); color: #FF2DA6; cursor: pointer; }
+#btn-start:hover, #btn-respawn:hover { transform: scale(1.04); }
+.foot { margin-top: 22px; max-width: 520px; font-size: 11px; color: rgba(255,255,255,.35); line-height: 1.5; }
+#overlay h2 { font-family: Orbitron, sans-serif; font-size: 64px; font-weight: 900; color: #FF2DA6; }
+#overlay p { color: rgba(255,255,255,.7); margin: 12px 0 22px; }
+
+/* Touch */
+#touch { position: fixed; inset: 0; z-index: 25; pointer-events: none; }
+#stick-base { position: absolute; left: 24px; bottom: 90px; width: 110px; height: 110px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); pointer-events: auto; touch-action: none; }
+#stick-knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(0,245,255,.35); border: 2px solid rgba(0,245,255,.7); }
+#touch-btns { position: absolute; right: 20px; bottom: 110px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+#touch-btns button { width: 66px; height: 66px; border-radius: 50%; border: 1px solid rgba(255,45,166,.6); background: rgba(255,45,166,.2); color: #fff; font-family: Orbitron, sans-serif; font-size: 11px; touch-action: none; }
+@media (max-width: 700px) { #start-screen h1 { font-size: 52px; } #hint { display: none; } }

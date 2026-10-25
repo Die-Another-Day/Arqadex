@@ -22,6 +22,18 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.7.0 — NEON OUTLAW Part 1: GTA-style open city
+
+Original GTA-inspired 3D open-city game (no Rockstar assets, names or map —
+every model is code-built low-poly). Walk neon streets, jack a car with E,
+outrun cops under a wanted-star system, pull the GETAWAY mission (M) for cash,
+switch cameras (V) or go full cinematic with letterbox bars (C). Three.js is
+vendored locally (`public/neon-outlaw/three.module.min.js`, 670 KB, MIT) so the
+game has no CDN dependency at runtime. Verified in a real browser: start, walk,
+enter car, full-throttle drive to ~90 km/h, mission start with 2 wanted stars,
+cinematic bars, live minimap — zero page errors (the one console error seen in
+the VM run is the Google Fonts CDN, unreachable from the offline VM only).
+
 ## What's in v2.6.4 — traffic lever: one-tap share on every game
 
 Decision 2026-10-25: grow traffic first, ads later (no ad code, no ad account,
