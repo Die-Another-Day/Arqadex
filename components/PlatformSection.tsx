@@ -22,8 +22,8 @@ const PILLARS = [
     icon: Users,
     color: '#FF2DA6',
     title: 'PLAY TOGETHER',
-    desc: 'Send any game link to a friend or your partner and they open it instantly, no download on their side either. Private rooms with live shared play — real group and couples modes — are the next build, and they are labelled as such until they ship.',
-    tag: 'SHARE LINKS TODAY · LIVE ROOMS NEXT',
+    desc: 'Send any game link to a friend or your partner and they open it instantly, no download on their side either. And now live rooms are real: NEON DUEL lets you create a room, share the link, and duel a partner or a group in real time, peer-to-peer.',
+    tag: 'LIVE ROOMS: NEON DUEL',
   },
   {
     icon: Upload,
@@ -91,6 +91,13 @@ export default function PlatformSection() {
             style={{ background: 'color-mix(in srgb, var(--accent) 14%, transparent)', border: '1px solid var(--border)', color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}
           >
             BROWSE GAMES <ArrowRight className="w-4 h-4" />
+          </a>
+          <a
+            href="/play/neon-duel"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold tracking-widest transition-all hover:scale-105"
+            style={{ background: 'color-mix(in srgb, var(--accent2) 14%, transparent)', border: '1px solid var(--border)', color: 'var(--accent2)', fontFamily: 'var(--font-orbitron)' }}
+          >
+            <Users className="w-4 h-4" /> PLAY NEON DUEL — LIVE ROOMS
           </a>
           <a
             href="/submit/"

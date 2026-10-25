@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>NEON DUEL — ARQADEX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="wrap">
+
+    <!-- ============ LOBBY ============ -->
+    <section id="screen-lobby" class="screen">
+      <div class="eyebrow">ARQADEX · LIVE ROOMS · NO DOWNLOADS</div>
+      <h1>NEON<br><span>DUEL</span></h1>
+      <p class="tag">The fastest finger wins. A reaction duel for friends, groups — and couples.</p>
+
+      <label class="field-label" for="callsign">YOUR CALLSIGN</label>
+      <input id="callsign" maxlength="16" placeholder="e.g. VOLT" autocomplete="off">
+
+      <div id="invite-hint" class="hint hidden">Invite link opened — enter your callsign and tap JOIN ROOM.</div>
+
+      <div class="btn-row">
+        <button id="btn-create" class="btn primary">CREATE ROOM</button>
+        <button id="btn-practice" class="btn ghost">PRACTICE VS BOT</button>
+      </div>
+
+      <div class="mode-row">
+        <label><input type="radio" name="mode" value="couple" checked> COUPLES · 2 players</label>
+        <label><input type="radio" name="mode" value="group"> GROUP · up to 6</label>
+      </div>
+
+      <div class="join-box">
+        <input id="join-code" maxlength="4" placeholder="ROOM CODE" autocomplete="off">
+        <button id="btn-join" class="btn small">JOIN ROOM</button>
+      </div>
+
+      <p id="lobby-status" class="status"></p>
+      <p class="foot">Multiplayer runs peer-to-peer through a free public relay (PeerJS Cloud). No accounts, no Arqadex servers — scores live in your browser only. If the host leaves, the room closes.</p>
+    </section>
+
+    <!-- ============ ROOM ============ -->
+    <section id="screen-room" class="screen hidden">
+      <div class="eyebrow">ROOM <span id="room-code"></span> · <span id="room-mode"></span></div>
+      <h2>WAITING FOR<br>PLAYERS</h2>
+      <div id="roster" class="roster"></div>
+      <div class="btn-row">
+        <button id="btn-copy" class="btn ghost">COPY INVITE LINK</button>
+        <button id="btn-start" class="btn primary hidden">START DUEL</button>
+      </div>
+      <button id="btn-leave" class="btn text">LEAVE ROOM</button>
+      <p id="room-status" class="status"></p>
+    </section>
+
+    <!-- ============ DUEL ============ -->
+    <section id="screen-duel" class="screen hidden">
+      <div class="duel-top">
+        <div>ROUND <span id="duel-round">1</span></div>
+        <div>FIRST TO 3 WINS</div>
+      </div>
+      <div id="scoreboard" class="scoreboard"></div>
+      <div id="duel-msg" class="duel-msg">GET READY…</div>
+      <button id="target" class="target" disabled>TAP WHEN IT FLASHES</button>
+      <p id="duel-status" class="status"></p>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section id="screen-results" class="screen hidden">
+      <div class="eyebrow">MATCH OVER</div>
+      <h2 id="winner-name">—</h2>
+      <div id="final-scores" class="scoreboard"></div>
+      <div class="btn-row">
+        <button id="btn-rematch" class="btn primary">REMATCH</button>
+        <button id="btn-lobby" class="btn ghost">BACK TO LOBBY</button>
+      </div>
+    </section>
+
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

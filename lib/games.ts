@@ -121,6 +121,20 @@ export const GAMES: Game[] = [
     shape: 'duel',
   },
   {
+    id: 'neon-duel',
+    title: 'NEON DUEL',
+    tagline:
+      'Arqadex\'s first real multiplayer game. Create a room, share the link, and duel your friends, your group — or your partner — in a fastest-finger reaction battle. No downloads, no accounts, peer-to-peer.',
+    tags: ['REACTION', 'MULTIPLAYER', 'PARTY'],
+    color: '#FF2DA6',
+    status: 'LIVE',
+    progress: 100,
+    url: '/play/neon-duel',
+    players: 'MULTIPLAYER',
+    mood: 'Fastest finger wins',
+    shape: 'duel',
+  },
+  {
     id: 'reflex-rush',
     title: 'REFLEX RUSH',
     tagline:

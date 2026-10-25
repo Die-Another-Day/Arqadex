@@ -22,6 +22,23 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.6.0 — Phase 2: first real multiplayer game (NEON DUEL)
+
+- NEON DUEL, a reaction duel: create a room (couples = 2 players, group = up to 6),
+  share the invite link (`/neon-duel/?room=CODE`), first to 3 round wins takes it.
+- Peer-to-peer via PeerJS Cloud (free public relay, no account, no Arqadex server):
+  the host arbitrates rounds on its own clock; if the host leaves, the room closes.
+  Practice vs bot mode works fully offline and shares the same round engine.
+- Registered in the game grid and the themed play shell (`/play/neon-duel`).
+- Platform section updated: live rooms are now real for NEON DUEL, with a CTA.
+- Bug caught by real-browser verification (the v2.4 lesson, again): endMatch nulled
+  the match before rendering scores, so the results screen never appeared. Fixed
+  by rendering before nulling, plus a null guard in renderScores.
+- Honest limit, stated in-game: real two-player play could NOT be verified from
+  this VM (its browser has no internet through the egress proxy). Local checks
+  prove the full offline flow; live two-tab verification on arqadex.site is the
+  remaining check before calling multiplayer done.
+
 ## What's in v2.4.1 — Quantum Drift crash fix (the v2.4 features were dead on arrival)
 
 - **Root cause found by running the game in a real browser:** the v2.3
