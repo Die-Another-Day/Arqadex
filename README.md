@@ -22,6 +22,14 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.6.3 — discoverability (first distribution push)
+
+- Social cards: proper Open Graph + Twitter cards (title "Play Instantly. No
+  Downloads.", description, og-image) so every shared Arqadex link looks like a
+  real product instead of a bare URL.
+- sitemap.xml + robots.txt covering every game page, for search indexing.
+- No gameplay changes; this release exists so the marketing actually lands.
+
 ## What's in v2.6.2 — version stamp + on-page debug panel (retest hygiene)
 
 The v2.6.1 retest quoted the OLD error text, which only exists in v2.6.0 — so

@@ -2,13 +2,23 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'ARQADEX — Experimental Web Games',
-  description: 'An experimental digital arcade. Physics-driven chaos, procedural systems, and interactive madness. Search, favourite, and play in your browser — no installs, no accounts.',
-  keywords: ['arcade', 'indie games', 'experimental', 'web games', 'interactive', 'cyberpunk', 'arqadex'],
+  title: 'ARQADEX — Play Instantly. No Downloads.',
+  description: 'Play games and apps instantly in your browser — no downloads, no installs. Duel friends in live rooms, play solo, and publish your own HTML5 games on Arqadex.',
+  keywords: ['arqadex', 'play instantly', 'no download games', 'browser games', 'web games', 'multiplayer games', 'indie games', 'html5 games', 'neon duel', 'couples games', 'group games'],
+  metadataBase: new URL('https://arqadex.site'),
   openGraph: {
-    title: 'ARQADEX',
-    description: 'Experimental Web Games & Interactive Chaos',
+    title: 'ARQADEX — Play Instantly. No Downloads.',
+    description: 'Games that open in seconds in your browser. Live multiplayer rooms, solo games, and an open door for developers.',
+    url: 'https://arqadex.site',
+    siteName: 'ARQADEX',
     type: 'website',
+    images: [{ url: '/og-image.png', width: 2144, height: 1120, alt: 'NEON DUEL on ARQADEX — No downloads. Just play.' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ARQADEX — Play Instantly. No Downloads.',
+    description: 'Games that open in seconds in your browser. Live multiplayer rooms, solo games, and an open door for developers.',
+    images: ['/og-image.png'],
   },
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>",
