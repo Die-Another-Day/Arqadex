@@ -5,6 +5,7 @@ import HeroSection from '@/components/HeroSection'
 import FeaturedGame from '@/components/FeaturedGame'
 import GameGrid from '@/components/GameGrid'
 import Cabinet from '@/components/Cabinet'
+import PlatformSection from '@/components/PlatformSection'
 import LabSection from '@/components/LabSection'
 import AboutSection from '@/components/AboutSection'
 import Footer from '@/components/Footer'
@@ -32,6 +33,7 @@ export default function HomePage() {
             <FeaturedGame />
             <GameGrid />
             <Cabinet />
+            <PlatformSection />
             <LabSection />
             <AboutSection />
             <Footer />

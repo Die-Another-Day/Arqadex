@@ -6,6 +6,22 @@ no accounts, no tracking.
 
 Live site: **https://arqadex.site**
 
+## What's in v2.5.0 — Platform skin: Arqadex starts becoming a company
+
+First step of the company pivot (goal: a Play Store-style instant-play platform).
+Monetization decided by the founder: ads + 70/30 dev revenue share.
+
+- New home section "NO DOWNLOADS. JUST PLAY." — three honest pillars: instant play
+  (live today), play together (share links today, live rooms explicitly marked as
+  next), publish here (developer program, 70% to the dev).
+- Nav: SUBMIT renamed DEVELOPERS, new PLATFORM anchor link.
+- Hero badge now says "INSTANT PLAY // NO DOWNLOADS" (also fixes the stale V2.0 label).
+- /submit repositioned as the Developer Program page: 70/30 terms, instant-play
+  standard and 3–5 day human review stated up front, consent checkbox updated to
+  the same terms. The existing submission form itself is unchanged.
+- Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
+  are Phase 2+ and are labelled as next until they ship.
+
 ## What's in v2.4.1 — Quantum Drift crash fix (the v2.4 features were dead on arrival)
 
 - **Root cause found by running the game in a real browser:** the v2.3

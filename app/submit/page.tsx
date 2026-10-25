@@ -57,7 +57,7 @@ export default function SubmitPage() {
             Submission Received
           </h2>
           <p className="text-silver/50 mb-8 leading-relaxed">
-            We review every submission manually. If your game fits the lab, you'll hear from us within 3–5 days.
+            We review every submission manually. If your game fits Arqadex, you'll hear from us within 3–5 days — and once ads are live on the platform, you keep 70% of the ad revenue your game earns.
           </p>
 	  <a             
             href="/"
@@ -92,15 +92,32 @@ export default function SubmitPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-12">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-6 h-px bg-purple/50" />
-            <span className="text-xs tracking-widest text-purple/50" style={{ fontFamily: 'var(--font-orbitron)' }}>CREATOR PORTAL</span>
+            <span className="text-xs tracking-widest text-purple/50" style={{ fontFamily: 'var(--font-orbitron)' }}>DEVELOPER PROGRAM</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-black text-white mb-4" style={{ fontFamily: 'var(--font-syne)' }}>
             SUBMIT<br />
             <span style={{ WebkitTextStroke: '1px rgba(122,92,255,0.5)', color: 'transparent' }}>YOUR GAME</span>
           </h1>
           <p className="text-silver/40 leading-relaxed max-w-lg">
-            Built something experimental? If it fits the ARQADEX aesthetic — weird, interactive, and genuinely playable — we want to publish it here.
+            Built a web game? Arqadex players open it in their browser in seconds — no downloads, no installs. Submit it here and it can reach them instantly.
           </p>
+        </motion.div>
+
+        {/* Program terms — the deal, stated plainly */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10"
+        >
+          {[
+            { big: '70 / 30', small: 'You keep 70% of the ad revenue your game earns. Arqadex keeps 30%. Payouts begin once ads are live on the platform.' },
+            { big: 'INSTANT', small: 'HTML5 games run in a sandboxed frame in the browser. Players never download anything to play your game.' },
+            { big: '3–5 DAYS', small: 'Every submission is reviewed by a human. You hear back within 3–5 days, and you can request removal at any time.' },
+          ].map(card => (
+            <div key={card.big} className="rounded-xl p-5" style={{ background: 'rgba(8,8,24,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="text-xl font-black mb-2" style={{ color: '#00F5FF', fontFamily: 'var(--font-syne)' }}>{card.big}</div>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{card.small}</p>
+            </div>
+          ))}
         </motion.div>
 
         {/* Form */}
@@ -254,7 +271,7 @@ export default function SubmitPage() {
             <input name="agree" type="checkbox" required id="agree"
               className="mt-0.5 w-4 h-4 accent-cyan" />
             <label htmlFor="agree" className="text-xs text-silver/35 leading-relaxed">
-              I confirm this game is my own original work and I agree to let ARQADEX publish it on arqadex.site. I can request removal at any time by emailing.
+              I confirm this game is my own original work and I agree to let ARQADEX publish it on arqadex.site under the developer program — 70% of ad revenue from my game to me, 30% to Arqadex, once ads are live. I can request removal at any time by emailing.
             </label>
           </div>
 

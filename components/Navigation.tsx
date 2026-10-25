@@ -11,9 +11,10 @@ import CommandPalette from '@/components/CommandPalette'
 const navItems = [
   { label: 'GAMES', href: '#games', icon: Gamepad2 },
   { label: 'CABINET', href: '#cabinet', icon: Archive },
+  { label: 'PLATFORM', href: '#platform', icon: Gamepad2 },
   { label: 'LAB', href: '#lab', icon: FlaskConical },
   { label: 'ABOUT', href: '#about', icon: User },
-  { label: 'SUBMIT', href: '/submit/', icon: Upload },
+  { label: 'DEVELOPERS', href: '/submit/', icon: Upload },
 ]
 
 export default function Navigation() {

@@ -89,7 +89,7 @@ export default function HeroSection() {
         >
           <div className="w-1.5 h-1.5 rounded-full status-live" style={{ background: 'var(--accent)' }} />
           <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
-            EXPERIMENT // ONLINE · V2.0
+            INSTANT PLAY // NO DOWNLOADS
           </span>
         </motion.div>
 
