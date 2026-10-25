@@ -6,7 +6,38 @@
    other's clocks. Practice mode runs the same round engine offline vs a bot.
    Nothing is stored anywhere: scores live in this page only. */
 (function () {
-  'use strict'
+  'use strict'; // NOTE: the semicolon is load-bearing. Without it, the (function…)
+  // debug block below parses as a call on the 'use strict' string and the
+  // whole game dies on load ("use strict" is not a function).
+
+  /* v2.6.2: ?debug=1 renders PeerJS log lines on the page itself. The live
+     retest could not open DevTools in the automated browser, so console-only
+     evidence was unobtainable — this makes the evidence visible in screenshots. */
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search)
+      if (params.get('debug') !== '1') return
+      var box = document.getElementById('debug-log')
+      if (!box) return
+      box.classList.add('on')
+      var lines = []
+      ;['log', 'warn', 'error'].forEach(function (m) {
+        var orig = console[m]
+        console[m] = function () {
+          try {
+            var text = Array.prototype.map.call(arguments, function (a) {
+              return typeof a === 'string' ? a : JSON.stringify(a)
+            }).join(' ')
+            lines.push(text)
+            if (lines.length > 120) lines.shift()
+            box.textContent = lines.join('\n')
+            box.scrollTop = box.scrollHeight
+          } catch (e) {}
+          return orig.apply(console, arguments)
+        }
+      })
+    } catch (e) {}
+  })()
 
   var $ = function (id) { return document.getElementById(id) }
   var screens = ['lobby', 'room', 'duel', 'results']

@@ -7,6 +7,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <style>
+    /* v2.6.2 debug panel: only visible with ?debug=1 — shows PeerJS log lines
+       on the page itself, because automated browsers cannot open DevTools. */
+    #debug-log { display: none; margin-top: 20px; padding: 12px; border-radius: 10px;
+      background: rgba(0,0,0,.6); border: 1px solid rgba(255,176,32,.4);
+      font-size: 11px; line-height: 1.5; color: #FFB020; max-height: 260px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word; }
+    #debug-log.on { display: block; }
+  </style>
 </head>
 <body>
   <div class="scanlines"></div>
@@ -40,6 +49,8 @@
 
       <p id="lobby-status" class="status"></p>
       <p class="foot">Multiplayer runs peer-to-peer through a free public relay (PeerJS Cloud). No accounts, no Arqadex servers — scores live in your browser only. If the host leaves, the room closes.</p>
+      <p class="foot" id="build-line">NEON DUEL BUILD 2.6.2</p>
+      <div id="debug-log"></div>
     </section>
 
     <!-- ============ ROOM ============ -->
@@ -79,6 +90,6 @@
     </section>
 
   </div>
-  <script src="game.js"></script>
+  <script src="game.js?v=2.6.2"></script>
 </body>
 </html>

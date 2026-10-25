@@ -22,6 +22,20 @@ Monetization decided by the founder: ads + 70/30 dev revenue share.
 - Nothing here claims live multiplayer rooms, ads, accounts or payouts — those
   are Phase 2+ and are labelled as next until they ship.
 
+## What's in v2.6.2 — version stamp + on-page debug panel (retest hygiene)
+
+The v2.6.1 retest quoted the OLD error text, which only exists in v2.6.0 — so
+it almost certainly ran a cached copy, and the automated browser could not open
+DevTools to capture console evidence either. Fixes for the TESTING, not the game:
+- Lobby footer now stamps "NEON DUEL BUILD 2.6.2", and game.js is loaded with
+  `?v=2.6.2`, so any future test can prove which build it is running.
+- `?debug=1` renders PeerJS log lines in an on-page panel (automated browsers
+  cannot open DevTools, so console-only evidence was unobtainable).
+- Lesson from this release itself, caught by local browser verification: a
+  `'use strict'` line followed by an IIFE parses as a CALL on the string
+  ("use strict" is not a function) and kills the whole game on load. The
+  semicolon after 'use strict' is now commented as load-bearing.
+
 ## What's in v2.6.1 — Neon Duel connection diagnostics (after live join failed)
 
 Live two-tab test on arqadex.site (25 Oct): host room opened fine, but the guest
