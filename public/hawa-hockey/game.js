@@ -1,5 +1,34 @@
 'use strict';
 (function () {
+  // ---------- theme: ?theme= wins, then the Arqadex shell theme, then the OS ----------
+  // The shell sets data-theme on its own <html> (daylight = light, the rest dark).
+  // Standalone (opened directly) the OS prefers-color-scheme decides, live.
+  (function applyChatpataTheme() {
+    function setTheme(t) { document.documentElement.dataset.theme = t; }
+    function fromSiteTheme(t) { return t === 'daylight' ? 'light' : 'dark'; }
+    try {
+      var q = new URLSearchParams(window.location.search).get('theme');
+      if (q) { setTheme(q === 'light' || q === 'daylight' ? 'light' : 'dark'); return; }
+      if (window.parent && window.parent !== window) {
+        var pt = window.parent.document.documentElement.getAttribute('data-theme');
+        if (pt) {
+          setTheme(fromSiteTheme(pt));
+          try {
+            var obs = new window.parent.MutationObserver(function () {
+              var t2 = window.parent.document.documentElement.getAttribute('data-theme');
+              if (t2) setTheme(fromSiteTheme(t2));
+            });
+            obs.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+          } catch (err2) { /* theme changes need a reload */ }
+          return;
+        }
+      }
+    } catch (err) { /* cross-origin: fall through to the OS */ }
+    var mq = window.matchMedia('(prefers-color-scheme: light)');
+    setTheme(mq.matches ? 'light' : 'dark');
+    if (mq.addEventListener) mq.addEventListener('change', function (e) { setTheme(e.matches ? 'light' : 'dark'); });
+  })();
+
   // ---------- helpers ----------
   function $(id) { return document.getElementById(id); }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -246,6 +275,6 @@
     cv.addEventListener('pointercancel', release);
   })();
 
-  window.__CHATPATA__ = { state: state, version: '2.10.0', game: 'hawa-hockey' };
-  log('hawa-hockey 2.10.0 loaded');
+  window.__CHATPATA__ = { state: state, version: '2.12.0', game: 'hawa-hockey' };
+  log('hawa-hockey 2.12.0 loaded');
 })();
