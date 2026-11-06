@@ -149,6 +149,20 @@ export const GAMES: Game[] = [
     shape: 'duel',
   },
   {
+    id: 'duo-clash',
+    title: 'DUO CLASH',
+    tagline:
+      'The couples challenge arena. Sit together, one phone between you, and fight through 5 games — Reaction Rush, Tap Storm, Air Hockey, Memory Duel and a Know Me quiz. Best of 5 decides who owes dinner. No downloads, no accounts, no ads between rounds — or practice solo vs the bot.',
+    tags: ['COUPLES', 'MULTIPLAYER', 'PARTY'],
+    color: '#FF2DA6',
+    status: 'LIVE',
+    progress: 100,
+    url: '/play/duo-clash',
+    players: '2 PLAYERS',
+    mood: 'Who owes dinner?',
+    shape: 'duel',
+  },
+  {
     id: 'reflex-rush',
     title: 'REFLEX RUSH',
     tagline:

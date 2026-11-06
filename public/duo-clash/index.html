@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>DUO CLASH — Couples Challenge Arena · ARQADEX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="wrap">
+
+    <!-- ============ LOBBY ============ -->
+    <section id="screen-lobby" class="screen">
+      <div class="eyebrow">ARQADEX · COUPLES · ONE PHONE · NO DOWNLOADS</div>
+      <h1>DUO<br><span>CLASH</span></h1>
+      <p class="tag">Sit together. One phone between you. Five brutal little games. Best of 5 decides who owes dinner.</p>
+
+      <label class="field-label" for="name-p1">PLAYER 1 · PINK</label>
+      <input id="name-p1" maxlength="12" placeholder="e.g. ALEX" autocomplete="off">
+      <label class="field-label" for="name-p2">PLAYER 2 · CYAN</label>
+      <input id="name-p2" maxlength="12" placeholder="e.g. SAM" autocomplete="off">
+
+      <div class="mode-row" id="mode-row">
+        <button class="mode-btn selected" data-mode="duo" type="button">👫 SAME PHONE · 2P</button>
+        <button class="mode-btn" data-mode="bot" type="button">🤖 VS BOT · 1P</button>
+      </div>
+      <p class="hint" id="mode-hint">Same phone: sit opposite each other, phone flat between you. P1 plays the top half, P2 the bottom half.</p>
+
+      <div class="btn-row">
+        <button id="btn-start" class="btn primary">START THE CLASH</button>
+      </div>
+
+      <div class="games-list">
+        <div class="gl-head">TONIGHT'S 5 CHALLENGES — FIRST TO 3 GAME-POINTS WINS</div>
+        <div class="gl-row"><span class="gl-n">1</span><div><b>REACTION RUSH</b><i>Wait for green. Tap your half. False start = you lose the round.</i></div></div>
+        <div class="gl-row"><span class="gl-n">2</span><div><b>TAP STORM</b><i>10 seconds. Tap your half as fast as humanly possible.</i></div></div>
+        <div class="gl-row"><span class="gl-n">3</span><div><b>AIR HOCKEY DUEL</b><i>Drag your paddle. First to 3 goals. 60-second cap.</i></div></div>
+        <div class="gl-row"><span class="gl-n">4</span><div><b>MEMORY DUEL</b><i>Flip two cards. Match a pair, keep it — and go again.</i></div></div>
+        <div class="gl-row"><span class="gl-n">5</span><div><b>KNOW ME QUIZ</b><i>Answer about yourself. Your partner guesses. How well do they really know you?</i></div></div>
+      </div>
+
+      <p class="foot">Better than the viral couple apps: no download, no account, no ads between rounds, no paywall — one link, one phone, straight into the fight. Scores live in your browser only.</p>
+      <p class="foot" id="build-line">DUO CLASH BUILD 2.9.0</p>
+      <div id="debug-log"></div>
+    </section>
+
+    <!-- ============ MATCH ============ -->
+    <section id="screen-match" class="screen hidden">
+      <div class="match-top">
+        <div id="match-progress">GAME 1 / 5</div>
+        <div>FIRST TO 3</div>
+      </div>
+      <div id="match-score" class="scoreboard"></div>
+      <h2 id="game-title">REACTION RUSH</h2>
+      <p id="game-sub" class="tag center">Wait for green.</p>
+
+      <!-- REACTION -->
+      <div id="stage-reaction" class="stage hidden">
+        <div id="react-msg" class="duel-msg">GET READY…</div>
+        <div class="split">
+          <button id="react-p1" class="tap-zone p1" type="button"><span class="tz-name" id="react-p1-name">P1</span><span class="tz-sub">TAP WHEN GREEN</span></button>
+          <button id="react-p2" class="tap-zone p2" type="button"><span class="tz-name" id="react-p2-name">P2</span><span class="tz-sub">TAP WHEN GREEN</span></button>
+        </div>
+        <p id="react-round" class="status center">Round 1 of 3</p>
+      </div>
+
+      <!-- TAP STORM -->
+      <div id="stage-tap" class="stage hidden">
+        <div id="tap-msg" class="duel-msg">TAP! TAP! TAP!</div>
+        <div id="tap-timer" class="big-timer">10</div>
+        <div class="split">
+          <button id="tap-p1" class="tap-zone p1" type="button"><span class="tz-name" id="tap-p1-name">P1</span><span class="tz-count" id="tap-p1-count">0</span></button>
+          <button id="tap-p2" class="tap-zone p2" type="button"><span class="tz-name" id="tap-p2-name">P2</span><span class="tz-count" id="tap-p2-count">0</span></button>
+        </div>
+      </div>
+
+      <!-- AIR HOCKEY -->
+      <div id="stage-hockey" class="stage hidden">
+        <div id="hockey-score" class="duel-msg">0 — 0</div>
+        <div id="hockey-timer" class="status center">60s left · first to 3</div>
+        <canvas id="hockey-canvas" width="360" height="520"></canvas>
+        <p class="status center">Drag your paddle with one finger. Top = P1 (pink), bottom = P2 (cyan).</p>
+      </div>
+
+      <!-- MEMORY -->
+      <div id="stage-memory" class="stage hidden">
+        <div id="memory-msg" class="duel-msg">P1's turn — flip two cards</div>
+        <div id="memory-score" class="status center">Pairs — P1: 0 · P2: 0</div>
+        <div id="memory-grid" class="memory-grid"></div>
+      </div>
+
+      <!-- QUIZ -->
+      <div id="stage-quiz" class="stage hidden">
+        <div id="quiz-msg" class="duel-msg">—</div>
+        <div id="quiz-body"></div>
+      </div>
+
+      <div id="match-msg" class="status center"></div>
+      <div class="btn-row">
+        <button id="btn-next-game" class="btn primary hidden">NEXT CHALLENGE →</button>
+        <button id="btn-quit" class="btn text">QUIT TO LOBBY</button>
+      </div>
+    </section>
+
+    <!-- ============ FINAL ============ -->
+    <section id="screen-final" class="screen hidden">
+      <div class="eyebrow">MATCH OVER</div>
+      <h2 id="winner-name">—</h2>
+      <p id="winner-line" class="tag">—</p>
+      <div id="final-scores" class="scoreboard"></div>
+      <div id="dare-box" class="dare-box"></div>
+      <div class="btn-row">
+        <button id="btn-rematch" class="btn primary">REMATCH</button>
+        <button id="btn-final-lobby" class="btn ghost">BACK TO LOBBY</button>
+      </div>
+    </section>
+
+  </div>
+  <script src="game.js?v=2.9.0"></script>
+</body>
+</html>
