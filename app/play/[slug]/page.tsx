@@ -41,6 +41,7 @@ const STATIC_GAMES: Record<string, { title: string; src: string }> = {
   'hawa-hockey': { title: 'HAWA HOCKEY', src: '/hawa-hockey/' },
   'yaaddasht': { title: 'YAADDASHT', src: '/yaaddasht/' },
   'pehchan-kaun': { title: 'PEHCHAN KAUN', src: '/pehchan-kaun/' },
+  'bus-yatra': { title: 'BUS YATRA', src: '/bus-yatra/' },
 }
 
 export function generateStaticParams() {
