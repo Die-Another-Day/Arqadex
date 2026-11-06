@@ -41,7 +41,7 @@ export default function PlatformSection() {
         <div className="flex items-center gap-4 mb-4">
           <div className="w-8 h-px" style={{ background: 'var(--accent)' }} />
           <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
-            ARQADEX AS A PLATFORM
+            04 — ARQADEX AS A PLATFORM
           </span>
         </div>
         <h2 className="font-black text-5xl md:text-7xl mb-4" style={{ color: 'var(--text)', fontFamily: 'var(--font-syne)' }}>

@@ -53,7 +53,7 @@ export default function Cabinet() {
         <div className="flex items-center gap-4 mb-4">
           <div className="w-8 h-px" style={{ background: 'var(--accent)' }} />
           <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
-            SAVED IN THIS BROWSER ONLY
+            03 — SAVED IN THIS BROWSER ONLY
           </span>
         </div>
         <h2 className="font-syne text-5xl md:text-7xl font-black mb-4" style={{ color: 'var(--text)', fontFamily: 'var(--font-syne)' }}>

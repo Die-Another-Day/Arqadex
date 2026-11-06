@@ -531,26 +531,32 @@ body {
 }
 
 [data-theme='daylight'] {
-  --bg: #fdf6ec;
-  --bg2: #fffdf7;
-  --panel: rgba(255, 255, 255, 0.88);
-  --text: #1a1033;
-  --muted: #6b5f7a;
-  --accent: #ff2d78;
-  --accent2: #ff7a00;
-  --accent3: #6d28d9;
+  /* Reel restyle (v2.10.0) — the Sahir "Agentic Build" reel's design
+     language, kept light: near-white paper, ink text, grey body copy,
+     and one scarlet accent doing all the shouting. Blue and indigo are
+     the reel's sparing secondaries (progress bar, room light); green is
+     its "Live" badge. No cream, no pink, no heavy shadows — flat cards,
+     thin borders, modest radii, like the reel's dark cards mirrored. */
+  --bg: #fafaf8;
+  --bg2: #ffffff;
+  --panel: #ffffff;
+  --text: #111113;
+  --muted: #6b7280;
+  --accent: #e10600;
+  --accent2: #2563eb;
+  --accent3: #4f46e5;
   --on-accent: #ffffff;
-  --border: rgba(26, 16, 51, 0.16);
-  --bg-void: #fdf6ec;
-  --bg-void2: #fff3e0;
+  --border: rgba(17, 17, 19, 0.12);
+  --bg-void: #fafaf8;
+  --bg-void2: #f3f3f1;
   --bg-void3: #ffffff;
-  --accent-cyan: #ff2d78;
-  --accent-pink: #ff7a00;
-  --accent-purple: #6d28d9;
-  --accent-lime: #1a9e5c;
-  --text-primary: #1a1033;
-  --text-secondary: #6b5f7a;
-  --border-glow: rgba(255, 45, 120, 0.2);
+  --accent-cyan: #2563eb;
+  --accent-pink: #e10600;
+  --accent-purple: #4f46e5;
+  --accent-lime: #16a34a;
+  --text-primary: #111113;
+  --text-secondary: #6b7280;
+  --border-glow: rgba(225, 6, 0, 0.18);
 }
 
 [data-theme='daylight'] .scanlines,
@@ -560,8 +566,50 @@ body {
 
 [data-theme='daylight'] .grid-bg {
   background-image:
-    linear-gradient(rgba(255, 45, 120, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 45, 120, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(225, 6, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 6, 0, 0.05) 1px, transparent 1px);
+}
+
+/* Reel cards are 8–12px radius, not pill-shaped. Daylight mirrors that:
+   the 16px panels become 10px; 12px cards already sit in range. */
+[data-theme='daylight'] .rounded-2xl {
+  border-radius: 10px;
+}
+
+/* The reel's giant hollow "PORTFOLIO" word, as the ARQADEX hero word —
+   daylight only; the dark themes keep their solid word. The accent span
+   inherits the same outline so the whole word reads as one cut-out. */
+.hero-word {
+  color: var(--text);
+}
+.hero-word .hero-word-accent {
+  color: var(--accent);
+}
+[data-theme='daylight'] .hero-word,
+[data-theme='daylight'] .hero-word .hero-word-accent {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--accent);
+}
+@supports not (-webkit-text-stroke: 1px black) {
+  [data-theme='daylight'] .hero-word,
+  [data-theme='daylight'] .hero-word .hero-word-accent {
+    color: var(--accent);
+  }
+}
+@media (max-width: 640px) {
+  [data-theme='daylight'] .hero-word,
+  [data-theme='daylight'] .hero-word .hero-word-accent {
+    -webkit-text-stroke-width: 1.25px;
+  }
+}
+
+/* The reel's stat row is split by thin vertical dividers — desktop only,
+   so wrapped mobile stats stay clean. */
+@media (min-width: 768px) {
+  .stat-dividers > * + * {
+    border-left: 1px solid var(--border);
+    padding-left: 2.5rem;
+  }
 }
 
 .glass {

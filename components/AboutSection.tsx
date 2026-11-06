@@ -25,7 +25,7 @@ export default function AboutSection() {
         <div className="flex items-center gap-4 mb-4">
           <div className="w-8 h-px" style={{ background: 'var(--accent)' }} />
           <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
-            OPERATOR PROFILE
+            06 — OPERATOR PROFILE
           </span>
         </div>
         <h2 className="font-syne text-5xl md:text-7xl font-black mb-12" style={{ color: 'var(--text)', fontFamily: 'var(--font-syne)' }}>

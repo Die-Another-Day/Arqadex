@@ -16,9 +16,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>('daylight')
 
   useEffect(() => {
-    // Layout's inline script already set data-theme before paint;
-    // this just syncs React state with it.
-    setThemeState(getTheme())
+    // Layout's inline script already set data-theme before paint, but
+    // re-assert it here: if that script ever failed or was bypassed, a
+    // first visit would otherwise sit on the wrong theme while the
+    // switcher claimed Daylight.
+    const saved = getTheme()
+    setThemeState(saved)
+    applyTheme(saved)
   }, [])
 
   const setTheme = (t: ThemeId) => {

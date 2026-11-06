@@ -14,7 +14,7 @@ export default function FeaturedGame() {
         <div className="flex items-center gap-4 mb-4">
           <div className="w-8 h-px" style={{ background: 'var(--accent)' }} />
           <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
-            FEATURED RELEASE
+            01 — FEATURED RELEASE
           </span>
         </div>
         <h2 className="font-syne text-4xl md:text-6xl font-black mb-12" style={{ color: 'var(--text)', fontFamily: 'var(--font-syne)' }}>

@@ -40,7 +40,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ARQADEX" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#fdf6ec" />
+        <meta name="theme-color" content="#fafaf8" />
         <link rel="apple-touch-icon" href="/icons/icon-180.png" />
 
 
@@ -61,8 +61,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           try {
             var t = localStorage.getItem('arqadex:theme');
-            var ok = ['neon', 'synthwave', 'matrix', 'daylight'].indexOf(JSON.parse(t || '"daylight"')) >= 0;
-            document.documentElement.dataset.theme = ok ? JSON.parse(t) : 'daylight';
+            var parsed = null;
+            try { parsed = JSON.parse(t); } catch (e) { parsed = null; }
+            var ok = ['neon', 'synthwave', 'matrix', 'daylight'].indexOf(parsed) >= 0;
+            document.documentElement.dataset.theme = ok ? parsed : 'daylight';
           } catch (e) {
             document.documentElement.dataset.theme = 'daylight';
           }

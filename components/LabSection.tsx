@@ -17,9 +17,9 @@ export default function LabSection() {
     <section id="lab" className="relative py-24 px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-8 h-px" style={{ background: 'var(--accent3)' }} />
-          <span className="text-xs tracking-widest" style={{ color: 'var(--accent3)', fontFamily: 'var(--font-orbitron)' }}>
-            RESEARCH DIVISION
+          <div className="w-8 h-px" style={{ background: 'var(--accent)' }} />
+          <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', fontFamily: 'var(--font-orbitron)' }}>
+            05 — RESEARCH DIVISION
           </span>
         </div>
         <h2 className="font-syne text-5xl md:text-7xl font-black mb-4" style={{ color: 'var(--text)', fontFamily: 'var(--font-syne)' }}>

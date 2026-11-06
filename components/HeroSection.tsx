@@ -97,10 +97,9 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="font-black leading-[1.05] tracking-tight w-full mx-auto text-center"
+          className="hero-word font-black leading-[1.05] tracking-tight w-full mx-auto text-center"
           style={{
             fontFamily: 'var(--font-syne)',
-            color: 'var(--text)',
             // Measured, not guessed: Syne 800 "ARQADEX" advances 8.464em
             // (fontTools on the actual woff2). At the old 10rem cap that is
             // 1,354px — wider than the old 1,024px container, so the word
@@ -118,8 +117,19 @@ export default function HeroSection() {
             whiteSpace: 'nowrap',
           }}
         >
-          ARQA<span style={{ color: 'var(--accent)' }}>DEX</span>
+          ARQA<span className="hero-word-accent">DEX</span>
         </motion.h1>
+
+        {/* The reel's "SAHIR." moment — white caps on a solid scarlet block. */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-6 inline-block px-4 py-1.5"
+          style={{ background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-syne)' }}
+        >
+          <span className="text-lg md:text-2xl font-black tracking-widest">PLAY INSTANTLY.</span>
+        </motion.div>
 
         <motion.p
           initial={{ opacity: 0 }}
@@ -135,8 +145,8 @@ export default function HeroSection() {
           every mechanic is a hypothesis — and the interesting failures live here too.
         </p>
 
-        {/* Stats */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-6 md:gap-10">
+        {/* Stats — thin vertical dividers between them, like the reel's stat row */}
+        <div className="stat-dividers mt-10 flex flex-wrap items-center justify-center gap-6 md:gap-10">
           {[
             { value: String(GAMES.length), label: 'EXPERIMENTS' },
             { value: String(LIVE_GAMES.length), label: 'LIVE NOW' },
