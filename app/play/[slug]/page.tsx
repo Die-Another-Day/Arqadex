@@ -1,5 +1,32 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import GameShell from '@/components/GameShell'
+import { GAMES } from '@/lib/games'
+
+/** Per-game metadata so each play page can rank on its own title instead of
+ *  every game sharing the generic homepage title. Canonical uses the
+ *  trailing-slash URL the static export actually serves. */
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const game = GAMES.find((g) => g.id === slug)
+  const staticGame = STATIC_GAMES[slug]
+  const title = game
+    ? `${game.title} — Play Instantly on ARQADEX`
+    : staticGame
+      ? `${staticGame.title} — Play Instantly on ARQADEX`
+      : 'ARQADEX — Play Instantly. No Downloads.'
+  const description =
+    game?.tagline ??
+    'Play instantly in your browser — no downloads, no installs. Duel friends in live rooms or play solo on Arqadex.'
+  const url = `https://arqadex.site/play/${slug}/`
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, siteName: 'ARQADEX', type: 'website' },
+    twitter: { card: 'summary', title, description },
+  }
+}
 
 /** Static builds that used to open bare, now play inside the themed shell. */
 const STATIC_GAMES: Record<string, { title: string; src: string }> = {
