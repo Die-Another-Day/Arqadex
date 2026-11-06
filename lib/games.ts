@@ -23,6 +23,19 @@ export type Game = {
  */
 export const GAMES: Game[] = [
   {
+    id: 'bus-yatra',
+    title: 'BUS YATRA',
+    tagline: 'Drive or ride an Indian bus across real routes — Vadodara to Ahmedabad, Mumbai to Pune, Delhi to Jaipur — with old-school Bollywood-style radio that changes with the place.',
+    color: '#FFB020',
+    shape: 'duel',
+    tags: ['3D', 'SIMULATOR', 'INDIAN', 'MUSIC'],
+    players: '1P + BOTS',
+    mood: 'DESI ROAD TRIP',
+    status: 'LIVE',
+    progress: 100,
+    url: '/play/bus-yatra',
+  },
+  {
     id: 'jhatka',
     title: 'JHATKA',
     tagline:
