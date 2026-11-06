@@ -1,11 +1,56 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { GAMES } from '@/lib/games'
+
+/** Structured data so search engines understand the site: a WebSite plus
+ *  every live game as a VideoGame in an ItemList. Built from lib/games.ts,
+ *  the same source of truth as the arcade grid, so it can never go stale. */
+const SITE_URL = 'https://arqadex.site'
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: 'ARQADEX',
+      url: `${SITE_URL}/`,
+      description:
+        'Play games and apps instantly in your browser — no downloads, no installs. Duel friends in live rooms, play solo, and publish your own HTML5 games on Arqadex.',
+      inLanguage: 'en',
+    },
+    {
+      '@type': 'ItemList',
+      name: 'ARQADEX Games',
+      itemListElement: GAMES.filter((g) => g.status === 'LIVE' && g.url).map((g, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'VideoGame',
+          name: g.title,
+          url: `${SITE_URL}${g.url!.replace(/\/$/, '')}/`,
+          description: g.tagline,
+          genre: g.tags,
+          applicationCategory: 'Game',
+          operatingSystem: 'Web browser',
+        },
+      })),
+    },
+  ],
+}
 
 export const metadata: Metadata = {
   title: 'ARQADEX — Play Instantly. No Downloads.',
   description: 'Play games and apps instantly in your browser — no downloads, no installs. Duel friends in live rooms, play solo, and publish your own HTML5 games on Arqadex.',
-  keywords: ['arqadex', 'play instantly', 'no download games', 'browser games', 'web games', 'multiplayer games', 'indie games', 'html5 games', 'neon duel', 'couples games', 'group games'],
-  metadataBase: new URL('https://arqadex.site'),
+  keywords: ['arqadex', 'play instantly', 'no download games', 'browser games', 'web games', 'multiplayer games', 'indie games', 'html5 games', 'neon duel', 'couples games', 'group games', 'two player games', 'jhatka', 'tap dhamaka', 'hawa hockey', 'yaaddasht', 'pehchan kaun', 'chatpata games', 'couple games online'],
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: `${SITE_URL}/` },
+  authors: [{ name: 'Arqadex' }],
+  creator: 'Arqadex',
+  publisher: 'Arqadex',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+  },
   openGraph: {
     title: 'ARQADEX — Play Instantly. No Downloads.',
     description: 'Games that open in seconds in your browser. Live multiplayer rooms, solo games, and an open door for developers.',
@@ -34,6 +79,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
