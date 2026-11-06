@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>JHATKA — Chatpata Duo · ARQADEX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="wrap">
+
+    <!-- ============ LOBBY ============ -->
+    <section id="screen-lobby" class="screen">
+      <div class="eyebrow">ARQADEX · CHATPATA DUO · ONE PHONE · NO DOWNLOADS</div>
+      <h1>JHAT<span>KA</span></h1>
+      <p class="tag">Bijli se tez! Green dekhte hi apni side dabao — jaldi dabaya to jhatka, der ki to haar.</p>
+
+      <label class="field-label" for="name-p1">PLAYER 1 · PINK</label>
+      <input id="name-p1" maxlength="12" placeholder="e.g. ALEX" autocomplete="off">
+      <label class="field-label" for="name-p2">PLAYER 2 · CYAN</label>
+      <input id="name-p2" maxlength="12" placeholder="e.g. SAM" autocomplete="off">
+
+      <div class="mode-row" id="mode-row">
+        <button class="mode-btn selected" data-mode="duo" type="button">👫 SAME PHONE · 2P</button>
+        <button class="mode-btn" data-mode="bot" type="button">🤖 VS BOT · 1P</button>
+      </div>
+      <p class="hint" id="mode-hint">Same phone: sit opposite each other, phone flat between you. P1 plays the top half, P2 the bottom half.</p>
+
+      <div class="btn-row">
+        <button id="btn-start" class="btn primary">SHURU KARO ⚡</button>
+      </div>
+
+      <div class="games-list">
+        <div class="gl-head">KAISE KHELE — JHATKA</div>
+        <div class="gl-row"><span class="gl-n">1</span><div><b>GREEN KA WAIT</b><i>Screen red hai to haath roko. Green hote hi apni side dabao.</i></div></div>
+        <div class="gl-row"><span class="gl-n">2</span><div><b>BEST OF 3 ROUNDS</b><i>Pehle 2 rounds jeeto — match tumhara.</i></div></div>
+        <div class="gl-row"><span class="gl-n">3</span><div><b>FALSE START = ROUND GAYA</b><i>Green se pehle dabaya to round seedha opponent ka.</i></div></div>
+      </div>
+
+      <p class="foot">Chatpata Duo: no download, no account, no ads between rounds — one link, one phone, seedha fight. Scores live in your browser only.</p>
+      <p class="foot" id="build-line">JHATKA BUILD 2.10.0</p>
+      <div id="debug-log"></div>
+    </section>
+
+    <!-- ============ MATCH ============ -->
+    <section id="screen-match" class="screen hidden">
+      <div class="match-top">
+        <div id="match-progress">JHATKA</div>
+        <div>FIRST TO 2</div>
+      </div>
+      <div id="match-score" class="scoreboard"></div>
+      <h2 id="game-title">JHATKA</h2>
+      <p id="game-sub" class="tag center">Green ka wait karo. Apni side dabao.</p>
+
+      <div id="stage-reaction" class="stage">
+        <div id="react-msg" class="duel-msg">GET READY…</div>
+        <div class="split">
+          <button id="react-p1" class="tap-zone p1" type="button"><span class="tz-name" id="react-p1-name">P1</span><span class="tz-sub">TAP WHEN GREEN</span></button>
+          <button id="react-p2" class="tap-zone p2" type="button"><span class="tz-name" id="react-p2-name">P2</span><span class="tz-sub">TAP WHEN GREEN</span></button>
+        </div>
+        <p id="react-round" class="status center">Round 1 of 3</p>
+      </div>
+
+      <div id="match-msg" class="status center"></div>
+      <div class="btn-row">
+        <button id="btn-quit" class="btn text">QUIT TO LOBBY</button>
+      </div>
+    </section>
+
+    <!-- ============ FINAL ============ -->
+    <section id="screen-final" class="screen hidden">
+      <div class="eyebrow">MATCH OVER</div>
+      <h2 id="winner-name">—</h2>
+      <p id="winner-line" class="tag">—</p>
+      <div id="final-scores" class="scoreboard"></div>
+      <div id="dare-box" class="dare-box"></div>
+      <div class="btn-row">
+        <button id="btn-rematch" class="btn primary">REMATCH</button>
+        <button id="btn-final-lobby" class="btn ghost">BACK TO LOBBY</button>
+      </div>
+    </section>
+
+  </div>
+  <script src="game.js?v=2.10.0"></script>
+</body>
+</html>

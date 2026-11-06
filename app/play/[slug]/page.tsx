@@ -9,7 +9,11 @@ const STATIC_GAMES: Record<string, { title: string; src: string }> = {
   'quantum-drift': { title: 'QUANTUM DRIFT', src: '/quantum-drift/' },
   'neon-duel': { title: 'NEON DUEL', src: '/neon-duel/' },
   'neon-outlaw': { title: 'NEON OUTLAW', src: '/neon-outlaw/' },
-  'duo-clash': { title: 'DUO CLASH', src: '/duo-clash/' },
+  'jhatka': { title: 'JHATKA', src: '/jhatka/' },
+  'tap-dhamaka': { title: 'TAP DHAMAKA', src: '/tap-dhamaka/' },
+  'hawa-hockey': { title: 'HAWA HOCKEY', src: '/hawa-hockey/' },
+  'yaaddasht': { title: 'YAADDASHT', src: '/yaaddasht/' },
+  'pehchan-kaun': { title: 'PEHCHAN KAUN', src: '/pehchan-kaun/' },
 }
 
 export function generateStaticParams() {

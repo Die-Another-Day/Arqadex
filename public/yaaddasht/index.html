@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>YAADDASHT — Chatpata Duo · ARQADEX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="wrap">
+
+    <!-- ============ LOBBY ============ -->
+    <section id="screen-lobby" class="screen">
+      <div class="eyebrow">ARQADEX · CHATPATA DUO · ONE PHONE · NO DOWNLOADS</div>
+      <h1>YAAD<br><span>DASHT</span></h1>
+      <p class="tag">Dimaag ki kasrat! Jodi milao, jeet jao — bhool gaye to gaye.</p>
+
+      <label class="field-label" for="name-p1">PLAYER 1 · PINK</label>
+      <input id="name-p1" maxlength="12" placeholder="e.g. ALEX" autocomplete="off">
+      <label class="field-label" for="name-p2">PLAYER 2 · CYAN</label>
+      <input id="name-p2" maxlength="12" placeholder="e.g. SAM" autocomplete="off">
+
+      <div class="mode-row" id="mode-row">
+        <button class="mode-btn selected" data-mode="duo" type="button">👫 SAME PHONE · 2P</button>
+        <button class="mode-btn" data-mode="bot" type="button">🤖 VS BOT · 1P</button>
+      </div>
+      <p class="hint" id="mode-hint">Same phone: sit opposite each other, phone flat between you. Take turns flipping cards.</p>
+
+      <div class="btn-row">
+        <button id="btn-start" class="btn primary">SHURU KARO 🧠</button>
+      </div>
+
+      <div class="games-list">
+        <div class="gl-head">KAISE KHELE — YAADDASHT</div>
+        <div class="gl-row"><span class="gl-n">1</span><div><b>DO CARDS PALTO</b><i>Apni baari mein do cards palto. Jodi mili to pair tumhara.</i></div></div>
+        <div class="gl-row"><span class="gl-n">2</span><div><b>JODI = EK AUR BAARI</b><i>Pair milte hi dobara khelo. Galat jodi to baari opponent ki.</i></div></div>
+        <div class="gl-row"><span class="gl-n">3</span><div><b>8 JODIYAAN, ZYADA PAIRS JEETE</b><i>Board khatam hote hi jiske zyada pairs, match uska.</i></div></div>
+      </div>
+
+      <p class="foot">Chatpata Duo: no download, no account, no ads between rounds — one link, one phone, seedha fight. Scores live in your browser only.</p>
+      <p class="foot" id="build-line">YAADDASHT BUILD 2.10.0</p>
+      <div id="debug-log"></div>
+    </section>
+
+    <!-- ============ MATCH ============ -->
+    <section id="screen-match" class="screen hidden">
+      <div class="match-top">
+        <div id="match-progress">YAADDASHT</div>
+        <div>8 JODIYAAN</div>
+      </div>
+      <div id="match-score" class="scoreboard"></div>
+      <h2 id="game-title">YAADDASHT</h2>
+      <p id="game-sub" class="tag center">Jodi milao. Yaad rakho.</p>
+
+      <div id="stage-memory" class="stage">
+        <div id="memory-msg" class="duel-msg">P1's turn — flip two cards</div>
+        <div id="memory-score" class="status center">Pairs — P1: 0 · P2: 0</div>
+        <div id="memory-grid" class="memory-grid"></div>
+      </div>
+
+      <div id="match-msg" class="status center"></div>
+      <div class="btn-row">
+        <button id="btn-quit" class="btn text">QUIT TO LOBBY</button>
+      </div>
+    </section>
+
+    <!-- ============ FINAL ============ -->
+    <section id="screen-final" class="screen hidden">
+      <div class="eyebrow">MATCH OVER</div>
+      <h2 id="winner-name">—</h2>
+      <p id="winner-line" class="tag">—</p>
+      <div id="final-scores" class="scoreboard"></div>
+      <div id="dare-box" class="dare-box"></div>
+      <div class="btn-row">
+        <button id="btn-rematch" class="btn primary">REMATCH</button>
+        <button id="btn-final-lobby" class="btn ghost">BACK TO LOBBY</button>
+      </div>
+    </section>
+
+  </div>
+  <script src="game.js?v=2.10.0"></script>
+</body>
+</html>
