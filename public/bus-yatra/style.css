@@ -1,5 +1,6 @@
-/* BUS YATRA skin — v2.15.0. Same theme system as Chatpata Duo:
-   dark by default; light when the OS is light or the Arqadex shell says daylight. */
+/* BUS YATRA skin — v2.16.0. Landscape-first on phones (v2.15.0 was portrait;
+   the brief now demands landscape). Theme system as before: dark by default,
+   light when the OS is light or the Arqadex shell says daylight. */
 :root {
   --bg: #050514; --ink: #ffffff; --muted: rgba(255, 255, 255, .6); --faint: rgba(255, 255, 255, .4);
   --card: rgba(255, 255, 255, .05); --line: rgba(255, 255, 255, .14); --line-soft: rgba(255, 255, 255, .08);
@@ -33,23 +34,33 @@ body { background: var(--bg); color: var(--ink); font-family: 'Space Mono', ui-m
 #game-root { position: fixed; inset: 0; z-index: 0; }
 #game-root canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .screen { position: fixed; inset: 0; z-index: 10; overflow-y: auto; background: var(--bg);
-  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 20px calc(32px + env(safe-area-inset-bottom, 0px)); }
 .screen.hidden, .hidden { display: none !important; }
-.screen > * { max-width: 560px; margin-left: auto; margin-right: auto; }
-.eyebrow { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .25em; color: var(--cyan); margin-bottom: 14px; text-align: center; }
-h1 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(52px, 15vw, 72px); line-height: .95; margin-bottom: 12px; text-align: center; }
+.screen > * { max-width: 640px; margin-left: auto; margin-right: auto; }
+.eyebrow { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .25em; color: var(--cyan); margin-bottom: 10px; text-align: center; }
+h1 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(44px, 10vw, 64px); line-height: .95; margin-bottom: 10px; text-align: center; }
 h1 span { color: transparent; -webkit-text-stroke: 1.5px var(--gold); }
-h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px, 8vw, 34px); line-height: 1.1; margin-bottom: 10px; text-align: center; }
-.tag { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 22px; text-align: center; }
+h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px, 6vw, 32px); line-height: 1.1; margin-bottom: 10px; text-align: center; }
+.tag { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 18px; text-align: center; }
 .field-label { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .2em; color: var(--faint); margin: 16px 0 8px; }
+.save-bar { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 6px; }
+.save-bar span { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--gold);
+  border-radius: 20px; padding: 7px 13px; font-size: 12px; font-family: Orbitron, sans-serif; letter-spacing: .04em; }
+.mode-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.mode-btn { flex: 1; min-width: 100px; font-family: Orbitron, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: .05em;
+  padding: 12px 6px; border-radius: 12px; cursor: pointer; color: var(--muted);
+  background: var(--card); border: 1px solid var(--line); }
+.mode-btn.selected { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
 .pick-list { display: flex; flex-direction: column; gap: 8px; }
 .pick { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left;
-  padding: 13px 14px; border-radius: 12px; cursor: pointer; background: var(--card);
+  padding: 12px 14px; border-radius: 12px; cursor: pointer; background: var(--card);
   border: 1px solid var(--line); color: var(--ink); font-family: 'Space Mono', monospace; font-size: 13px; line-height: 1.4; }
 .pick.selected { border-color: var(--pink); background: var(--pink-soft); }
+.pick.locked { opacity: .65; }
 .pick b { font-family: Orbitron, sans-serif; font-size: 13px; letter-spacing: .06em; display: block; }
 .pick i { font-style: normal; color: var(--muted); font-size: 12px; }
 .pick .pill { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .1em; color: var(--gold); white-space: nowrap; }
+.pick .pill.lock { color: var(--faint); }
 .hint { background: var(--cyan-soft); border: 1px solid var(--cyan); color: var(--cyan);
   padding: 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.6; }
 .hint b { color: var(--gold); }
@@ -60,13 +71,14 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px,
 .btn:active { transform: scale(.97); }
 .btn.primary { background: var(--pink-soft); border-color: var(--pink); color: var(--pink); flex: 1; }
 .btn.ghost { background: var(--cyan-soft); border-color: var(--cyan); color: var(--cyan); flex: 1; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
 .foot { font-size: 11px; line-height: 1.6; color: var(--faint); margin-top: 20px; text-align: center; }
 #debug-log { display: none; margin-top: 20px; padding: 12px; border-radius: 10px;
   background: rgba(0,0,0,.6); border: 1px solid var(--gold);
   font-size: 11px; line-height: 1.5; color: var(--gold); max-height: 260px; overflow-y: auto; white-space: pre-wrap; }
 #debug-log.on { display: block; }
 
-/* Rotate overlay (portrait only on phones) */
+/* Rotate overlay (landscape only on phones) */
 #rotate-overlay { position: fixed; inset: 0; z-index: 50; background: var(--bg);
   display: flex; align-items: center; justify-content: center; padding: 24px; }
 .rotate-card { text-align: center; }
@@ -77,76 +89,112 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px,
 
 /* HUD */
 #hud { position: fixed; inset: 0; z-index: 5; pointer-events: none;
-  padding: calc(10px + env(safe-area-inset-top, 0px)) 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 10px calc(8px + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; justify-content: space-between; }
-.hud-top { display: flex; gap: 6px; flex-wrap: wrap; }
+.hud-top { display: flex; gap: 6px; flex-wrap: wrap; max-width: calc(100% - 130px); }
 .hud-chip { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.25); border-radius: 10px;
-  padding: 7px 10px; color: #fff; font-size: 13px; backdrop-filter: blur(4px); }
+  padding: 6px 9px; color: #fff; font-size: 12px; backdrop-filter: blur(4px); }
 .hud-chip .hud-label { display: block; font-family: Orbitron, sans-serif; font-size: 8px; letter-spacing: .2em; opacity: .7; }
-.hud-chip b { font-family: Orbitron, sans-serif; font-size: 13px; }
+.hud-chip b { font-family: Orbitron, sans-serif; font-size: 12px; }
+.hud-right { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); right: 10px; text-align: center; pointer-events: auto; }
+#minimap { width: 110px; height: 110px; border-radius: 12px; border: 1px solid rgba(255,255,255,.35);
+  background: rgba(0,0,0,.55); backdrop-filter: blur(4px); }
+#map-label { font-family: Orbitron, sans-serif; font-size: 8px; letter-spacing: .2em; color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 3px; }
 .hud-mid { text-align: center; }
-#hud-stop { font-family: Orbitron, sans-serif; font-size: 13px; letter-spacing: .12em; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+#hud-stop { font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .12em; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
 #hud-msg { font-size: 12px; color: var(--gold); text-shadow: 0 2px 8px rgba(0,0,0,.9); margin-top: 4px; min-height: 16px; }
-.hud-radio { display: flex; gap: 6px; justify-content: center; pointer-events: auto; flex-wrap: wrap; }
-.hud-radio button { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.3); color: #fff;
-  border-radius: 20px; padding: 9px 13px; font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .06em;
+.hud-radio, .hud-drive-row { display: flex; gap: 6px; justify-content: center; pointer-events: auto; flex-wrap: wrap; }
+.hud-radio button, .hud-drive-row button { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.3); color: #fff;
+  border-radius: 20px; padding: 8px 12px; font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .06em;
   cursor: pointer; backdrop-filter: blur(4px); }
-.hud-radio button:active { transform: scale(.96); }
+.hud-radio button:active, .hud-drive-row button:active { transform: scale(.96); }
+.hud-drive-row { margin-top: 6px; }
+.hud-drive-row button.on { border-color: var(--gold); color: var(--gold); }
 #btn-music.playing { border-color: var(--gold); color: var(--gold); animation: beat 0.6s ease-in-out infinite; }
-@keyframes beat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+@keyframes beat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+/* Music player panel */
+#music-panel { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  z-index: 8; width: min(420px, calc(100% - 24px)); background: rgba(10,10,26,.92);
+  border: 1px solid var(--gold); border-radius: 16px; padding: 14px; backdrop-filter: blur(6px); }
+.mp-title { font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .08em; color: var(--gold); margin-bottom: 8px; }
+.mp-progress { height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; margin-bottom: 10px; }
+#mp-bar { height: 100%; width: 0%; background: var(--gold); }
+.mp-controls { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.mp-controls button { flex: 0 0 44px; height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.08); color: #fff; font-size: 16px; cursor: pointer; }
+.mp-controls label { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .1em; color: #fff;
+  display: flex; align-items: center; gap: 6px; flex: 1; }
+.mp-controls input { flex: 1; accent-color: var(--gold); }
+.mp-list { display: flex; flex-direction: column; gap: 4px; }
+.mp-item { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  font-size: 12px; color: rgba(255,255,255,.8); }
+.mp-item.sel { background: var(--gold-soft); color: var(--gold); }
 
 /* Walk joystick */
-#joystick { position: fixed; left: 18px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 6; text-align: center; }
-#joy-base { width: 120px; height: 120px; border-radius: 50%; background: rgba(0,0,0,.4);
+#joystick { position: fixed; left: 18px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 6; text-align: center; }
+#joy-base { width: 116px; height: 116px; border-radius: 50%; background: rgba(0,0,0,.4);
   border: 2px solid rgba(255,255,255,.45); position: relative; touch-action: none; backdrop-filter: blur(4px); }
-#joy-nub { width: 52px; height: 52px; border-radius: 50%; background: var(--pink);
-  position: absolute; left: 34px; top: 34px; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+#joy-nub { width: 50px; height: 50px; border-radius: 50%; background: var(--pink);
+  position: absolute; left: 33px; top: 33px; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
 .joy-label { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .2em; color: #fff;
   text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
 
-/* Drive controls: steering wheel + pedals */
-#drive-controls { position: fixed; left: 0; right: 0; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); z-index: 6;
+/* Drive controls */
+#drive-controls { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 6;
   display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; pointer-events: none; }
 #wheel-wrap { text-align: center; pointer-events: auto; }
-#wheel { width: 96px; height: 96px; border-radius: 50%; background: rgba(0,0,0,.5);
-  border: 3px solid rgba(255,255,255,.5); color: #fff; font-size: 34px; line-height: 90px; text-align: center;
+#wheel { width: 92px; height: 92px; border-radius: 50%; background: rgba(0,0,0,.5);
+  border: 3px solid rgba(255,255,255,.5); color: #fff; font-size: 32px; line-height: 86px; text-align: center;
   touch-action: none; backdrop-filter: blur(4px); transition: transform .08s linear; }
 .wheel-label { font-family: Orbitron, sans-serif; font-size: 9px; letter-spacing: .18em; color: #fff;
   text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
-.pedals { display: flex; gap: 12px; pointer-events: auto; }
-.pedals button { width: 72px; height: 72px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5);
+.pedals { display: flex; gap: 10px; pointer-events: auto; }
+.pedals button { width: 66px; height: 66px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5);
   background: rgba(0,0,0,.45); color: #fff; font-family: Orbitron, sans-serif; font-size: 11px; font-weight: 700;
   cursor: pointer; backdrop-filter: blur(4px); touch-action: none; }
 .pedals button.held { background: rgba(255,45,166,.55); border-color: #fff; }
 #btn-gas { border-color: var(--green) !important; }
 #btn-brake { border-color: var(--red) !important; }
+#btn-rev { border-color: var(--cyan) !important; }
 
 /* Passenger */
-#touch-passenger { position: fixed; left: 0; right: 0; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); z-index: 6;
+#touch-passenger { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 6;
   display: flex; gap: 10px; justify-content: center; padding: 0 14px; }
 #touch-passenger button { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.4); color: #fff;
   border-radius: 24px; padding: 13px 18px; font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .06em;
   cursor: pointer; backdrop-filter: blur(4px); }
 
-/* Bus prompt */
-#bus-prompt { position: fixed; left: 0; right: 0; bottom: calc(210px + env(safe-area-inset-bottom, 0px)); z-index: 7;
-  display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
-.prompt-card { pointer-events: auto; width: 100%; max-width: 420px; background: rgba(10,10,26,.88);
+/* Prompt cards (bus / ticket / seat) */
+#bus-prompt, #ticket-panel, #seat-panel { position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(200px + env(safe-area-inset-bottom, 0px)); z-index: 7;
+  width: min(420px, calc(100% - 24px)); pointer-events: none; display: flex; justify-content: center; }
+.prompt-card { pointer-events: auto; width: 100%; background: rgba(10,10,26,.88);
   border: 1px solid var(--gold); border-radius: 16px; padding: 16px; text-align: center; backdrop-filter: blur(6px); }
-.prompt-bus { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 22px; letter-spacing: .08em; color: var(--gold); }
+.prompt-bus { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 20px; letter-spacing: .08em; color: var(--gold); }
 .prompt-sub { font-size: 12px; color: rgba(255,255,255,.75); margin: 4px 0 12px; }
 .prompt-btns { display: flex; gap: 10px; }
 .prompt-btns .btn { flex: 1; padding: 14px 10px; font-size: 13px; }
 .prompt-note { font-size: 11px; line-height: 1.5; color: rgba(255,255,255,.55); margin-top: 10px; }
+#seat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.seat { padding: 12px 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.06);
+  color: #fff; font-family: Orbitron, sans-serif; font-size: 11px; cursor: pointer; }
+.seat.sel { border-color: var(--gold); background: var(--gold-soft); color: var(--gold); }
+.seat small { display: block; font-size: 9px; opacity: .7; margin-top: 2px; }
 
 .scoreboard { display: flex; flex-direction: column; gap: 8px; margin: 18px 0; }
 .scoreboard .row { display: flex; justify-content: space-between; background: var(--card);
   border: 1px solid var(--line-soft); border-radius: 10px; padding: 11px 14px; font-size: 14px; }
 .scoreboard .row b { color: var(--gold); font-family: Orbitron, sans-serif; }
-@media (max-width: 380px) {
-  .pedals button { width: 64px; height: 64px; }
-  #wheel { width: 84px; height: 84px; line-height: 78px; font-size: 30px; }
-  #joy-base { width: 108px; height: 108px; }
-  #joy-nub { width: 46px; height: 46px; left: 31px; top: 31px; }
-  .hud-chip b { font-size: 11px; }
+
+/* Landscape phones: tighten the HUD so controls never overlap */
+@media (orientation: landscape) and (max-height: 500px) {
+  #minimap { width: 84px; height: 84px; }
+  #joy-base { width: 96px; height: 96px; }
+  #joy-nub { width: 42px; height: 42px; left: 27px; top: 27px; }
+  #wheel { width: 80px; height: 80px; line-height: 74px; font-size: 28px; }
+  .pedals button { width: 58px; height: 58px; }
+  #bus-prompt, #ticket-panel, #seat-panel { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  #music-panel { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
