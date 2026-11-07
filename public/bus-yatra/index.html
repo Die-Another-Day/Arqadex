@@ -19,25 +19,49 @@
     <h1>BUS<br><span>YATRA</span></h1>
     <p class="tag">Walk through a real Indian city, reach the bus stand, and stand next to any bus. Drive it yourself — or climb in and travel as a passenger. Old songs on the radio, all the way.</p>
 
-    <div class="field-label">PICK A CITY &amp; ROUTE</div>
+    <div class="save-bar">
+      <span>🪙 <b id="save-coins">100</b> coins</span>
+      <span>⭐ <b id="save-xp">0</b> XP</span>
+      <span>🛣️ <b id="save-routes">0</b>/10 routes done</span>
+    </div>
+
+    <div class="field-label">1 · PICK A ROUTE (10 REAL INDIAN ROUTES)</div>
     <div class="pick-list" id="route-list"></div>
 
-    <div class="hint">🚌 At the stand you'll find 3 buses parked in their bays — <b>LAL PARI</b>, <b>RAJDHANI COACH</b> and <b>GAADI NO. 1</b>. Walk up to one and choose <b>DRIVE</b> or <b>TRAVEL</b>. Music is original, composed in the style of old Bollywood — the radio changes with the place you're driving through.</div>
+    <div class="field-label">2 · TIME OF DAY</div>
+    <div class="mode-row" id="time-row">
+      <button class="mode-btn selected" data-time="morning" type="button">🌅 MORNING</button>
+      <button class="mode-btn" data-time="afternoon" type="button">☀️ AFTERNOON</button>
+      <button class="mode-btn" data-time="evening" type="button">🌇 EVENING</button>
+      <button class="mode-btn" data-time="night" type="button">🌙 NIGHT</button>
+    </div>
+
+    <div class="field-label">3 · WEATHER</div>
+    <div class="mode-row" id="weather-row">
+      <button class="mode-btn selected" data-weather="clear" type="button">☀️ CLEAR</button>
+      <button class="mode-btn" data-weather="rain" type="button">🌧️ RAIN</button>
+      <button class="mode-btn" data-weather="fog" type="button">🌫️ FOG</button>
+    </div>
+
+    <div class="field-label">4 · GARAGE — YOUR BUSES (3 PARK AT THE STAND)</div>
+    <div class="pick-list" id="garage-list"></div>
+
+    <div class="hint">🚌 At the stand you'll find your 3 garage buses parked in their bays — walk up to one and choose <b>DRIVE</b> or <b>TRAVEL</b>. Earn coins by driving routes and carrying passengers, then unlock new buses in the garage. Music is original, composed in the style of old Bollywood.</div>
 
     <div class="btn-row">
       <button id="btn-start" class="btn primary">ENTER THE CITY ▶</button>
     </div>
-    <p class="foot">No download, no account. Best played on your phone, held upright (portrait). Keyboard works too: WASD to walk, arrows to drive.</p>
-    <p class="foot" id="build-line">BUS YATRA BUILD 2.15.0</p>
+    <p class="foot">No download, no account. Played in landscape on your phone — rotate it sideways. Keyboard works too: WASD to walk, arrows to drive.</p>
+    <p class="foot" id="build-line">BUS YATRA BUILD 2.16.0</p>
     <div id="debug-log"></div>
   </section>
 
-  <!-- ============ ROTATE (portrait only on phones) ============ -->
+  <!-- ============ ROTATE (landscape only on phones) ============ -->
   <div id="rotate-overlay" class="hidden">
     <div class="rotate-card">
       <div class="rotate-icon">📱↻</div>
       <h2>ROTATE YOUR PHONE</h2>
-      <p>Bus Yatra is played upright, in portrait mode.</p>
+      <p>Bus Yatra is played sideways, in landscape mode.</p>
     </div>
   </div>
 
@@ -47,7 +71,13 @@
       <div class="hud-chip"><span class="hud-label">ROUTE</span><b id="hud-route">—</b></div>
       <div class="hud-chip"><span class="hud-label">FARE ₹</span><b id="hud-fare">0</b></div>
       <div class="hud-chip"><span class="hud-label">SPEED</span><b id="hud-speed">0 km/h</b></div>
+      <div class="hud-chip"><span class="hud-label">GEAR</span><b id="hud-gear">P</b></div>
       <div class="hud-chip"><span class="hud-label">TO GO</span><b id="hud-dist">—</b></div>
+      <div class="hud-chip"><span class="hud-label">COINS 🪙</span><b id="hud-coins">0</b></div>
+    </div>
+    <div class="hud-right">
+      <canvas id="minimap" width="110" height="110"></canvas>
+      <div id="map-label">ROUTE MAP</div>
     </div>
     <div class="hud-mid">
       <div id="hud-stop">NEXT STOP —</div>
@@ -59,6 +89,26 @@
       <button id="btn-cam" type="button">🎥 <span id="hud-cam">CHASE</span></button>
       <button id="btn-horn" type="button">📣 HORN</button>
     </div>
+    <div class="hud-drive-row hidden" id="hud-drive-row">
+      <button id="btn-ind-l" type="button">◀ IND</button>
+      <button id="btn-ind-r" type="button">IND ▶</button>
+      <button id="btn-lights" type="button">💡 LIGHTS</button>
+      <button id="btn-door" type="button">🚪 DOOR</button>
+      <button id="btn-hb" type="button">🅿 HANDBRAKE</button>
+    </div>
+  </div>
+
+  <!-- ============ MUSIC PLAYER ============ -->
+  <div id="music-panel" class="hidden">
+    <div class="mp-title">📻 BUS RADIO — <span id="mp-now">RETRO ROMANCE</span></div>
+    <div class="mp-progress"><div id="mp-bar"></div></div>
+    <div class="mp-controls">
+      <button id="mp-prev" type="button">⏮</button>
+      <button id="mp-play" type="button">⏸</button>
+      <button id="mp-next" type="button">⏭</button>
+      <label>VOL <input id="mp-vol" type="range" min="0" max="100" value="80"></label>
+    </div>
+    <div class="mp-list" id="mp-list"></div>
   </div>
 
   <!-- ============ WALK: virtual joystick ============ -->
@@ -74,6 +124,7 @@
       <div class="wheel-label">STEER — drag</div>
     </div>
     <div class="pedals">
+      <button id="btn-rev" type="button">REV</button>
       <button id="btn-brake" type="button">BRAKE</button>
       <button id="btn-gas" type="button">GAS</button>
     </div>
@@ -94,7 +145,32 @@
         <button id="btn-drive" class="btn primary" type="button">🚌 DRIVE IT</button>
         <button id="btn-travel" class="btn ghost" type="button">🧳 TRAVEL</button>
       </div>
-      <div class="prompt-note">Drive: you steer, pick up passengers, earn fare.<br>Travel: ride along, enjoy the radio.</div>
+      <div class="prompt-note">Drive: you steer, pick up passengers, earn fare.<br>Travel: buy a ticket, pick a seat, enjoy the ride.</div>
+    </div>
+  </div>
+
+  <!-- ============ TICKET ============ -->
+  <div id="ticket-panel" class="hidden">
+    <div class="prompt-card">
+      <div class="prompt-bus">🎫 TICKET</div>
+      <div class="prompt-sub" id="ticket-info">—</div>
+      <div class="prompt-btns">
+        <button id="btn-buy-ticket" class="btn primary" type="button">BUY TICKET</button>
+        <button id="btn-no-ticket" class="btn ghost" type="button">NOT NOW</button>
+      </div>
+      <div class="prompt-note" id="ticket-note">Your coins: 0</div>
+    </div>
+  </div>
+
+  <!-- ============ SEAT MAP ============ -->
+  <div id="seat-panel" class="hidden">
+    <div class="prompt-card">
+      <div class="prompt-bus">💺 PICK YOUR SEAT</div>
+      <div class="prompt-sub">Window seats see the road best. Tap a seat to sit.</div>
+      <div id="seat-grid"></div>
+      <div class="prompt-btns">
+        <button id="btn-sit" class="btn primary" type="button">SIT HERE</button>
+      </div>
     </div>
   </div>
 
@@ -110,6 +186,6 @@
     </div>
   </section>
 
-  <script type="module" src="game.js?v=2.15.0"></script>
+  <script type="module" src="game.js?v=2.16.0"></script>
 </body>
 </html>
