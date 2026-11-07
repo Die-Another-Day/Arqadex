@@ -1,4 +1,4 @@
-/* BUS YATRA skin — v2.16.0. Landscape-first on phones (v2.15.0 was portrait;
+/* BUS YATRA skin — v2.16.1. Landscape-first on phones (v2.15.0 was portrait;
    the brief now demands landscape). Theme system as before: dark by default,
    light when the OS is light or the Arqadex shell says daylight. */
 :root {
@@ -65,6 +65,21 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   padding: 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.6; }
 .hint b { color: var(--gold); }
 .btn-row { display: flex; gap: 10px; margin: 18px 0; }
+/* v2.16.1: the lobby is long on a landscape phone (2064px in a 390px
+   viewport) and ENTER THE CITY sat at the very bottom — users never
+   reached it. Pin the CTA to the bottom of the visible lobby area. */
+#screen-lobby .btn-row { position: sticky; bottom: 0; z-index: 5;
+  background: var(--bg); padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px)); margin-bottom: 0; }
+/* v2.16.1: compact landscape lobby — two-column route/garage grids so the
+   whole lobby is ~half as tall on short (landscape) screens. */
+@media (max-height: 500px) {
+  #screen-lobby h1 { font-size: 34px; }
+  #screen-lobby .tag { margin-bottom: 10px; font-size: 12px; }
+  #screen-lobby .field-label { margin: 10px 0 6px; }
+  #screen-lobby .pick-list { display: grid; grid-template-columns: 1fr 1fr; }
+  #screen-lobby .hint { margin-top: 10px; }
+  #screen-lobby .save-bar { margin-bottom: 2px; }
+}
 .btn { font-family: Orbitron, sans-serif; font-weight: 700; letter-spacing: .1em; font-size: 14px;
   padding: 16px 20px; border-radius: 12px; cursor: pointer; border: 1px solid transparent;
   color: var(--ink); background: var(--card); transition: transform .15s ease; }
