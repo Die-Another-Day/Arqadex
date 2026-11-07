@@ -25,7 +25,7 @@ export const GAMES: Game[] = [
   {
     id: 'bus-yatra',
     title: 'BUS YATRA',
-    tagline: 'Drive or ride an Indian bus across real routes — Vadodara to Ahmedabad, Mumbai to Pune, Delhi to Jaipur — with old-school Bollywood-style radio that changes with the place.',
+    tagline: 'Walk through an Indian city to the bus stand, stand next to any bus and choose: drive it yourself or travel as a passenger. Real routes, bot traffic, and old-school Bollywood-style radio that changes with the place.',
     color: '#FFB020',
     shape: 'duel',
     tags: ['3D', 'SIMULATOR', 'INDIAN', 'MUSIC'],
