@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.16.0
+// BUS YATRA — Indian Bus Simulator · v2.16.1
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -1886,7 +1886,7 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.16.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.16.1', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
@@ -1902,5 +1902,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.16.0 loaded');
+  log('BUS YATRA 2.16.1 loaded');
 })();
