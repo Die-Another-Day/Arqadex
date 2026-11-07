@@ -1,42 +1,17 @@
-/* BUS YATRA shared skin — v2.13.0. Same theme system as Chatpata Duo:
+/* BUS YATRA skin — v2.15.0. Same theme system as Chatpata Duo:
    dark by default; light when the OS is light or the Arqadex shell says daylight. */
 :root {
-  --bg: #050514;
-  --ink: #ffffff;
-  --muted: rgba(255, 255, 255, .6);
-  --faint: rgba(255, 255, 255, .4);
-  --card: rgba(255, 255, 255, .05);
-  --line: rgba(255, 255, 255, .14);
-  --line-soft: rgba(255, 255, 255, .08);
-  --pink: #FF2DA6;
-  --pink-soft: rgba(255, 45, 166, .12);
-  --cyan: #00F5FF;
-  --cyan-soft: rgba(0, 245, 255, .10);
-  --gold: #FFB020;
-  --gold-soft: rgba(255, 176, 32, .10);
-  --green: #22c55e;
-  --red: #dc2626;
+  --bg: #050514; --ink: #ffffff; --muted: rgba(255, 255, 255, .6); --faint: rgba(255, 255, 255, .4);
+  --card: rgba(255, 255, 255, .05); --line: rgba(255, 255, 255, .14); --line-soft: rgba(255, 255, 255, .08);
+  --pink: #FF2DA6; --pink-soft: rgba(255, 45, 166, .12); --cyan: #00F5FF; --cyan-soft: rgba(0, 245, 255, .10);
+  --gold: #FFB020; --gold-soft: rgba(255, 176, 32, .10); --green: #22c55e; --red: #dc2626;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
-  :root {
-    --bg: #fafaf8;
-    --ink: #17171c;
-    --muted: rgba(23, 23, 28, .62);
-    --faint: rgba(23, 23, 28, .42);
-    --card: #ffffff;
-    --line: rgba(23, 23, 28, .16);
-    --line-soft: rgba(23, 23, 28, .08);
-    --pink: #D6006E;
-    --pink-soft: rgba(214, 0, 110, .08);
-    --cyan: #00879C;
-    --cyan-soft: rgba(0, 135, 156, .08);
-    --gold: #8A5E00;
-    --gold-soft: rgba(138, 94, 0, .08);
-    --green: #15803d;
-    --red: #dc2626;
-    color-scheme: light;
-  }
+  :root { --bg: #fafaf8; --ink: #17171c; --muted: rgba(23, 23, 28, .62); --faint: rgba(23, 23, 28, .42);
+    --card: #ffffff; --line: rgba(23, 23, 28, .16); --line-soft: rgba(23, 23, 28, .08);
+    --pink: #D6006E; --pink-soft: rgba(214, 0, 110, .08); --cyan: #00879C; --cyan-soft: rgba(0, 135, 156, .08);
+    --gold: #8A5E00; --gold-soft: rgba(138, 94, 0, .08); --green: #15803d; --red: #dc2626; color-scheme: light; }
 }
 html[data-theme="light"] {
   --bg: #fafaf8; --ink: #17171c; --muted: rgba(23, 23, 28, .62); --faint: rgba(23, 23, 28, .42);
@@ -50,18 +25,13 @@ html[data-theme="dark"] {
   --pink: #FF2DA6; --pink-soft: rgba(255, 45, 166, .12); --cyan: #00F5FF; --cyan-soft: rgba(0, 245, 255, .10);
   --gold: #FFB020; --gold-soft: rgba(255, 176, 32, .10); --green: #22c55e; --red: #dc2626; color-scheme: dark;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
-body {
-  background: var(--bg); color: var(--ink);
-  font-family: 'Space Mono', ui-monospace, monospace;
+body { background: var(--bg); color: var(--ink); font-family: 'Space Mono', ui-monospace, monospace;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-  user-select: none; -webkit-user-select: none; overscroll-behavior: none;
-}
+  user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
 #game-root { position: fixed; inset: 0; z-index: 0; }
 #game-root canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-
 .screen { position: fixed; inset: 0; z-index: 10; overflow-y: auto; background: var(--bg);
   padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(40px + env(safe-area-inset-bottom, 0px)); }
 .screen.hidden, .hidden { display: none !important; }
@@ -72,11 +42,6 @@ h1 span { color: transparent; -webkit-text-stroke: 1.5px var(--gold); }
 h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px, 8vw, 34px); line-height: 1.1; margin-bottom: 10px; text-align: center; }
 .tag { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 22px; text-align: center; }
 .field-label { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .2em; color: var(--faint); margin: 16px 0 8px; }
-.mode-row { display: flex; gap: 10px; }
-.mode-btn { flex: 1; font-family: Orbitron, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em;
-  padding: 15px 8px; border-radius: 12px; cursor: pointer; color: var(--muted);
-  background: var(--card); border: 1px solid var(--line); }
-.mode-btn.selected { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
 .pick-list { display: flex; flex-direction: column; gap: 8px; }
 .pick { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left;
   padding: 13px 14px; border-radius: 12px; cursor: pointer; background: var(--card);
@@ -86,7 +51,8 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px,
 .pick i { font-style: normal; color: var(--muted); font-size: 12px; }
 .pick .pill { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .1em; color: var(--gold); white-space: nowrap; }
 .hint { background: var(--cyan-soft); border: 1px solid var(--cyan); color: var(--cyan);
-  padding: 10px 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.5; }
+  padding: 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.6; }
+.hint b { color: var(--gold); }
 .btn-row { display: flex; gap: 10px; margin: 18px 0; }
 .btn { font-family: Orbitron, sans-serif; font-weight: 700; letter-spacing: .1em; font-size: 14px;
   padding: 16px 20px; border-radius: 12px; cursor: pointer; border: 1px solid transparent;
@@ -100,6 +66,15 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px,
   font-size: 11px; line-height: 1.5; color: var(--gold); max-height: 260px; overflow-y: auto; white-space: pre-wrap; }
 #debug-log.on { display: block; }
 
+/* Rotate overlay (portrait only on phones) */
+#rotate-overlay { position: fixed; inset: 0; z-index: 50; background: var(--bg);
+  display: flex; align-items: center; justify-content: center; padding: 24px; }
+.rotate-card { text-align: center; }
+.rotate-icon { font-size: 64px; margin-bottom: 16px; animation: wiggle 1.2s ease-in-out infinite; }
+@keyframes wiggle { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(78deg); } }
+.rotate-card h2 { font-size: 22px; }
+.rotate-card p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
 /* HUD */
 #hud { position: fixed; inset: 0; z-index: 5; pointer-events: none;
   padding: calc(10px + env(safe-area-inset-top, 0px)) 10px calc(10px + env(safe-area-inset-bottom, 0px));
@@ -110,36 +85,68 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(26px,
 .hud-chip .hud-label { display: block; font-family: Orbitron, sans-serif; font-size: 8px; letter-spacing: .2em; opacity: .7; }
 .hud-chip b { font-family: Orbitron, sans-serif; font-size: 13px; }
 .hud-mid { text-align: center; }
-#hud-stop { font-family: Orbitron, sans-serif; font-size: 13px; letter-spacing: .12em; color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+#hud-stop { font-family: Orbitron, sans-serif; font-size: 13px; letter-spacing: .12em; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
 #hud-msg { font-size: 12px; color: var(--gold); text-shadow: 0 2px 8px rgba(0,0,0,.9); margin-top: 4px; min-height: 16px; }
-.hud-radio { display: flex; gap: 6px; justify-content: center; pointer-events: auto; }
+.hud-radio { display: flex; gap: 6px; justify-content: center; pointer-events: auto; flex-wrap: wrap; }
 .hud-radio button { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.3); color: #fff;
-  border-radius: 20px; padding: 9px 14px; font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .06em;
+  border-radius: 20px; padding: 9px 13px; font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .06em;
   cursor: pointer; backdrop-filter: blur(4px); }
 .hud-radio button:active { transform: scale(.96); }
+#btn-music.playing { border-color: var(--gold); color: var(--gold); animation: beat 0.6s ease-in-out infinite; }
+@keyframes beat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 
-/* Touch controls */
-#touch { position: fixed; left: 0; right: 0; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); z-index: 6;
-  display: flex; justify-content: space-between; padding: 0 14px; pointer-events: none; }
-#touch .touch-left, #touch .touch-right { display: flex; gap: 12px; pointer-events: auto; }
-#touch button { width: 68px; height: 68px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5);
-  background: rgba(0,0,0,.45); color: #fff; font-family: Orbitron, sans-serif; font-size: 12px; font-weight: 700;
+/* Walk joystick */
+#joystick { position: fixed; left: 18px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 6; text-align: center; }
+#joy-base { width: 120px; height: 120px; border-radius: 50%; background: rgba(0,0,0,.4);
+  border: 2px solid rgba(255,255,255,.45); position: relative; touch-action: none; backdrop-filter: blur(4px); }
+#joy-nub { width: 52px; height: 52px; border-radius: 50%; background: var(--pink);
+  position: absolute; left: 34px; top: 34px; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.joy-label { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .2em; color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
+
+/* Drive controls: steering wheel + pedals */
+#drive-controls { position: fixed; left: 0; right: 0; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); z-index: 6;
+  display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; pointer-events: none; }
+#wheel-wrap { text-align: center; pointer-events: auto; }
+#wheel { width: 96px; height: 96px; border-radius: 50%; background: rgba(0,0,0,.5);
+  border: 3px solid rgba(255,255,255,.5); color: #fff; font-size: 34px; line-height: 90px; text-align: center;
+  touch-action: none; backdrop-filter: blur(4px); transition: transform .08s linear; }
+.wheel-label { font-family: Orbitron, sans-serif; font-size: 9px; letter-spacing: .18em; color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
+.pedals { display: flex; gap: 12px; pointer-events: auto; }
+.pedals button { width: 72px; height: 72px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5);
+  background: rgba(0,0,0,.45); color: #fff; font-family: Orbitron, sans-serif; font-size: 11px; font-weight: 700;
   cursor: pointer; backdrop-filter: blur(4px); touch-action: none; }
-#touch button.held { background: rgba(255,45,166,.55); border-color: #fff; }
+.pedals button.held { background: rgba(255,45,166,.55); border-color: #fff; }
 #btn-gas { border-color: var(--green) !important; }
 #btn-brake { border-color: var(--red) !important; }
+
+/* Passenger */
 #touch-passenger { position: fixed; left: 0; right: 0; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); z-index: 6;
   display: flex; gap: 10px; justify-content: center; padding: 0 14px; }
 #touch-passenger button { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.4); color: #fff;
   border-radius: 24px; padding: 13px 18px; font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .06em;
   cursor: pointer; backdrop-filter: blur(4px); }
+
+/* Bus prompt */
+#bus-prompt { position: fixed; left: 0; right: 0; bottom: calc(210px + env(safe-area-inset-bottom, 0px)); z-index: 7;
+  display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
+.prompt-card { pointer-events: auto; width: 100%; max-width: 420px; background: rgba(10,10,26,.88);
+  border: 1px solid var(--gold); border-radius: 16px; padding: 16px; text-align: center; backdrop-filter: blur(6px); }
+.prompt-bus { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 22px; letter-spacing: .08em; color: var(--gold); }
+.prompt-sub { font-size: 12px; color: rgba(255,255,255,.75); margin: 4px 0 12px; }
+.prompt-btns { display: flex; gap: 10px; }
+.prompt-btns .btn { flex: 1; padding: 14px 10px; font-size: 13px; }
+.prompt-note { font-size: 11px; line-height: 1.5; color: rgba(255,255,255,.55); margin-top: 10px; }
+
 .scoreboard { display: flex; flex-direction: column; gap: 8px; margin: 18px 0; }
 .scoreboard .row { display: flex; justify-content: space-between; background: var(--card);
   border: 1px solid var(--line-soft); border-radius: 10px; padding: 11px 14px; font-size: 14px; }
 .scoreboard .row b { color: var(--gold); font-family: Orbitron, sans-serif; }
-
 @media (max-width: 380px) {
-  #touch button { width: 60px; height: 60px; }
+  .pedals button { width: 64px; height: 64px; }
+  #wheel { width: 84px; height: 84px; line-height: 78px; font-size: 30px; }
+  #joy-base { width: 108px; height: 108px; }
+  #joy-nub { width: 46px; height: 46px; left: 31px; top: 31px; }
   .hud-chip b { font-size: 11px; }
 }
