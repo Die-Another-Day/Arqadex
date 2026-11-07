@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.15.0
+// BUS YATRA — Indian Bus Simulator · v2.16.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -64,11 +64,37 @@ import * as THREE from 'three';
     { id: 'del-jai', name: 'DELHI → JAIPUR', sub: 'Pink City Express · 280 km', km: 280, length: 3400,
       station: 1, stops: ['GURUGRAM', 'MANESAR', 'JAIPUR'],
       zones: ['DELHI CITY', 'ARAVALLI HIGHWAY', 'DESERT EDGE', 'JAIPUR CITY'] },
+    { id: 'ahd-sur', name: 'AHMEDABAD → SURAT', sub: 'Diamond Express · 265 km', km: 265, length: 3300,
+      station: 0, stops: ['NADIAD', 'VADODARA', 'SURAT'],
+      zones: ['AHMEDABAD CITY', 'GUJARAT HIGHWAY', 'TEXTILE BELT', 'SURAT CITY'] },
+    { id: 'vad-mum', name: 'VADODARA → MUMBAI', sub: 'Gateway Express · 410 km', km: 410, length: 3600,
+      station: 2, stops: ['BHARUCH', 'SURAT', 'MUMBAI'],
+      zones: ['VADODARA CITY', 'NARMADA CROSSING', 'COASTAL HIGHWAY', 'MUMBAI CITY'] },
+    { id: 'jai-uda', name: 'JAIPUR → UDAIPUR', sub: 'Lake City Express · 390 km', km: 390, length: 3500,
+      station: 1, stops: ['AJMER', 'RAJSAMAND', 'UDAIPUR'],
+      zones: ['JAIPUR CITY', 'ARAVALLI HILLS', 'LAKE DISTRICT', 'UDAIPUR CITY'] },
+    { id: 'blr-mys', name: 'BENGALURU → MYSURU', sub: 'Mysuru Express · 150 km', km: 150, length: 3000,
+      station: 2, stops: ['RAMANAGARA', 'CHANNAPATNA', 'MYSURU'],
+      zones: ['BENGALURU CITY', 'SILK CITY', 'CAUVERY BELT', 'MYSURU CITY'] },
+    { id: 'hyd-vij', name: 'HYDERABAD → VIJAYAWADA', sub: 'Krishna Express · 275 km', km: 275, length: 3300,
+      station: 3, stops: ['NALGONDA', 'SURYAPET', 'VIJAYAWADA'],
+      zones: ['HYDERABAD CITY', 'TELANGANA PLAINS', 'KRISHNA RIVER', 'VIJAYAWADA CITY'] },
+    { id: 'lko-kan', name: 'LUCKNOW → KANPUR', sub: 'Ganga Express · 90 km', km: 90, length: 2400,
+      station: 0, stops: ['UNNAO', 'BANGARMAU', 'KANPUR'],
+      zones: ['LUCKNOW CITY', 'AAM BAGH', 'GANGA BELT', 'KANPUR CITY'] },
+    { id: 'bho-ind', name: 'BHOPAL → INDORE', sub: 'Malwa Express · 195 km', km: 195, length: 3100,
+      station: 1, stops: ['SEHORE', 'DEWAS', 'INDORE'],
+      zones: ['BHOPAL CITY', 'MALWA PLATEAU', 'DEWAS HILLS', 'INDORE CITY'] },
   ];
   var BUSES = [
-    { id: 'lalpari', name: 'LAL PARI', sub: 'City Bus · red · steady', color: 0xdc2626, stripe: 0xfacc15, topSpeed: 34, accel: 15, fare: 20 },
-    { id: 'rajdhani', name: 'RAJDHANI COACH', sub: 'Deluxe · blue · fast', color: 0x2563eb, stripe: 0xe2e8f0, topSpeed: 46, accel: 19, fare: 30 },
-    { id: 'vintage', name: 'GAADI NO. 1', sub: 'Vintage · green-yellow · tourist favourite', color: 0x16a34a, stripe: 0xfacc15, topSpeed: 38, accel: 16, fare: 40 },
+    { id: 'lalpari', name: 'LAL PARI', sub: 'Ordinary City Bus · red', cat: 'CITY', color: 0xdc2626, stripe: 0xfacc15, topSpeed: 34, accel: 15, fare: 20, price: 0 },
+    { id: 'rajdhani', name: 'RAJDHANI COACH', sub: 'Deluxe Intercity · blue', cat: 'INTERCITY', color: 0x2563eb, stripe: 0xe2e8f0, topSpeed: 46, accel: 19, fare: 30, price: 0 },
+    { id: 'vintage', name: 'GAADI NO. 1', sub: 'Vintage Tourist · green-yellow', cat: 'TOURIST', color: 0x16a34a, stripe: 0xfacc15, topSpeed: 38, accel: 16, fare: 40, price: 0 },
+    { id: 'state', name: 'STATE TRANSPORT', sub: 'Government Ordinary · orange', cat: 'GOVT', color: 0xea580c, stripe: 0xf8fafc, topSpeed: 36, accel: 15, fare: 25, price: 150 },
+    { id: 'cityac', name: 'CITY AC', sub: 'AC City Bus · sky blue', cat: 'CITY AC', color: 0x0284c7, stripe: 0xf8fafc, topSpeed: 40, accel: 17, fare: 35, price: 200 },
+    { id: 'tourist', name: 'TOURIST COACH', sub: 'Tourist · yellow', cat: 'TOURIST', color: 0xeab308, stripe: 0x111827, topSpeed: 42, accel: 17, fare: 50, price: 250 },
+    { id: 'sleeper', name: 'AC SLEEPER', sub: 'Private Sleeper · teal', cat: 'SLEEPER', color: 0x0f766e, stripe: 0xfacc15, topSpeed: 44, accel: 18, fare: 60, price: 350 },
+    { id: 'volvo', name: 'VOLVO LUXURY', sub: 'Volvo-style Luxury Coach · purple', cat: 'LUXURY', color: 0x6d28d9, stripe: 0xe2e8f0, topSpeed: 50, accel: 20, fare: 80, price: 500 },
   ];
   function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
   // Each station: a short catchy hook (the "viral part"), looped. Original tunes.
@@ -95,7 +121,8 @@ import * as THREE from 'three';
   var AudioEngine = {
     ctx: null, master: null, radioGain: null, engineOsc: null, engineGain: null,
     station: 0, timer: null, nextNoteTime: 0, step: 0, started: false, musicOn: true,
-    lastBeatAt: 0,
+    vol: 0.8, lastBeatAt: 0,
+    progress: function () { return (this.step % 32) / 32; },
     init: function () {
       if (this.ctx) return;
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -120,7 +147,11 @@ import * as THREE from 'three';
     resume: function () { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
     setMusic: function (on) {
       this.musicOn = on;
-      if (this.radioGain) this.radioGain.gain.value = on ? 0.55 : 0;
+      if (this.radioGain) this.radioGain.gain.value = on ? 0.55 * this.vol : 0;
+    },
+    setVolume: function (v) {
+      this.vol = clamp(v, 0, 1);
+      if (this.radioGain) this.radioGain.gain.value = this.musicOn ? 0.55 * this.vol : 0;
     },
     setEngine: function (speed01) {
       if (!this.ctx) return;
@@ -240,8 +271,36 @@ import * as THREE from 'three';
   // ============================================================================
   // STATE
   // ============================================================================
+  // ---- save / progression (localStorage) ----
+  var SAVE_KEY = 'bus-yatra-save-v1';
+  var save = { coins: 100, xp: 0, completed: [], owned: ['lalpari', 'rajdhani', 'vintage'], stand: ['lalpari', 'rajdhani', 'vintage'], totalPax: 0, totalKm: 0 };
+  function loadSave() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (d && typeof d === 'object') {
+        if (typeof d.coins === 'number') save.coins = d.coins;
+        if (typeof d.xp === 'number') save.xp = d.xp;
+        if (Array.isArray(d.completed)) save.completed = d.completed;
+        if (Array.isArray(d.owned) && d.owned.length) save.owned = d.owned;
+        if (Array.isArray(d.stand) && d.stand.length === 3) save.stand = d.stand;
+        if (typeof d.totalPax === 'number') save.totalPax = d.totalPax;
+        if (typeof d.totalKm === 'number') save.totalKm = d.totalKm;
+      }
+    } catch (e) { /* fresh save */ }
+  }
+  function persistSave() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* storage full/blocked */ }
+  }
+  function busById(id) { for (var i = 0; i < BUSES.length; i++) if (BUSES[i].id === id) return BUSES[i]; return BUSES[0]; }
+  loadSave();
+
   var state = {
     role: null, routeIdx: 0, mode: 'lobby',
+    timeOfDay: 'morning', weather: 'clear',
+    gear: 'P', doorsOpen: false, indicator: 0, lightsOn: false, handbrake: false,
+    seat: 0, ticketPaid: false,
     // walk
     px: 0, pz: 35, pHeading: 0, camYaw: 0, walkSpeed: 0,
     // drive
@@ -262,10 +321,11 @@ import * as THREE from 'three';
   var passengersAtStops = [], stopGroups = [], npcs = [], colliders = [];
   var clouds = [], wheels = [];
   var playerMesh = null, playerLegL = null, playerLegR = null, walkCycle = 0;
+  var headlight = null, headTarget = null, rainPoints = null, roadMat = null, sunLight = null, hemiLight = null;
   var keys = {};
   var joy = { x: 0, y: 0, active: false };
   var wheelDrag = { active: false, startX: 0, steer: 0 };
-  var input = { gas: false, brake: false };
+  var input = { gas: false, brake: false, rev: false, hb: false };
   var camOrbit = { active: false, lastX: 0 };
 
   function canvasTexture(draw, w, h) {
@@ -310,14 +370,30 @@ import * as THREE from 'three';
       board.position.set(0, 1.15, -3.52); board.rotation.y = Math.PI;
       g.add(board);
     }
+    var headMat = new THREE.MeshBasicMaterial({ color: 0xfff7cc });
+    var indMatL = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    var indMatR = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
     [-0.85, 0.85].forEach(function (x) {
-      var hl = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xfff7cc }));
+      var hl = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), headMat);
       hl.position.set(x, 0.85, -3.55); g.add(hl);
       var tl = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8),
         new THREE.MeshBasicMaterial({ color: 0xef4444 }));
       tl.position.set(x, 0.85, 3.55); g.add(tl);
+      // indicators (amber, front + rear, blink when on)
+      var indF = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), x < 0 ? indMatL : indMatR);
+      indF.position.set(x, 1.25, -3.55); g.add(indF);
+      var indR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), x < 0 ? indMatL : indMatR);
+      indR.position.set(x, 1.25, 3.55); g.add(indR);
     });
+    // passenger door (left side, near the front) — slides open/closed
+    var door = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.9, 1.1),
+      new THREE.MeshLambertMaterial({ color: 0x1a202c }));
+    door.position.set(-1.32, 1.35, -1.6);
+    g.add(door);
+    g.userData.door = door;
+    g.userData.headMat = headMat;
+    g.userData.indMatL = indMatL;
+    g.userData.indMatR = indMatR;
     var wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.3, 12);
     var wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
     var wg = [];
@@ -415,6 +491,31 @@ import * as THREE from 'three';
       new THREE.MeshBasicMaterial({ map: tex }));
   }
 
+  // ---- time of day + weather ----
+  var WEATHER_CFG = {
+    morning: { sky: 0x9fd8ef, sun: 1.4, sunPos: [40, 80, 30], hemi: 0.95, fogFar: 240 },
+    afternoon: { sky: 0x7ec8f0, sun: 1.6, sunPos: [10, 100, 10], hemi: 1.0, fogFar: 240 },
+    evening: { sky: 0xff9a56, sun: 0.9, sunPos: [-60, 25, 40], hemi: 0.6, fogFar: 200 },
+    night: { sky: 0x0b1026, sun: 0.15, sunPos: [0, 60, -20], hemi: 0.25, fogFar: 160 },
+  };
+  function applyWeather() {
+    if (!scene) return;
+    var cfg = WEATHER_CFG[state.timeOfDay] || WEATHER_CFG.morning;
+    var sky = cfg.sky, fogFar = cfg.fogFar;
+    if (state.weather === 'rain') { sky = 0x8a97a3; fogFar = Math.min(fogFar, 140); }
+    if (state.weather === 'fog') { sky = 0xb8c4cc; fogFar = 90; }
+    scene.background = new THREE.Color(sky);
+    scene.fog = new THREE.Fog(sky, 60, fogFar);
+    if (sunLight) {
+      sunLight.intensity = cfg.sun;
+      sunLight.position.set(cfg.sunPos[0], cfg.sunPos[1], cfg.sunPos[2]);
+    }
+    if (hemiLight) hemiLight.intensity = cfg.hemi;
+    if (roadMat) roadMat.color.setHex(state.weather === 'rain' ? 0x1f2937 : 0x2f3540);
+    if (rainPoints) rainPoints.visible = state.weather === 'rain';
+    state.lightsOn = state.timeOfDay === 'night' ? true : state.lightsOn;
+  }
+
   function buildWorld() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x9fd8ef);
@@ -426,10 +527,29 @@ import * as THREE from 'three';
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     $('game-root').appendChild(renderer.domElement);
 
-    scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x8a7a5a, 0.95));
-    var sun = new THREE.DirectionalLight(0xfff2cc, 1.4);
-    sun.position.set(40, 80, 30);
-    scene.add(sun);
+    hemiLight = new THREE.HemisphereLight(0xcfe8ff, 0x8a7a5a, 0.95);
+    scene.add(hemiLight);
+    sunLight = new THREE.DirectionalLight(0xfff2cc, 1.4);
+    sunLight.position.set(40, 80, 30);
+    scene.add(sunLight);
+    // headlight spotlight (attached to the active bus when lights are on)
+    headlight = new THREE.SpotLight(0xfff2cc, 0, 60, 0.5, 0.4, 1.2);
+    headTarget = new THREE.Object3D();
+    scene.add(headTarget);
+    headlight.target = headTarget;
+    scene.add(headlight);
+    // rain particles (hidden unless weather is rain)
+    var rainGeo = new THREE.BufferGeometry();
+    var rainPos = new Float32Array(600 * 3);
+    for (var ri = 0; ri < 600; ri++) {
+      rainPos[ri * 3] = rand(-40, 40);
+      rainPos[ri * 3 + 1] = rand(0, 30);
+      rainPos[ri * 3 + 2] = rand(-40, 40);
+    }
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+    rainPoints = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0x9db8cc, size: 0.35, transparent: true, opacity: 0.7 }));
+    rainPoints.visible = false;
+    scene.add(rainPoints);
 
     var L = route.length;
     // ground — fields
@@ -439,8 +559,8 @@ import * as THREE from 'three';
     ground.position.set(0, -0.05, -L / 2);
     scene.add(ground);
     // route road (continues through the city)
-    var road = new THREE.Mesh(new THREE.PlaneGeometry(14, L + 400),
-      new THREE.MeshLambertMaterial({ color: 0x2f3540 }));
+    roadMat = new THREE.MeshLambertMaterial({ color: 0x2f3540 });
+    var road = new THREE.Mesh(new THREE.PlaneGeometry(14, L + 400), roadMat);
     road.rotation.x = -Math.PI / 2;
     road.position.set(0, 0, -L / 2 + 100);
     scene.add(road);
@@ -539,15 +659,72 @@ import * as THREE from 'three';
       scene.add(bench);
       colliders.push({ x: x, z: 10, hw: 1.6, hd: 0.5 });
     });
-    // parked buses in bays
+    // parked buses in bays — the 3 from the player's garage
     var bayX = [-7, 0, 7];
-    BUSES.forEach(function (bs, i) {
+    save.stand.forEach(function (busId, i) {
+      var bs = busById(busId);
       var bus = makeBus(bs.color, bs.stripe, route.name);
       bus.position.set(bayX[i], 0, 5);
       scene.add(bus);
       parkedBuses.push({ spec: bs, mesh: bus, x: bayX[i], z: 5, taken: false });
       colliders.push({ x: bayX[i], z: 5, hw: 1.5, hd: 3.7, bus: true, ref: parkedBuses[i] });
     });
+
+    // ---- landmarks along the route (fixed fractions, never on the road) ----
+    function landmark(kind, z) {
+      var grp = new THREE.Group();
+      if (kind === 'petrol') {
+        var canopy = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 7),
+          new THREE.MeshLambertMaterial({ color: 0xdc2626 }));
+        canopy.position.y = 4.5; grp.add(canopy);
+        [[-4, -3], [4, -3], [-4, 3], [4, 3]].forEach(function (pp) {
+          var pil = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4.5, 6),
+            new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+          pil.position.set(pp[0], 2.25, pp[1]); grp.add(pil);
+        });
+        var pump = new THREE.Mesh(new THREE.BoxGeometry(1, 1.6, 0.6),
+          new THREE.MeshLambertMaterial({ color: 0xfacc15 }));
+        pump.position.set(0, 0.8, 0); grp.add(pump);
+      } else if (kind === 'toll') {
+        var gantry = new THREE.Mesh(new THREE.BoxGeometry(20, 0.5, 0.8),
+          new THREE.MeshLambertMaterial({ color: 0x334155 }));
+        gantry.position.y = 6; grp.add(gantry);
+        [-9, 9].forEach(function (x) {
+          var leg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.5),
+            new THREE.MeshLambertMaterial({ color: 0x334155 }));
+          leg.position.set(x, 3, 0); grp.add(leg);
+          var booth = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.4, 2),
+            new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+          booth.position.set(x * 0.7, 1.2, 2.5); grp.add(booth);
+        });
+      } else if (kind === 'temple') {
+        var base = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 6),
+          new THREE.MeshLambertMaterial({ color: 0xf5d0a9 }));
+        base.position.y = 2; grp.add(base);
+        var dome = new THREE.Mesh(new THREE.SphereGeometry(2.2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshLambertMaterial({ color: 0xdc2626 }));
+        dome.position.y = 4; grp.add(dome);
+        var flag = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.7),
+          new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide }));
+        flag.position.set(0, 7.2, 0); grp.add(flag);
+      } else if (kind === 'railway') {
+        var barrier = new THREE.Mesh(new THREE.BoxGeometry(8, 0.25, 0.25),
+          new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+        barrier.position.y = 1.2; grp.add(barrier);
+        var post = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.4, 0.3),
+          new THREE.MeshLambertMaterial({ color: 0x111827 }));
+        post.position.set(-4, 1.2, 0); grp.add(post);
+        var crossSign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4),
+          new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide }));
+        crossSign.position.set(4.5, 2.5, 0); grp.add(crossSign);
+      }
+      grp.position.set(16, 0, z);
+      scene.add(grp);
+    }
+    landmark('petrol', -L * 0.25);
+    landmark('toll', -L * 0.4);
+    landmark('temple', -L * 0.6);
+    landmark('railway', -L * 0.75);
 
     // ---- route scenery (z < 0) ----
     var colors = [0xf59e0b, 0xec4899, 0x06b6d4, 0x8b5cf6, 0xf97316, 0x14b8a6];
@@ -684,6 +861,35 @@ import * as THREE from 'three';
       scene.add(car);
       cars.push({ mesh: car, lane: lane2, dir: dir2, speed: rand(24, 34), kind: 'car' });
     }
+    // autos (3-wheelers) + bikes — the real Indian road
+    for (var a = 0; a < 3; a++) {
+      var auto = new THREE.Group();
+      var abody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 2.2),
+        new THREE.MeshLambertMaterial({ color: pick([0xfacc15, 0x16a34a, 0x111827]) }));
+      abody.position.y = 0.6; auto.add(abody);
+      var acan = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.15, 2.3),
+        new THREE.MeshLambertMaterial({ color: 0x111827 }));
+      acan.position.y = 1.35; auto.add(acan);
+      var aw = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 10),
+        new THREE.MeshLambertMaterial({ color: 0x111111 }));
+      aw.rotation.z = Math.PI / 2; aw.position.set(0, 0.28, -0.9); auto.add(aw);
+      var laneA = a % 2 === 0 ? 3.5 : -3.5;
+      auto.position.set(laneA, 0, -Math.random() * route.length);
+      scene.add(auto);
+      cars.push({ mesh: auto, lane: laneA, dir: laneA > 0 ? -1 : 1, speed: rand(16, 22), kind: 'auto' });
+    }
+    for (var bk = 0; bk < 2; bk++) {
+      var bike = new THREE.Group();
+      var rider = makePerson(pick([0xef4444, 0x3b82f6, 0xf59e0b]));
+      rider.scale.set(0.9, 0.9, 0.9);
+      rider.position.y = 0.35;
+      bike.add(rider);
+      var laneB = bk % 2 === 0 ? 1.5 : -1.5;
+      bike.position.set(laneB, 0, -Math.random() * route.length);
+      scene.add(bike);
+      cars.push({ mesh: bike, lane: laneB, dir: laneB > 0 ? -1 : 1, speed: rand(26, 36), kind: 'bike' });
+    }
+    applyWeather();
 
     clock = new THREE.Clock();
     window.addEventListener('resize', function () {
@@ -705,7 +911,8 @@ import * as THREE from 'three';
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'pick' + (i === state.routeIdx ? ' selected' : '');
-      b.innerHTML = '<span><b>' + r.name + '</b><i>' + r.sub + ' · Stops: ' + r.stops.join(' → ') + '</i></span><span class="pill">' + r.km + ' KM</span>';
+      var done = save.completed.indexOf(r.id) >= 0 ? ' ✅ DONE' : '';
+      b.innerHTML = '<span><b>' + r.name + '</b><i>' + r.sub + ' · Stops: ' + r.stops.join(' → ') + '</i></span><span class="pill">' + r.km + ' KM' + done + '</span>';
       b.onclick = function () {
         state.routeIdx = i; route = ROUTES[i];
         rl.querySelectorAll('.pick').forEach(function (el) { el.classList.remove('selected'); });
@@ -713,6 +920,22 @@ import * as THREE from 'three';
       };
       rl.appendChild(b);
     });
+    $('time-row').querySelectorAll('.mode-btn').forEach(function (btn) {
+      btn.onclick = function () {
+        state.timeOfDay = btn.dataset.time;
+        $('time-row').querySelectorAll('.mode-btn').forEach(function (el) { el.classList.remove('selected'); });
+        btn.classList.add('selected');
+      };
+    });
+    $('weather-row').querySelectorAll('.mode-btn').forEach(function (btn) {
+      btn.onclick = function () {
+        state.weather = btn.dataset.weather;
+        $('weather-row').querySelectorAll('.mode-btn').forEach(function (el) { el.classList.remove('selected'); });
+        btn.classList.add('selected');
+      };
+    });
+    renderGarage();
+    updateSaveBar();
     $('btn-start').onclick = enterCity;
     $('btn-again').onclick = function () {
       $('screen-end').classList.add('hidden');
@@ -722,7 +945,50 @@ import * as THREE from 'three';
       $('screen-end').classList.add('hidden');
       $('screen-lobby').classList.remove('hidden');
       state.mode = 'lobby';
+      buildLobby();
     };
+  }
+
+  function updateSaveBar() {
+    $('save-coins').textContent = String(save.coins);
+    $('save-xp').textContent = String(save.xp);
+    $('save-routes').textContent = String(save.completed.length);
+    var hc = $('hud-coins');
+    if (hc) hc.textContent = String(save.coins);
+  }
+
+  function renderGarage() {
+    var gl = $('garage-list');
+    gl.innerHTML = '';
+    BUSES.forEach(function (bs) {
+      var owned = save.owned.indexOf(bs.id) >= 0;
+      var atStand = save.stand.indexOf(bs.id) >= 0;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pick' + (atStand ? ' selected' : '') + (owned ? '' : ' locked');
+      var pill = owned ? (atStand ? 'AT STAND ✓' : 'OWNED — TAP TO PARK') : '🔒 ' + bs.price + ' COINS';
+      b.innerHTML = '<span><b>' + bs.name + '</b><i>' + bs.sub + ' · Top ' + Math.round(bs.topSpeed * 2.2) + ' km/h · ₹' + bs.fare + '/head</i></span><span class="pill' + (owned ? '' : ' lock') + '">' + pill + '</span>';
+      b.onclick = function () {
+        if (owned) {
+          if (atStand) return;
+          save.stand[2] = bs.id; // swap into the third bay
+          persistSave();
+          renderGarage();
+          setMsg(bs.name + ' is now parked at the stand.');
+        } else if (save.coins >= bs.price) {
+          save.coins -= bs.price;
+          save.owned.push(bs.id);
+          save.stand[2] = bs.id;
+          persistSave();
+          renderGarage();
+          updateSaveBar();
+          setMsg('🎉 ' + bs.name + ' unlocked and parked at the stand!');
+        } else {
+          setMsg('Not enough coins for ' + bs.name + ' — drive routes to earn!');
+        }
+      };
+      gl.appendChild(b);
+    });
   }
 
   // ============================================================================
@@ -758,8 +1024,15 @@ import * as THREE from 'three';
     $('hud').classList.remove('hidden');
     $('joystick').classList.remove('hidden');
     $('drive-controls').classList.add('hidden');
+    $('hud-drive-row').classList.add('hidden');
+    $('music-panel').classList.add('hidden');
+    $('ticket-panel').classList.add('hidden');
+    $('seat-panel').classList.add('hidden');
     $('touch-passenger').classList.add('hidden');
     $('bus-prompt').classList.add('hidden');
+    state.doorsOpen = false; state.indicator = 0; state.handbrake = false;
+    state.lightsOn = state.timeOfDay === 'night';
+    state.seat = 0; state.ticketPaid = false;
     $('hud-route').textContent = route.name;
     $('hud-stop').textContent = 'WALK TO A BUS AT THE STAND';
     setMsg('Welcome to ' + route.name.split(' ')[0] + '! Walk to the bus stand 🚶');
@@ -783,6 +1056,10 @@ import * as THREE from 'three';
     $('hud').classList.add('hidden');
     $('joystick').classList.add('hidden');
     $('drive-controls').classList.add('hidden');
+    $('hud-drive-row').classList.add('hidden');
+    $('music-panel').classList.add('hidden');
+    $('ticket-panel').classList.add('hidden');
+    $('seat-panel').classList.add('hidden');
     $('touch-passenger').classList.add('hidden');
     $('bus-prompt').classList.add('hidden');
     $('end-title').textContent = title;
@@ -796,6 +1073,23 @@ import * as THREE from 'three';
   }
 
   function endYatra(reason) {
+    // ---- progression rewards ----
+    var earned = 0, xpGain = 0;
+    if (state.role === 'driver') {
+      earned = state.fare;
+      xpGain = state.fare + state.stopsServed * 10;
+      save.totalPax += state.passengers;
+      save.totalKm += route.km;
+    } else {
+      earned = 50;
+      xpGain = Math.round((state.rideDist || 0)) * 2;
+      save.totalKm += Math.round(state.rideDist || 0);
+    }
+    save.coins += earned;
+    save.xp += xpGain;
+    if (save.completed.indexOf(route.id) < 0) save.completed.push(route.id);
+    persistSave();
+    updateSaveBar();
     var mins = Math.floor(state.elapsed / 60);
     var secs = Math.floor(state.elapsed % 60);
     var timeStr = mins + ':' + String(secs).padStart(2, '0');
@@ -806,13 +1100,16 @@ import * as THREE from 'three';
           : 'Yatra ended midway — ' + state.passengers + ' passengers rode with you.',
         [['ROLE', 'DRIVER · ' + busSpec.name], ['ROUTE', route.name], ['FARE COLLECTED', '₹' + state.fare],
          ['PASSENGERS', String(state.passengers)], ['STOPS SERVED', state.stopsServed + ' / ' + route.stops.length],
+         ['COINS EARNED', '+' + earned + ' 🪙  (+' + xpGain + ' XP)'],
          ['TIME', timeStr]]);
     } else {
       var km = (state.rideDist || 0).toFixed(1);
       showEnd('UTAR GAYE! 👋',
         'You travelled ' + km + ' km as a passenger. Kaisi lagi yatra?',
         [['ROLE', 'PASSENGER · ' + busSpec.name], ['ROUTE', route.name], ['DISTANCE RODE', km + ' km'],
-         ['STOPS PASSED', String(state.stopsServed)], ['TIME', timeStr]]);
+         ['STOPS PASSED', String(state.stopsServed)],
+         ['COINS EARNED', '+' + earned + ' 🪙  (+' + xpGain + ' XP)'],
+         ['TIME', timeStr]]);
     }
   }
 
@@ -831,22 +1128,93 @@ import * as THREE from 'three';
       state.role = 'driver';
       playerBus = parked.mesh;
       state.x = parked.x; state.z = parked.z; state.heading = 0; state.speed = 0;
+      state.doorsOpen = false; state.indicator = 0; state.handbrake = false;
+      state.lightsOn = state.timeOfDay === 'night';
       wheels = playerBus.userData.wheels;
       state.mode = 'driving';
       $('drive-controls').classList.remove('hidden');
+      $('hud-drive-row').classList.remove('hidden');
+      updateDriveButtons();
       setMsg('Chalo! ' + busSpec.name + ' is yours. Next stop: ' + route.stops[0]);
     } else {
+      // traveller: buy a ticket, then pick a seat
       state.role = 'passenger';
-      rideBus = { mesh: parked.mesh, lane: 3.5, dir: -1, speed: 0, kind: 'bus', halt: null };
-      rideBus.mesh.position.set(3.5, 0, parked.z);
-      state.mode = 'passenger';
-      $('touch-passenger').classList.remove('hidden');
-      setMsg('You are riding the ' + busSpec.name + '. Enjoy the yatra!');
+      state.ticketPaid = false;
+      state.pendingBus = parked;
+      $('ticket-info').textContent = busSpec.name + ' · ' + route.name + ' · Fare ₹' + busSpec.fare;
+      $('ticket-note').textContent = 'Your coins: ' + save.coins + (save.coins < busSpec.fare ? ' — not enough? Drive a route to earn coins.' : '');
+      $('btn-buy-ticket').disabled = save.coins < busSpec.fare;
+      $('btn-buy-ticket').textContent = save.coins < busSpec.fare ? 'NOT ENOUGH COINS' : 'BUY TICKET — ₹' + busSpec.fare;
+      $('bus-prompt').classList.add('hidden');
+      $('ticket-panel').classList.remove('hidden');
+      setMsg('🎫 Buy your ticket for the ' + busSpec.name + '.');
     }
     state.camView = 0;
     updateCamButton();
     log('choose bus ' + busSpec.id + ' as ' + state.role);
   }
+
+  // ---- ticket + seat selection ----
+  var SEATS = [
+    { label: '1A', pos: 'WINDOW', off: [-0.8, 1.9, -2.0] },
+    { label: '1B', pos: 'WINDOW', off: [0.8, 1.9, -2.0] },
+    { label: '2A', pos: 'WINDOW', off: [-0.8, 1.9, 0] },
+    { label: '2B', pos: 'WINDOW', off: [0.8, 1.9, 0] },
+    { label: '3A', pos: 'AISLE', off: [-0.4, 1.9, 0.8] },
+    { label: '3B', pos: 'AISLE', off: [0.4, 1.9, 0.8] },
+    { label: '4A', pos: 'WINDOW', off: [-0.8, 1.9, 2.4] },
+    { label: '4B', pos: 'WINDOW', off: [0.8, 1.9, 2.4] },
+  ];
+  var selectedSeat = 0;
+  function boardAsPassenger() {
+    var parked = state.pendingBus;
+    if (!parked) return;
+    rideBus = { mesh: parked.mesh, lane: 3.5, dir: -1, speed: 0, kind: 'bus', halt: null };
+    rideBus.mesh.position.set(3.5, 0, parked.z);
+    playerMesh.visible = false;
+    $('seat-panel').classList.add('hidden');
+    $('ticket-panel').classList.add('hidden');
+    state.mode = 'passenger';
+    $('touch-passenger').classList.remove('hidden');
+    setMsg('💺 Seated in ' + SEATS[state.seat].label + ' (' + SEATS[state.seat].pos + '). Enjoy the yatra!');
+    state.camView = 0;
+    updateCamButton();
+    log('boarded as passenger, seat ' + SEATS[state.seat].label);
+  }
+  $('btn-buy-ticket').onclick = function () {
+    if (save.coins < busSpec.fare) return;
+    save.coins -= busSpec.fare;
+    state.ticketPaid = true;
+    persistSave();
+    updateSaveBar();
+    $('ticket-panel').classList.add('hidden');
+    // seat map
+    var grid = $('seat-grid');
+    grid.innerHTML = '';
+    selectedSeat = 0;
+    SEATS.forEach(function (seat, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'seat' + (i === 0 ? ' sel' : '');
+      b.innerHTML = seat.label + '<small>' + seat.pos + '</small>';
+      b.onclick = function () {
+        selectedSeat = i;
+        grid.querySelectorAll('.seat').forEach(function (el) { el.classList.remove('sel'); });
+        b.classList.add('sel');
+      };
+      grid.appendChild(b);
+    });
+    $('seat-panel').classList.remove('hidden');
+    setMsg('🎫 Ticket bought! Now pick your seat.');
+  };
+  $('btn-no-ticket').onclick = function () {
+    $('ticket-panel').classList.add('hidden');
+    $('bus-prompt').classList.remove('hidden');
+  };
+  $('btn-sit').onclick = function () {
+    state.seat = selectedSeat;
+    boardAsPassenger();
+  };
 
   // ============================================================================
   // WALK MODE
@@ -950,18 +1318,24 @@ import * as THREE from 'three';
   function updateDriver(dt) {
     var gas = input.gas || keys['arrowup'] || keys['w'];
     var brake = input.brake || keys['arrowdown'] || keys['s'];
+    var rev = input.rev || (keys['s'] && state.speed <= 0.5);
+    var hb = input.hb || keys[' '];
     var steerKeys = (keys['arrowleft'] || keys['a'] ? -1 : 0) + (keys['arrowright'] || keys['d'] ? 1 : 0);
     var steer = wheelDrag.active ? wheelDrag.steer : steerKeys;
     state.steer = lerp(state.steer, steer, dt * 8);
     // steering only bites while moving
-    var steerAuthority = clamp(state.speed / 18, 0, 1) * 0.9 + 0.1;
-    state.heading += state.steer * 1.05 * steerAuthority * dt;
+    var steerAuthority = clamp(Math.abs(state.speed) / 18, 0, 1) * 0.9 + 0.1;
+    state.heading += state.steer * 1.05 * steerAuthority * dt * (state.speed < 0 ? -1 : 1);
     state.heading = clamp(state.heading, -0.7, 0.7);
     if (gas) state.speed += busSpec.accel * dt;
-    if (brake) state.speed -= 32 * dt;
+    if (brake) { state.speed -= 32 * dt; if (state.speed < 0 && !rev) state.speed = 0; } // brake stops, never reverses on its own
+    if (rev) state.speed -= 10 * dt; // reverse gear
+    if (hb) { state.speed -= state.speed * 6 * dt; if (Math.abs(state.speed) < 0.3) state.speed = 0; } // handbrake
     state.speed -= state.speed * 0.25 * dt;
     if (Math.abs(state.x) > 6.5) state.speed -= 8 * dt; // off-road drag
-    state.speed = clamp(state.speed, 0, busSpec.topSpeed);
+    state.speed = clamp(state.speed, -8, busSpec.topSpeed);
+    state.gear = state.speed < -0.3 ? 'R' : state.speed > 0.3 ? 'D' : (hb ? 'N' : 'P');
+    $('hud-gear').textContent = state.gear;
     state.x += Math.sin(state.heading) * state.speed * dt;
     state.z -= Math.cos(state.heading) * state.speed * dt;
     state.x = clamp(state.x, -8.5, 8.5);
@@ -995,9 +1369,13 @@ import * as THREE from 'three';
           if (state.speed < 0) state.speed = 0;
         }
         if (Math.abs(state.z - s.z) < 18 && state.speed < 8) {
-          boarding = { stop: s, t: 0 };
-          setMsg('🛑 ' + s.name + ' — passengers boarding…');
-          break;
+          if (!state.doorsOpen) {
+            setMsg('🚪 Open the doors to let passengers board! (DOOR button)');
+          } else {
+            boarding = { stop: s, t: 0 };
+            setMsg('🛑 ' + s.name + ' — passengers boarding…');
+            break;
+          }
         }
       }
     } else {
@@ -1038,9 +1416,27 @@ import * as THREE from 'three';
       }
     }
 
+    // indicators blink, headlight follows the bus, door slides
+    var blinkOn = (performance.now() / 500) % 2 < 1;
+    if (playerBus.userData.indMatL) {
+      playerBus.userData.indMatL.color.setHex(state.indicator === 1 && blinkOn ? 0xf59e0b : 0x444444);
+      playerBus.userData.indMatR.color.setHex(state.indicator === 2 && blinkOn ? 0xf59e0b : 0x444444);
+    }
+    if (headlight) {
+      var hfx = Math.sin(state.heading), hfz = -Math.cos(state.heading);
+      headlight.position.set(state.x + hfx * 3, 1.4, state.z + hfz * 3);
+      headTarget.position.set(state.x + hfx * 30, 0.5, state.z + hfz * 30);
+      headlight.intensity = state.lightsOn ? 2.2 : 0;
+      if (playerBus.userData.headMat) playerBus.userData.headMat.color.setHex(state.lightsOn ? 0xffffff : 0xfff7cc);
+    }
+    if (playerBus.userData.door) {
+      var dd = playerBus.userData.door;
+      dd.position.z = lerp(dd.position.z, state.doorsOpen ? -2.7 : -1.6, dt * 6);
+    }
+
     if (state.z <= -route.length) { endYatra('done'); return; }
 
-    $('hud-speed').textContent = Math.round(state.speed * 2.2) + ' km/h';
+    $('hud-speed').textContent = Math.round(Math.abs(state.speed) * 2.2) + ' km/h';
     $('hud-fare').textContent = String(state.fare);
     $('hud-dist').textContent = ((1 - progress) * route.km).toFixed(1) + ' km';
     var next = null;
@@ -1096,6 +1492,11 @@ import * as THREE from 'three';
       }
       setMsg('📍 ' + route.zones[zone] + ' — 📻 ' + STATIONS[AudioEngine.station].name);
     }
+    if (headlight) {
+      headlight.position.set(b.mesh.position.x, 1.4, b.mesh.position.z - 3);
+      headTarget.position.set(b.mesh.position.x, 0.5, b.mesh.position.z - 30);
+      headlight.intensity = state.lightsOn ? 2.2 : 0;
+    }
     $('hud-speed').textContent = Math.round(b.speed * 2.2) + ' km/h';
     $('hud-fare').textContent = '—';
     $('hud-dist').textContent = ((1 - progress) * route.km).toFixed(1) + ' km';
@@ -1128,12 +1529,12 @@ import * as THREE from 'three';
   // ============================================================================
   var CAM_NAMES = {
     walk: ['FOLLOW', 'FIRST', 'HIGH'],
-    driving: ['CHASE', 'CAB', 'HIGH'],
+    driving: ['CHASE', 'CAB', 'BUMPER', 'INSIDE', 'CINE'],
     passenger: ['WINDOW', 'FRONT', 'REAR'],
   };
   function updateCamButton() {
     var names = CAM_NAMES[state.mode] || CAM_NAMES.walk;
-    $('hud-cam').textContent = names[state.camView % 3];
+    $('hud-cam').textContent = names[state.camView % names.length];
   }
 
   function updateCamera(dt) {
@@ -1159,14 +1560,24 @@ import * as THREE from 'three';
       }
     } else if (state.mode === 'driving' && playerBus) {
       var bx = playerBus.position.x, bz = playerBus.position.z;
+      var fx = Math.sin(state.heading), fz = -Math.cos(state.heading);
       if (state.camView === 1) {
         // cab — driver's seat, looking out the windshield
-        var fx = Math.sin(state.heading), fz = -Math.cos(state.heading);
         camera.position.set(bx + fx * 2.2, 2.1, bz + fz * 2.2);
         camera.lookAt(bx + fx * 40, 1.6, bz + fz * 40);
       } else if (state.camView === 2) {
-        camera.position.set(bx, 11, bz + 16);
-        camera.lookAt(bx, 1, bz - 6);
+        // front bumper, low
+        camera.position.set(bx + fx * 3.6, 0.9, bz + fz * 3.6);
+        camera.lookAt(bx + fx * 40, 1.0, bz + fz * 40);
+      } else if (state.camView === 3) {
+        // passenger interior, looking forward through the windshield
+        camera.position.set(bx - fx * 0.5, 1.9, bz - fz * 0.5);
+        camera.lookAt(bx + fx * 40, 1.6, bz + fz * 40);
+      } else if (state.camView === 4) {
+        // cinematic — slow orbit around the bus
+        var a = performance.now() / 1000 * 0.25;
+        camera.position.set(bx + Math.sin(a) * 11, 4.5, bz + Math.cos(a) * 11);
+        camera.lookAt(bx, 1.5, bz);
       } else {
         var cx = bx * 0.7, cy = 6.5, cz = bz + 13;
         camera.position.x = lerp(camera.position.x, cx, dt * 4);
@@ -1177,8 +1588,10 @@ import * as THREE from 'three';
     } else if (state.mode === 'passenger' && rideBus) {
       var rb = rideBus.mesh.position;
       if (state.camView === 0) {
-        camera.position.set(rb.x - 1.2, 2.1, rb.z - 0.5);
-        camera.lookAt(rb.x - 14, 1.2, rb.z - 14);
+        // your seat — window or aisle, as picked on the seat map
+        var so = SEATS[state.seat].off;
+        camera.position.set(rb.x + so[0], so[1], rb.z + so[2]);
+        camera.lookAt(rb.x + (so[0] < 0 ? -14 : 14), 1.2, rb.z - 14);
       } else if (state.camView === 1) {
         camera.position.set(rb.x, 2.1, rb.z - 2.2);
         camera.lookAt(rb.x, 1.6, rb.z - 40);
@@ -1202,6 +1615,21 @@ import * as THREE from 'three';
   }
   bindHold($('btn-gas'), 'gas');
   bindHold($('btn-brake'), 'brake');
+  bindHold($('btn-rev'), 'rev');
+  bindHold($('btn-hb'), 'hb');
+  function updateDriveButtons() {
+    $('btn-ind-l').classList.toggle('on', state.indicator === 1);
+    $('btn-ind-r').classList.toggle('on', state.indicator === 2);
+    $('btn-lights').classList.toggle('on', state.lightsOn);
+    $('btn-door').classList.toggle('on', state.doorsOpen);
+    $('btn-hb').classList.toggle('on', state.handbrake);
+  }
+  $('btn-ind-l').onclick = function () { state.indicator = state.indicator === 1 ? 0 : 1; updateDriveButtons(); };
+  $('btn-ind-r').onclick = function () { state.indicator = state.indicator === 2 ? 0 : 2; updateDriveButtons(); };
+  $('btn-lights').onclick = function () { state.lightsOn = !state.lightsOn; updateDriveButtons(); setMsg(state.lightsOn ? '💡 Headlights on' : '💡 Headlights off'); };
+  $('btn-door').onclick = function () { state.doorsOpen = !state.doorsOpen; updateDriveButtons(); setMsg(state.doorsOpen ? '🚪 Doors open' : '🚪 Doors closed'); };
+  $('btn-hb').addEventListener('pointerdown', function () { state.handbrake = true; updateDriveButtons(); });
+  $('btn-hb').addEventListener('pointerup', function () { state.handbrake = false; updateDriveButtons(); });
 
   // virtual joystick (walk)
   (function () {
@@ -1295,12 +1723,50 @@ import * as THREE from 'three';
     setMsg('📻 Now playing: ' + STATIONS[AudioEngine.station].name);
   };
   $('btn-music').onclick = function () {
+    var panel = $('music-panel');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) renderMusicList();
+  };
+  function renderMusicList() {
+    var list = $('mp-list');
+    list.innerHTML = '';
+    STATIONS.forEach(function (st, i) {
+      var d = document.createElement('div');
+      d.className = 'mp-item' + (i === AudioEngine.station ? ' sel' : '');
+      d.innerHTML = '<span>♪ ' + st.name + '</span><span>' + st.bpm + ' BPM</span>';
+      d.onclick = function () {
+        AudioEngine.setStation(i);
+        updateStationLabel();
+        renderMusicList();
+        setMsg('📻 Now playing: ' + st.name);
+      };
+      list.appendChild(d);
+    });
+    $('mp-now').textContent = STATIONS[AudioEngine.station].name;
+    $('mp-play').textContent = AudioEngine.musicOn ? '⏸' : '▶';
+  }
+  function updateMusicPanel() {
+    if ($('music-panel').classList.contains('hidden')) return;
+    $('mp-bar').style.width = Math.round(AudioEngine.progress() * 100) + '%';
+    $('mp-now').textContent = STATIONS[AudioEngine.station].name;
+  }
+  $('mp-play').onclick = function () {
     AudioEngine.setMusic(!AudioEngine.musicOn);
     updateMusicButton();
+    renderMusicList();
     setMsg(AudioEngine.musicOn ? '♪ Music on — ' + STATIONS[AudioEngine.station].name : '♪ Music off');
   };
+  $('mp-prev').onclick = function () {
+    AudioEngine.setStation((AudioEngine.station + STATIONS.length - 1) % STATIONS.length);
+    updateStationLabel(); renderMusicList();
+  };
+  $('mp-next').onclick = function () {
+    AudioEngine.setStation((AudioEngine.station + 1) % STATIONS.length);
+    updateStationLabel(); renderMusicList();
+  };
+  $('mp-vol').oninput = function (e) { AudioEngine.setVolume(e.target.value / 100); };
   $('btn-cam').onclick = function () {
-    state.camView = (state.camView + 1) % 3;
+    state.camView = (state.camView + 1) % (state.mode === 'driving' ? 5 : 3);
     updateCamButton();
     setMsg('🎥 Camera: ' + $('hud-cam').textContent);
   };
@@ -1318,6 +1784,10 @@ import * as THREE from 'three';
     if (e.key.toLowerCase() === 'c') $('btn-cam').click();
     if (e.key.toLowerCase() === 'r') $('btn-radio').click();
     if (e.key.toLowerCase() === 'm') $('btn-music').click();
+    if (e.key.toLowerCase() === 'q') $('btn-ind-l').click();
+    if (e.key.toLowerCase() === 'e') $('btn-ind-r').click();
+    if (e.key.toLowerCase() === 'n') $('btn-lights').click();
+    if (e.key.toLowerCase() === 'o') $('btn-door').click();
   });
   window.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
 
@@ -1326,12 +1796,51 @@ import * as THREE from 'three';
   // ============================================================================
   function checkOrientation() {
     var coarse = window.matchMedia('(pointer: coarse)').matches;
-    var landscape = window.innerWidth > window.innerHeight;
-    var show = coarse && landscape && state.mode !== 'lobby';
+    var portrait = window.innerHeight > window.innerWidth;
+    var show = coarse && portrait && state.mode !== 'lobby';
     $('rotate-overlay').classList.toggle('hidden', !show);
     return show;
   }
   window.addEventListener('orientationchange', function () { setTimeout(checkOrientation, 100); });
+
+  // ---- route minimap ----
+  var mapTimer = 0;
+  function drawMinimap() {
+    var cv = $('minimap');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, 0, W, H);
+    var x0 = W / 2, yTop = 12, yBot = H - 12;
+    // route line
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0, yTop); ctx.lineTo(x0, yBot); ctx.stroke();
+    // stops
+    var n = route.stops.length;
+    route.stops.forEach(function (name, i) {
+      var y = yTop + (yBot - yTop) * ((i + 1) / (n + 0.0)) * 0.92;
+      if (i === n - 1) y = yBot - 4;
+      var served = passengersAtStops[i] && passengersAtStops[i].served;
+      var isNext = passengersAtStops[i] && !passengersAtStops[i].served;
+      ctx.fillStyle = served ? '#22c55e' : (isNext ? '#FFB020' : '#ffffff');
+      ctx.beginPath(); ctx.arc(x0, y, served ? 4 : 5, 0, Math.PI * 2); ctx.fill();
+    });
+    // bus dot
+    var prog = 0;
+    if (state.mode === 'driving') prog = clamp(-state.z / route.length, 0, 1);
+    else if (state.mode === 'passenger' && rideBus) prog = clamp(-rideBus.mesh.position.z / route.length, 0, 1);
+    var by = yTop + (yBot - yTop) * prog;
+    ctx.fillStyle = '#FF2DA6';
+    ctx.beginPath(); ctx.arc(x0, by, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x0, by, 6, 0, Math.PI * 2); ctx.stroke();
+    // destination flag
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(x0 + 6, yBot - 12, 10, 8);
+  }
 
   // ============================================================================
   // MAIN LOOP + TEST HOOKS
@@ -1359,19 +1868,39 @@ import * as THREE from 'three';
       updateTraffic(dt);
       updateCamera(dt);
     }
+    // rain falls around the active camera
+    if (rainPoints && rainPoints.visible && camera) {
+      var pos = rainPoints.geometry.attributes.position;
+      for (var ri = 0; ri < 600; ri++) {
+        var y = pos.getY(ri) - dt * 22;
+        if (y < 0) y = 30;
+        pos.setY(ri, y);
+        pos.setX(ri, camera.position.x + ((pos.getX(ri) - camera.position.x + 40 + 80) % 80) - 40);
+        pos.setZ(ri, camera.position.z + ((pos.getZ(ri) - camera.position.z + 40 + 80) % 80) - 40);
+      }
+      pos.needsUpdate = true;
+    }
+    mapTimer += dt;
+    if (mapTimer > 0.15) { mapTimer = 0; drawMinimap(); updateMusicPanel(); }
     renderer.render(scene, camera);
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.15.0', route: function () { return route.id; },
+    state: state, version: '2.16.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
+    parkedNames: function () { return parkedBuses.map(function (pb) { return pb.spec.name; }); },
+    routeInfo: function () { return { length: route.length, stops: passengersAtStops.map(function (ps) { return ps.z; }) }; },
+    warp: function (z) {
+      if (state.mode === 'passenger' && rideBus) rideBus.mesh.position.z = z;
+      else state.z = z;
+    },
     cam: function () { return camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null; },
     player: function () { return { x: state.px, z: state.pz }; },
   };
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.15.0 loaded');
+  log('BUS YATRA 2.16.0 loaded');
 })();
