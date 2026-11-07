@@ -17,29 +17,29 @@
   <section id="screen-lobby" class="screen">
     <div class="eyebrow">ARQADEX · 3D · INDIAN BUS SIMULATOR</div>
     <h1>BUS<br><span>YATRA</span></h1>
-    <p class="tag">Real Indian roads. Real cities. Old songs on the radio. Drive the bus — or just ride along and watch India pass by the window.</p>
+    <p class="tag">Walk through a real Indian city, reach the bus stand, and stand next to any bus. Drive it yourself — or climb in and travel as a passenger. Old songs on the radio, all the way.</p>
 
-    <div class="field-label">1 · YOU ARE</div>
-    <div class="mode-row" id="role-row">
-      <button class="mode-btn selected" data-role="driver" type="button">🚌 DRIVER</button>
-      <button class="mode-btn" data-role="passenger" type="button">🧳 PASSENGER</button>
-    </div>
-
-    <div class="field-label">2 · PICK A ROUTE</div>
+    <div class="field-label">PICK A CITY &amp; ROUTE</div>
     <div class="pick-list" id="route-list"></div>
 
-    <div class="field-label">3 · PICK YOUR BUS</div>
-    <div class="pick-list" id="bus-list"></div>
-
-    <p class="hint" id="role-hint">Driver: steer, pick up passengers at every stop, reach the destination. Fare is your score.</p>
+    <div class="hint">🚌 At the stand you'll find 3 buses parked in their bays — <b>LAL PARI</b>, <b>RAJDHANI COACH</b> and <b>GAADI NO. 1</b>. Walk up to one and choose <b>DRIVE</b> or <b>TRAVEL</b>. Music is original, composed in the style of old Bollywood — the radio changes with the place you're driving through.</div>
 
     <div class="btn-row">
-      <button id="btn-start" class="btn primary">CHALO — START YATRA ▶</button>
+      <button id="btn-start" class="btn primary">ENTER THE CITY ▶</button>
     </div>
-    <p class="foot">No download, no account. Music is original, composed in the style of old Bollywood — the radio changes with the place you're driving through. Best on mobile, portrait or landscape.</p>
-    <p class="foot" id="build-line">BUS YATRA BUILD 2.13.0</p>
+    <p class="foot">No download, no account. Best played on your phone, held upright (portrait). Keyboard works too: WASD to walk, arrows to drive.</p>
+    <p class="foot" id="build-line">BUS YATRA BUILD 2.15.0</p>
     <div id="debug-log"></div>
   </section>
+
+  <!-- ============ ROTATE (portrait only on phones) ============ -->
+  <div id="rotate-overlay" class="hidden">
+    <div class="rotate-card">
+      <div class="rotate-icon">📱↻</div>
+      <h2>ROTATE YOUR PHONE</h2>
+      <p>Bus Yatra is played upright, in portrait mode.</p>
+    </div>
+  </div>
 
   <!-- ============ HUD ============ -->
   <div id="hud" class="hidden">
@@ -54,26 +54,48 @@
       <div id="hud-msg">—</div>
     </div>
     <div class="hud-radio">
-      <button id="btn-radio" type="button">📻 <span id="hud-station">RETRO ROMANCE</span> ♪</button>
-      <button id="btn-cam" type="button">🎥 CAM</button>
+      <button id="btn-music" type="button">♪ <span id="hud-music">MUSIC ON</span></button>
+      <button id="btn-radio" type="button">📻 <span id="hud-station">—</span></button>
+      <button id="btn-cam" type="button">🎥 <span id="hud-cam">CHASE</span></button>
       <button id="btn-horn" type="button">📣 HORN</button>
     </div>
   </div>
 
-  <!-- ============ TOUCH CONTROLS ============ -->
-  <div id="touch" class="hidden">
-    <div class="touch-left">
-      <button id="btn-left" type="button">◀</button>
-      <button id="btn-right" type="button">▶</button>
+  <!-- ============ WALK: virtual joystick ============ -->
+  <div id="joystick" class="hidden">
+    <div id="joy-base"><div id="joy-nub"></div></div>
+    <div class="joy-label">WALK</div>
+  </div>
+
+  <!-- ============ DRIVE: steering wheel + pedals ============ -->
+  <div id="drive-controls" class="hidden">
+    <div id="wheel-wrap">
+      <div id="wheel">🚌</div>
+      <div class="wheel-label">STEER — drag</div>
     </div>
-    <div class="touch-right">
+    <div class="pedals">
       <button id="btn-brake" type="button">BRAKE</button>
       <button id="btn-gas" type="button">GAS</button>
     </div>
   </div>
+
+  <!-- ============ PASSENGER ============ -->
   <div id="touch-passenger" class="hidden">
     <button id="btn-getoff" type="button">🛑 GET OFF HERE</button>
     <button id="btn-nextstop" type="button">⏭ NEXT STOP</button>
+  </div>
+
+  <!-- ============ NEAR A BUS: choose ============ -->
+  <div id="bus-prompt" class="hidden">
+    <div class="prompt-card">
+      <div class="prompt-bus" id="prompt-bus-name">LAL PARI</div>
+      <div class="prompt-sub" id="prompt-bus-sub">City Bus · ₹20/head</div>
+      <div class="prompt-btns">
+        <button id="btn-drive" class="btn primary" type="button">🚌 DRIVE IT</button>
+        <button id="btn-travel" class="btn ghost" type="button">🧳 TRAVEL</button>
+      </div>
+      <div class="prompt-note">Drive: you steer, pick up passengers, earn fare.<br>Travel: ride along, enjoy the radio.</div>
+    </div>
   </div>
 
   <!-- ============ END ============ -->
@@ -83,11 +105,11 @@
     <p id="end-line" class="tag">—</p>
     <div class="scoreboard" id="end-stats"></div>
     <div class="btn-row">
-      <button id="btn-again" class="btn primary">EK AUR YATRA</button>
+      <button id="btn-again" class="btn primary">BACK TO THE STAND</button>
       <button id="btn-lobby" class="btn ghost">CHANGE ROUTE</button>
     </div>
   </section>
 
-  <script type="module" src="game.js?v=2.13.0"></script>
+  <script type="module" src="game.js?v=2.15.0"></script>
 </body>
 </html>
