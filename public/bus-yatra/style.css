@@ -1,4 +1,4 @@
-/* BUS YATRA skin — v2.20.0. Landscape-first on phones (v2.15.0 was portrait;
+/* BUS YATRA skin — v2.21.0. Landscape-first on phones (v2.15.0 was portrait;
    the brief now demands landscape). Theme system as before: dark by default,
    light when the OS is light or the Arqadex shell says daylight. */
 :root {
@@ -65,12 +65,12 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   padding: 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.6; }
 .hint b { color: var(--gold); }
 .btn-row { display: flex; gap: 10px; margin: 18px 0; }
-/* v2.20.0: the lobby is long on a landscape phone (2064px in a 390px
+/* v2.21.0: the lobby is long on a landscape phone (2064px in a 390px
    viewport) and ENTER THE CITY sat at the very bottom — users never
    reached it. Pin the CTA to the bottom of the visible lobby area. */
 #screen-lobby .btn-row { position: sticky; bottom: 0; z-index: 5;
   background: var(--bg); padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px)); margin-bottom: 0; }
-/* v2.20.0: compact landscape lobby — two-column route/garage grids so the
+/* v2.21.0: compact landscape lobby — two-column route/garage grids so the
    whole lobby is ~half as tall on short (landscape) screens. */
 @media (max-height: 500px) {
   #screen-lobby h1 { font-size: 34px; }
@@ -182,8 +182,8 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 #drive-controls { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 6;
   display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; pointer-events: none; }
 #wheel-wrap { text-align: center; pointer-events: auto; }
-#wheel { width: 110px; height: 110px; border-radius: 28px; background: rgba(120,20,20,.5);
-  border: 3px solid rgba(255,255,255,.7); color: #fff; font-size: 38px; line-height: 104px; text-align: center;
+#wheel { width: 130px; height: 130px; border-radius: 32px; background: rgba(120,20,20,.5);
+  border: 3px solid rgba(255,255,255,.7); color: #fff; font-size: 44px; line-height: 124px; text-align: center;
   touch-action: none; backdrop-filter: blur(4px); transition: transform .08s linear;
   box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
 .wheel-label { font-family: Orbitron, sans-serif; font-size: 9px; letter-spacing: .18em; color: #fff;
@@ -240,7 +240,7 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   #dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); bottom: 64px; }
   #dpad button { font-size: 24px; }
   #walk-hint { bottom: 240px; }
-  #wheel { width: 96px; height: 96px; line-height: 90px; font-size: 32px; }
+  #wheel { width: 112px; height: 112px; line-height: 106px; font-size: 36px; }
   .pedals button { width: 68px; height: 68px; }
   #bus-prompt, #ticket-panel, #seat-panel { bottom: calc(138px + env(safe-area-inset-bottom, 0px)); }
   .prompt-card { padding: 12px; }
