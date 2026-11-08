@@ -52,19 +52,11 @@
       <button id="btn-start" class="btn primary">ENTER THE CITY ▶</button>
     </div>
     <p class="foot">No download, no account. Played in landscape on your phone — rotate it sideways. Keyboard works too: WASD to walk, arrows to drive.</p>
-    <p class="foot" id="build-line">BUS YATRA BUILD 2.17.1</p>
+    <p class="foot" id="build-line">BUS YATRA BUILD 2.18.0</p>
     <div id="debug-log"></div>
   </section>
 
   <!-- ============ ROTATE (landscape only on phones) ============ -->
-  <div id="rotate-overlay" class="hidden">
-    <div class="rotate-card">
-      <div class="rotate-icon">📱↻</div>
-      <h2>ROTATE YOUR PHONE</h2>
-      <p>Bus Yatra is played sideways, in landscape mode.</p>
-    </div>
-  </div>
-
   <!-- ============ HUD ============ -->
   <div id="hud" class="hidden">
     <div class="hud-top">
@@ -79,6 +71,10 @@
       <canvas id="minimap" width="110" height="110"></canvas>
       <div id="map-label">ROUTE MAP</div>
     </div>
+    <!-- Portrait tip: a flex row inside the HUD, so it flows with the layout
+         and never covers the chips or buttons. Small, dismissible, never
+         blocks play; landscape is just roomier. -->
+    <div id="rotate-tip" class="hidden">📱 Tip: rotate your phone sideways for a bigger view <button id="btn-tip-x" type="button">✕</button></div>
     <div class="hud-mid">
       <div id="hud-stop">NEXT STOP —</div>
       <div id="hud-msg">—</div>
@@ -97,6 +93,27 @@
       <button id="btn-door" type="button">🚪 DOOR</button>
       <button id="btn-hb" type="button">🅿 HANDBRAKE</button>
     </div>
+    <!-- Walk controls live INSIDE the HUD so they render whenever the HUD does -->
+    <div id="joystick" class="hidden">
+      <div id="joy-base"><div id="joy-nub"></div></div>
+      <div class="joy-label">WALK</div>
+    </div>
+    <div id="walk-hint" class="hidden">👆 DRAG THE STICK OR TAP THE ROAD</div>
+    <!-- D-pad: a second way to walk (hold an arrow). Same for keyboard users. -->
+    <div id="dpad" class="hidden">
+      <button id="dp-up" type="button" aria-label="Walk forward">▲</button>
+      <button id="dp-left" type="button" aria-label="Walk left">◀</button>
+      <button id="dp-down" type="button" aria-label="Walk back">▼</button>
+      <button id="dp-right" type="button" aria-label="Walk right">▶</button>
+    </div>
+  </div>
+
+  <!-- ============ YOUTUBE HOOK PLAYER ============ -->
+  <!-- Small visible player (YouTube requires it to be visible, not display:none
+       while playing). Shows only while a YouTube station is active. -->
+  <div id="yt-box" class="hidden">
+    <div id="yt-player"></div>
+    <div id="yt-title">—</div>
   </div>
 
   <!-- ============ MUSIC PLAYER ============ -->
@@ -111,13 +128,6 @@
     </div>
     <div class="mp-list" id="mp-list"></div>
   </div>
-
-  <!-- ============ WALK: virtual joystick ============ -->
-  <div id="joystick" class="hidden">
-    <div id="joy-base"><div id="joy-nub"></div></div>
-    <div class="joy-label">WALK</div>
-  </div>
-  <div id="walk-hint" class="hidden">👆 DRAG THE PINK STICK TO WALK</div>
 
   <!-- ============ DRIVE: steering wheel + pedals ============ -->
   <div id="drive-controls" class="hidden">
@@ -188,6 +198,6 @@
     </div>
   </section>
 
-  <script type="module" src="game.js?v=2.17.1"></script>
+  <script type="module" src="game.js?v=2.18.0"></script>
 </body>
 </html>
