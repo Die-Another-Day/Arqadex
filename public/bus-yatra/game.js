@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.20.0
+// BUS YATRA — Indian Bus Simulator · v2.21.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -97,6 +97,93 @@ import * as THREE from 'three';
     { id: 'volvo', name: 'VOLVO LUXURY', sub: 'Volvo-style Luxury Coach · purple', cat: 'LUXURY', color: 0x6d28d9, stripe: 0xe2e8f0, topSpeed: 50, accel: 20, fare: 80, price: 500 },
   ];
   function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+  // ============================================================================
+  // CITY PATH (v2.21.0) — the route is a winding road through a real Indian
+  // city, not a straight highway. The path is a polyline of waypoints with
+  // turns at crossings, a chowk (square) at the midpoint, and cross streets
+  // at regular intervals. All road geometry, stops, traffic and the minimap
+  // are built from this one path, so the bus can turn fully at any junction.
+  // ============================================================================
+  var pathPoints = [], pathSegs = [], pathTotal = 0, crossStreets = [], chowk = null;
+  function buildRoutePath() {
+    var L = route.length;
+    // segments as [direction-x, direction-z, fraction-of-length]
+    var plan = [
+      [0, -1, 0.20], [1, 0, 0.08], [0, -1, 0.20], [-1, 0, 0.12],
+      [0, -1, 0.20], [1, 0, 0.08], [0, -1, 0.12],
+    ];
+    pathPoints = [{ x: 0, z: 5 }];
+    plan.forEach(function (sg) {
+      var last = pathPoints[pathPoints.length - 1];
+      pathPoints.push({ x: last.x + sg[0] * sg[2] * L, z: last.z + sg[1] * sg[2] * L });
+    });
+    pathSegs = [];
+    pathTotal = 0;
+    for (var i = 0; i < pathPoints.length - 1; i++) {
+      var a = pathPoints[i], b = pathPoints[i + 1];
+      var dx = b.x - a.x, dz = b.z - a.z;
+      var len = Math.hypot(dx, dz);
+      pathSegs.push({ ax: a.x, az: a.z, bx: b.x, bz: b.z, len: len,
+        dx: dx / len, dz: dz / len, cum: pathTotal });
+      pathTotal += len;
+    }
+    // chowk (square) at the 3rd waypoint — where the route turns west
+    chowk = { x: pathPoints[3].x, z: pathPoints[3].z, r: 22 };
+    // cross streets: a perpendicular road every ~180 units along each segment
+    crossStreets = [];
+    pathSegs.forEach(function (sg) {
+      var n = Math.floor(sg.len / 180);
+      for (var k = 1; k <= n; k++) {
+        var s = sg.cum + sg.len * k / (n + 1);
+        var p = pointAtPath(s);
+        // perpendicular direction
+        var px = -sg.dz, pz = sg.dx;
+        crossStreets.push({ x: p.x, z: p.z, dx: px, dz: pz, s: s });
+      }
+    });
+  }
+  // point + heading at arc length s along the path (heading = bus rotation.y)
+  function pointAtPath(s) {
+    s = clamp(s, 0, pathTotal);
+    for (var i = 0; i < pathSegs.length; i++) {
+      var sg = pathSegs[i];
+      if (s <= sg.cum + sg.len || i === pathSegs.length - 1) {
+        var t = clamp((s - sg.cum) / sg.len, 0, 1);
+        // heading: forward is (sin h, -cos h) in (x, z); for direction (dx, dz):
+        // sin h = dx, -cos h = dz  =>  h = atan2(dx, -dz)
+        return { x: sg.ax + sg.dx * sg.len * t, z: sg.az + sg.dz * sg.len * t,
+          heading: Math.atan2(sg.dx, -sg.dz) };
+      }
+    }
+    var last = pathPoints[pathPoints.length - 1];
+    return { x: last.x, z: last.z, heading: 0 };
+  }
+  // nearest point on the path to (x, z): {s (arc length), dist, heading}
+  function nearestOnPath(x, z) {
+    var best = { s: 0, dist: 1e9, heading: 0 };
+    pathSegs.forEach(function (sg) {
+      var vx = x - sg.ax, vz = z - sg.az;
+      var t = clamp((vx * sg.dx + vz * sg.dz) / sg.len, 0, 1);
+      var px = sg.ax + sg.dx * sg.len * t, pz = sg.az + sg.dz * sg.len * t;
+      var d = Math.hypot(x - px, z - pz);
+      if (d < best.dist) best = { s: sg.cum + sg.len * t, dist: d, heading: Math.atan2(sg.dx, -sg.dz) };
+    });
+    return best;
+  }
+  // is (x, z) on a road? (route path, cross street, or the chowk plaza)
+  function onRoad(x, z) {
+    if (nearestOnPath(x, z).dist < 8) return true;
+    if (chowk && Math.hypot(x - chowk.x, z - chowk.z) < chowk.r + 4) return true;
+    for (var i = 0; i < crossStreets.length; i++) {
+      var cs = crossStreets[i];
+      var rx = x - cs.x, rz = z - cs.z;
+      var along = rx * cs.dx + rz * cs.dz;
+      var perp = Math.abs(rx * (-cs.dz) + rz * cs.dx);
+      if (Math.abs(along) < 45 && perp < 6) return true;
+    }
+    return false;
+  }
   // Each station: a short catchy hook (the "viral part"), looped. Original tunes.
   var STATIONS = [
     { name: 'RETRO ROMANCE', bpm: 92, kind: 'romance',
@@ -600,11 +687,66 @@ import * as THREE from 'three';
     g.userData.headMat = headMat;
     g.userData.indMatL = indMatL;
     g.userData.indMatR = indMatR;
-    // cab dashboard + steering wheel (seen from the CAB camera)
-    var dash = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 0.6), darkMat);
-    dash.position.set(0, 1.55, -3.1); g.add(dash);
-    var wheel = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.04, 8, 20), darkMat);
-    wheel.position.set(-0.6, 1.75, -2.85); wheel.rotation.x = -0.5; g.add(wheel);
+    // cab dashboard + steering wheel (seen from the CAB camera) — built like
+    // the reference: speedometer left, tachometer right, fuel + warning
+    // triangle centre, and a gold-rimmed wheel with a blue hub on the RIGHT
+    // (Indian right-hand drive). The gauge needles move with the bus.
+    // The dash sits LOW so the driver can see the road over it.
+    var dash = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.6), darkMat);
+    dash.position.set(0, 1.35, -3.1); g.add(dash);
+    var dashTop = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.06, 0.7), darkMat);
+    dashTop.position.set(0, 1.52, -3.05); g.add(dashTop);
+    function gauge(x, r) {
+      var face = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.05, 20),
+        new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+      face.rotation.x = Math.PI / 2 - 0.35;
+      face.position.set(x, 1.58, -2.82);
+      g.add(face);
+      var rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 6, 20), darkMat);
+      rim.position.set(x, 1.58, -2.8);
+      rim.rotation.x = -0.35;
+      g.add(rim);
+      var needle = new THREE.Mesh(new THREE.BoxGeometry(0.03, r * 0.85, 0.02),
+        new THREE.MeshBasicMaterial({ color: 0xdc2626 }));
+      needle.position.set(x, 1.58, -2.78);
+      needle.rotation.z = 2.1; // parked at the left stop
+      g.add(needle);
+      return needle;
+    }
+    var speedNeedle = gauge(-0.75, 0.22);
+    var rpmNeedle = gauge(0.75, 0.22);
+    // fuel gauge (small) + red warning triangle, centre of the dash
+    var fuel = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 14),
+      new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+    fuel.rotation.x = Math.PI / 2 - 0.35;
+    fuel.position.set(0, 1.56, -2.82);
+    g.add(fuel);
+    var warn = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.18, 3),
+      new THREE.MeshBasicMaterial({ color: 0xdc2626 }));
+    warn.position.set(0, 1.72, -2.82);
+    warn.rotation.z = Math.PI;
+    g.add(warn);
+    // steering wheel: gold rim, blue hub, 3 spokes — right-hand drive
+    var wheelGrp = new THREE.Group();
+    var rimMat = new THREE.MeshLambertMaterial({ color: 0xb45309 });
+    var rim = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.045, 8, 24), rimMat);
+    wheelGrp.add(rim);
+    var hub = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.06, 12),
+      new THREE.MeshLambertMaterial({ color: 0x1d4ed8 }));
+    hub.rotation.x = Math.PI / 2;
+    wheelGrp.add(hub);
+    [0, 2.1, 4.2].forEach(function (a) {
+      var spoke = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.26, 0.03), rimMat);
+      spoke.position.set(Math.sin(a) * 0.13, Math.cos(a) * 0.13, 0);
+      spoke.rotation.z = -a;
+      wheelGrp.add(spoke);
+    });
+    wheelGrp.position.set(0.6, 1.65, -2.8);
+    wheelGrp.rotation.x = -0.5;
+    g.add(wheelGrp);
+    g.userData.cabWheel = wheelGrp;
+    g.userData.speedNeedle = speedNeedle;
+    g.userData.rpmNeedle = rpmNeedle;
     // passenger seats (8: 2 columns x 4 rows) — seated riders sit on these
     var seatMat = new THREE.MeshLambertMaterial({ color: 0x374151 });
     [[-0.55, -1.2], [0.55, -1.2], [-0.55, -0.2], [0.55, -0.2],
@@ -1087,34 +1229,95 @@ import * as THREE from 'three';
     scene.add(rainPoints);
 
     var L = route.length;
-    // ground — fields
+    // ground — covers the whole city the route winds through
     var ground = new THREE.Mesh(new THREE.PlaneGeometry(700, L + 600),
       new THREE.MeshLambertMaterial({ color: 0x7fae5a }));
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(0, -0.05, -L / 2);
+    ground.position.set(30, -0.05, -L * 0.36);
     ground.receiveShadow = true;
     scene.add(ground);
-    // route road (continues through the city)
+    // ---- CITY ROAD NETWORK: the route winds through the city with turns,
+    // cross streets (crossings) and a chowk (square) at the midpoint ----
     roadMat = new THREE.MeshLambertMaterial({ color: 0x2f3540 });
-    var road = new THREE.Mesh(new THREE.PlaneGeometry(14, L + 400), roadMat);
-    road.rotation.x = -Math.PI / 2;
-    road.position.set(0, 0, -L / 2 + 100);
-    road.receiveShadow = true;
-    scene.add(road);
-    var dashMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
-    for (var z = 100; z > -L - 200; z -= 10) {
-      var dash = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 3), dashMat);
-      dash.rotation.x = -Math.PI / 2;
-      dash.position.set(0, 0.01, z);
-      scene.add(dash);
+    function roadSeg(cx, cz, heading, len, width) {
+      var r = new THREE.Mesh(new THREE.PlaneGeometry(width, len), roadMat);
+      r.rotation.x = -Math.PI / 2;
+      r.rotation.z = heading;
+      r.position.set(cx, 0, cz);
+      r.receiveShadow = true;
+      scene.add(r);
+      return r;
     }
-    [-6.8, 6.8].forEach(function (x) {
-      var edge = new THREE.Mesh(new THREE.PlaneGeometry(0.25, L + 400),
-        new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
-      edge.rotation.x = -Math.PI / 2;
-      edge.position.set(x, 0.01, -L / 2 + 100);
-      scene.add(edge);
+    function dashAt(x, z, heading) {
+      var d = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 3),
+        new THREE.MeshBasicMaterial({ color: 0xf8fafc }));
+      d.rotation.x = -Math.PI / 2;
+      d.rotation.z = heading;
+      d.position.set(x, 0.01, z);
+      scene.add(d);
+    }
+    pathSegs.forEach(function (sg) {
+      var midX = (sg.ax + sg.bx) / 2, midZ = (sg.az + sg.bz) / 2;
+      var heading = Math.atan2(sg.dx, -sg.dz);
+      roadSeg(midX, midZ, heading, sg.len, 14);
+      // centre dashes along the segment
+      var n = Math.floor(sg.len / 10);
+      for (var di = 0; di < n; di++) {
+        var t = (di + 0.5) / n;
+        dashAt(sg.ax + (sg.bx - sg.ax) * t, sg.az + (sg.bz - sg.az) * t, heading);
+      }
+      // yellow edge lines
+      [-6.8, 6.8].forEach(function (off) {
+        var ex = midX + (-sg.dz) * off, ez = midZ + sg.dx * off;
+        var edge = new THREE.Mesh(new THREE.PlaneGeometry(0.25, sg.len),
+          new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+        edge.rotation.x = -Math.PI / 2;
+        edge.rotation.z = heading;
+        edge.position.set(ex, 0.01, ez);
+        scene.add(edge);
+      });
     });
+    // cross streets (crossings) — perpendicular roads with zebra stripes
+    crossStreets.forEach(function (cs) {
+      roadSeg(cs.x, cs.z, Math.atan2(cs.dx, -cs.dz), 90, 10);
+      // zebra crossing across the main road at the junction
+      for (var zi = -5; zi <= 5; zi += 2.5) {
+        var zx = cs.x + (-cs.dz) * zi, zz = cs.z + cs.dx * zi;
+        var stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 5),
+          new THREE.MeshBasicMaterial({ color: 0xf8fafc }));
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.rotation.z = Math.atan2(cs.dx, -cs.dz);
+        stripe.position.set(zx, 0.02, zz);
+        scene.add(stripe);
+      }
+      // traffic light pole at the corner
+      var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 4.5, 6),
+        new THREE.MeshLambertMaterial({ color: 0x334155 }));
+      pole.position.set(cs.x + (-cs.dz) * 8, 2.25, cs.z + cs.dx * 8);
+      scene.add(pole);
+      var lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.9, 0.4),
+        new THREE.MeshBasicMaterial({ color: 0x22c55e }));
+      lamp.position.set(cs.x + (-cs.dz) * 8, 4.6, cs.z + cs.dx * 8);
+      scene.add(lamp);
+    });
+    // chowk (square) — a roundabout plaza where the route turns
+    var plazaDisc = new THREE.Mesh(new THREE.CircleGeometry(chowk.r, 24),
+      new THREE.MeshLambertMaterial({ color: 0xb8b0a0 }));
+    plazaDisc.rotation.x = -Math.PI / 2;
+    plazaDisc.position.set(chowk.x, 0.02, chowk.z);
+    scene.add(plazaDisc);
+    var island = new THREE.Mesh(new THREE.CylinderGeometry(4, 4.5, 0.6, 16),
+      new THREE.MeshLambertMaterial({ color: 0x94a3b8 }));
+    island.position.set(chowk.x, 0.3, chowk.z);
+    scene.add(island);
+    var monument = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 7, 8),
+      new THREE.MeshLambertMaterial({ color: 0xdc2626 }));
+    monument.position.set(chowk.x, 4.1, chowk.z);
+    scene.add(monument);
+    var orb = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 8),
+      new THREE.MeshLambertMaterial({ color: 0xfacc15 }));
+    orb.position.set(chowk.x, 8, chowk.z);
+    scene.add(orb);
 
     // ---- CITY around the bus stand (z from -8 to +48, x -38..38) ----
     var plaza = new THREE.Mesh(new THREE.PlaneGeometry(76, 56),
@@ -1208,8 +1411,15 @@ import * as THREE from 'three';
       colliders.push({ x: bayX[i], z: 5, hw: 1.5, hd: 3.7, bus: true, ref: parkedBuses[i] });
     });
 
-    // ---- landmarks along the route (fixed fractions, never on the road) ----
-    function landmark(kind, z) {
+    // landmarks sit beside the road at fixed fractions along the route
+    function landmarkAt(kind, frac, side) {
+      var p = pointAtPath(pathTotal * frac);
+      // lateral offset to the right of the road direction (right = (cos h, sin h))
+      var lx = p.x + Math.cos(p.heading) * side * 20;
+      var lz = p.z + Math.sin(p.heading) * side * 20;
+      landmark(kind, lx, lz);
+    }
+    function landmark(kind, x, z) {
       var grp = new THREE.Group();
       if (kind === 'petrol') {
         var canopy = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 7),
@@ -1256,27 +1466,38 @@ import * as THREE from 'three';
           new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide }));
         crossSign.position.set(4.5, 2.5, 0); grp.add(crossSign);
       }
-      grp.position.set(16, 0, z);
+      grp.position.set(x, 0, z);
       scene.add(grp);
     }
-    landmark('petrol', -L * 0.25);
-    landmark('toll', -L * 0.4);
-    landmark('temple', -L * 0.6);
-    landmark('railway', -L * 0.75);
+    landmarkAt('petrol', 0.25, 1);
+    landmarkAt('toll', 0.4, -1);
+    landmarkAt('temple', 0.6, 1);
+    landmarkAt('railway', 0.75, -1);
 
-    // ---- route scenery (z < 0) ----
+    // ---- buildings, trees and shops lining the city roads ----
+    // Walk along the route; every ~90 units place something on one side,
+    // skipping the chowk plaza and the crossings so nothing blocks the road.
     var colors = [0xf59e0b, 0xec4899, 0x06b6d4, 0x8b5cf6, 0xf97316, 0x14b8a6];
-    for (var sz = -60; sz > -L - 100; sz -= 90) {
+    for (var s = 120; s < pathTotal - 60; s += 90) {
+      var p = pointAtPath(s);
+      if (chowk && Math.hypot(p.x - chowk.x, p.z - chowk.z) < chowk.r + 14) continue;
+      var nearCrossing = false;
+      crossStreets.forEach(function (cs) { if (Math.abs(s - cs.s) < 18) nearCrossing = true; });
+      if (nearCrossing) continue;
       var side = Math.random() < 0.5 ? -1 : 1;
+      var off = rand(14, 30);
+      var bx = p.x + Math.cos(p.heading) * side * off;
+      var bz = p.z + Math.sin(p.heading) * side * off;
       var kind = Math.random();
       if (kind < 0.4) {
         var b = makeBuilding(rand(5, 9), rand(4, 11), rand(5, 8), pick(colors));
-        b.position.set(side * rand(14, 30), 0, sz + rand(-20, 20));
+        b.position.set(bx, 0, bz);
         scene.add(b);
+        colliders.push({ x: bx, z: bz, hw: 4, hd: 4 });
       } else if (kind < 0.75) {
         for (var tj = 0; tj < 3; tj++) {
           var tr2 = makeTree();
-          tr2.position.set(side * rand(10, 26), 0, sz + rand(-30, 30));
+          tr2.position.set(bx + rand(-6, 6), 0, bz + rand(-14, 14));
           scene.add(tr2);
         }
       } else {
@@ -1287,13 +1508,14 @@ import * as THREE from 'three';
         var awn = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.15, 2),
           new THREE.MeshLambertMaterial({ color: 0xdc2626 }));
         awn.position.set(0, 2.6, 2.4); awn.rotation.x = 0.25; shop.add(awn);
-        shop.position.set(side * rand(13, 20), 0, sz);
+        shop.position.set(bx, 0, bz);
         scene.add(shop);
+        colliders.push({ x: bx, z: bz, hw: 2.5, hd: 2 });
       }
-      if (Math.abs(sz % 300) < 45) {
+      if (Math.random() < 0.3) {
         var ms = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.0, 0.3),
           new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
-        ms.position.set(7.6, 0.5, sz);
+        ms.position.set(p.x + Math.cos(p.heading) * 7.6, 0.5, p.z + Math.sin(p.heading) * 7.6);
         scene.add(ms);
       }
     }
@@ -1334,11 +1556,16 @@ import * as THREE from 'three';
       pole2.position.set(bb.position.x, 1.5, bz);
       scene.add(pole2);
     }
-    // bus stops on the route
+    // bus stops on the route — placed along the winding road, on the
+    // left side (Indian kerb side) so passengers wait by the pavement
     route.stops.forEach(function (name, i) {
-      var z;
-      if (i === route.stops.length - 1) z = -route.length * 0.92;
-      else z = -route.length * ((i + 1) / route.stops.length) * 0.85;
+      var frac;
+      if (i === route.stops.length - 1) frac = 0.92;
+      else frac = ((i + 1) / route.stops.length) * 0.85;
+      var sp = pointAtPath(pathTotal * frac);
+      // left side of the road (left = (-cos h, sin h))
+      var sx = sp.x + (-Math.cos(sp.heading)) * 9.5;
+      var sz = sp.z + Math.sin(sp.heading) * 9.5;
       var stop = new THREE.Group();
       var shelter = new THREE.Mesh(new THREE.BoxGeometry(5, 0.2, 2.5),
         new THREE.MeshLambertMaterial({ color: 0x0ea5e9 }));
@@ -1351,20 +1578,21 @@ import * as THREE from 'three';
       var sign = makeStopSign(name);
       sign.position.set(0, 2.2, 0);
       stop.add(sign);
-      stop.position.set(9.5, 0, z);
+      stop.position.set(sx, 0, sz);
+      stop.rotation.y = sp.heading;
       scene.add(stop);
       stopGroups.push(stop);
       var n = 2 + Math.floor(Math.random() * 3);
       var group = [];
       for (var pi = 0; pi < n; pi++) {
         var pax = makeHumanoid(randomArchetype(PASSENGER_ARCHETYPES));
-        pax.position.set(9.5 + rand(-1.5, 1.5), 0, z + rand(-2, 2));
+        pax.position.set(sx + rand(-1.5, 1.5), 0, sz + rand(-2, 2));
         pax.rotation.y = rand(-0.6, 0.6);
         poseHumanoid(pax, 'idle', 0);
         scene.add(pax);
         group.push(pax);
       }
-      passengersAtStops.push({ z: z, name: name, people: group, served: false });
+      passengersAtStops.push({ x: sx, z: sz, s: pathTotal * frac, name: name, people: group, served: false });
     });
 
     // walking NPCs on the sidewalks
@@ -1382,23 +1610,28 @@ import * as THREE from 'three';
     scene.add(playerMesh);
     poseHumanoid(playerMesh, 'idle', 0);
 
-    // bot buses + cars on the route
+    // bot buses + cars on the route — they drive along the winding road
+    // (arc-length position s, direction +1 with the route or -1 against it)
     var botColors = [0x0ea5e9, 0xf59e0b, 0x8b5cf6, 0xec4899, 0x14b8a6];
     for (var b = 0; b < 5; b++) {
       var bb = makeBus(botColors[b % botColors.length], 0xf8fafc, 'CITY BUS');
-      var lane = b % 2 === 0 ? 3.5 : -3.5;
-      var dir = lane > 0 ? -1 : 1;
-      bb.position.set(lane, 0, -Math.random() * route.length);
+      var dirB = b % 2 === 0 ? 1 : -1;
+      var sB = Math.random() * pathTotal;
+      var pB = pointAtPath(sB);
+      bb.position.set(pB.x, 0, pB.z);
+      bb.rotation.y = pB.heading + (dirB < 0 ? Math.PI : 0);
       scene.add(bb);
-      botBuses.push({ mesh: bb, lane: lane, dir: dir, speed: rand(14, 22), kind: 'bus' });
+      botBuses.push({ mesh: bb, s: sB, dir: dirB, speed: rand(14, 22), kind: 'bus' });
     }
     for (var c = 0; c < 6; c++) {
       var car = makeCar(pick([0xef4444, 0xfacc15, 0x3b82f6, 0xf8fafc, 0x111827]));
-      var lane2 = c % 2 === 0 ? 3.5 : -3.5;
-      var dir2 = lane2 > 0 ? -1 : 1;
-      car.position.set(lane2, 0, -Math.random() * route.length);
+      var dirC = c % 2 === 0 ? 1 : -1;
+      var sC = Math.random() * pathTotal;
+      var pC = pointAtPath(sC);
+      car.position.set(pC.x, 0, pC.z);
+      car.rotation.y = pC.heading + (dirC < 0 ? Math.PI : 0);
       scene.add(car);
-      cars.push({ mesh: car, lane: lane2, dir: dir2, speed: rand(24, 34), kind: 'car' });
+      cars.push({ mesh: car, s: sC, dir: dirC, speed: rand(24, 34), kind: 'car' });
     }
     // autos (3-wheelers) + bikes — the real Indian road
     for (var a = 0; a < 3; a++) {
@@ -1412,26 +1645,32 @@ import * as THREE from 'three';
       var aw = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 10),
         new THREE.MeshLambertMaterial({ color: 0x111111 }));
       aw.rotation.z = Math.PI / 2; aw.position.set(0, 0.28, -0.9); auto.add(aw);
-      var laneA = a % 2 === 0 ? 3.5 : -3.5;
-      auto.position.set(laneA, 0, -Math.random() * route.length);
+      var dirA = a % 2 === 0 ? 1 : -1;
+      var sA = Math.random() * pathTotal;
+      var pA = pointAtPath(sA);
+      auto.position.set(pA.x, 0, pA.z);
+      auto.rotation.y = pA.heading + (dirA < 0 ? Math.PI : 0);
       scene.add(auto);
-      cars.push({ mesh: auto, lane: laneA, dir: laneA > 0 ? -1 : 1, speed: rand(16, 22), kind: 'auto' });
+      cars.push({ mesh: auto, s: sA, dir: dirA, speed: rand(16, 22), kind: 'auto' });
     }
     for (var bk = 0; bk < 2; bk++) {
       var bike = new THREE.Group();
       var rider = makeHumanoid(randomArchetype(['kurtaMan', 'middleM', 'studentM', 'traveller']));
       rider.scale.set(0.9, 0.9, 0.9);
       rider.position.y = 0.35;
-      var laneB = bk % 2 === 0 ? 1.5 : -1.5;
-      rider.rotation.y = laneB > 0 ? Math.PI : 0; // face the bike's direction of travel
+      var dirK = bk % 2 === 0 ? 1 : -1;
+      rider.rotation.y = dirK > 0 ? 0 : Math.PI; // face the bike's direction of travel
       poseHumanoid(rider, 'sit', 0);
       rider.userData.joints.spine.rotation.x = 0.25; // lean forward over the bars
       rider.userData.joints.shoulderL.rotation.x = -0.9;
       rider.userData.joints.shoulderR.rotation.x = -0.9;
       bike.add(rider);
-      bike.position.set(laneB, 0, -Math.random() * route.length);
+      var sK = Math.random() * pathTotal;
+      var pK = pointAtPath(sK);
+      bike.position.set(pK.x, 0, pK.z);
+      bike.rotation.y = pK.heading + (dirK < 0 ? Math.PI : 0);
       scene.add(bike);
-      cars.push({ mesh: bike, lane: laneB, dir: laneB > 0 ? -1 : 1, speed: rand(26, 36), kind: 'bike' });
+      cars.push({ mesh: bike, s: sK, dir: dirK, speed: rand(26, 36), kind: 'bike' });
     }
     applyWeather();
 
@@ -1570,6 +1809,7 @@ import * as THREE from 'three';
     AudioEngine.resume();
     route = ROUTES[state.routeIdx];
     ZONE_STATIONS = [route.station, 2, 1, 3];
+    buildRoutePath(); // winding city road with turns, crossings and a chowk
     if (renderer) {
       renderer.dispose();
       var root = $('game-root');
@@ -1700,7 +1940,7 @@ import * as THREE from 'three';
     }
     spec.skin = pick(SKIN_TONES);
     driverMesh = makeHumanoid(spec);
-    driverMesh.position.set(-0.6, -0.15, -2.2); // driver seat, behind the wheel
+    driverMesh.position.set(0.6, -0.15, -2.2); // driver seat (right-hand drive), behind the wheel
     driverMesh.rotation.y = Math.PI; // face forward (-Z)
     poseHumanoid(driverMesh, 'steer', 0, { steer: 0 });
     busMesh.add(driverMesh);
@@ -1975,6 +2215,25 @@ import * as THREE from 'three';
   function zoneFor(progress) { return Math.min(3, Math.floor(progress * 4)); }
   function zoneStation(zone) { return ZONE_STATIONS[zone]; }
 
+  // dashboard gauges: the needles sweep with speed (speedo) and revs (tacho)
+  function updateCabGauges(busMesh, speed) {
+    if (!busMesh || !busMesh.userData) return;
+    var top = busSpec ? busSpec.topSpeed : 40;
+    var frac = clamp(Math.abs(speed) / top, 0, 1);
+    // needle parked at rotation.z = 2.1 (left stop), sweeps to -2.1 (right stop)
+    if (busMesh.userData.speedNeedle) busMesh.userData.speedNeedle.rotation.z = 2.1 - frac * 4.2;
+    if (busMesh.userData.rpmNeedle) busMesh.userData.rpmNeedle.rotation.z = 2.1 - frac * 3.6;
+  }
+
+  // door position in world space (the door is on the bus's left side)
+  function doorWorld() {
+    var h = state.heading;
+    return {
+      x: state.x + Math.cos(h) * -1.4 + Math.sin(h) * -2,
+      z: state.z + Math.sin(h) * -1.4 + (-Math.cos(h)) * -2,
+    };
+  }
+
   function updateDriver(dt) {
     var gas = input.gas || keys['arrowup'] || keys['w'];
     var brake = input.brake || keys['arrowdown'] || keys['s'];
@@ -1983,28 +2242,41 @@ import * as THREE from 'three';
     var steerKeys = (keys['arrowleft'] || keys['a'] ? -1 : 0) + (keys['arrowright'] || keys['d'] ? 1 : 0);
     var steer = wheelDrag.active ? wheelDrag.steer : steerKeys;
     state.steer = lerp(state.steer, steer, dt * 8);
-    // steering only bites while moving
-    var steerAuthority = clamp(Math.abs(state.speed) / 18, 0, 1) * 0.9 + 0.1;
-    state.heading += state.steer * 1.05 * steerAuthority * dt * (state.speed < 0 ? -1 : 1);
-    state.heading = clamp(state.heading, -0.7, 0.7);
+    // FULL steering: the heading is free (no clamp), so the bus can turn
+    // 90° at a crossing, do a U-turn, and follow the winding city road.
+    // A bus turns its wheels sharply at low speed and less at high speed
+    // (like a real vehicle), so the rate is high when slow, capped when fast.
+    var steerRate = clamp(2.2 - Math.abs(state.speed) * 0.03, 0.6, 2.2);
+    state.heading += state.steer * steerRate * dt * (state.speed < 0 ? -1 : 1);
+    if (state.heading > Math.PI) state.heading -= Math.PI * 2;
+    if (state.heading < -Math.PI) state.heading += Math.PI * 2;
     if (gas) state.speed += busSpec.accel * dt;
     if (brake) { state.speed -= 32 * dt; if (state.speed < 0 && !rev) state.speed = 0; } // brake stops, never reverses on its own
     if (rev) state.speed -= 10 * dt; // reverse gear
     if (hb) { state.speed -= state.speed * 6 * dt; if (Math.abs(state.speed) < 0.3) state.speed = 0; } // handbrake
     state.speed -= state.speed * 0.25 * dt;
-    if (Math.abs(state.x) > 6.5) state.speed -= 8 * dt; // off-road drag
+    if (!onRoad(state.x, state.z) && state.speed > 0) state.speed = Math.max(0, state.speed - 10 * dt); // off-road drag (fields, pavements) — never reverses the bus
     state.speed = clamp(state.speed, -8, busSpec.topSpeed);
     state.gear = state.speed < -0.3 ? 'R' : state.speed > 0.3 ? 'D' : (hb ? 'N' : 'P');
     $('hud-gear').textContent = state.gear;
     state.x += Math.sin(state.heading) * state.speed * dt;
     state.z -= Math.cos(state.heading) * state.speed * dt;
-    state.x = clamp(state.x, -8.5, 8.5);
+    // stay inside the city the route winds through
+    state.x = clamp(state.x, -260, 260);
+    state.z = clamp(state.z, -pathTotal - 120, 120);
     playerBus.position.set(state.x, 0, state.z);
     playerBus.rotation.y = state.heading;
-    wheels.forEach(function (w) { w.rotation.x += state.speed * dt * 0.6; });
+    wheels.forEach(function (w, wi) {
+      w.rotation.x += state.speed * dt * 0.6;
+      // front wheels (z = -2.3) visibly turn with the steering
+      if (wi < 2) w.rotation.y = state.steer * 0.4;
+    });
+    // the cab steering wheel + dashboard gauges follow the driving
+    if (playerBus.userData.cabWheel) playerBus.userData.cabWheel.rotation.z = -state.steer * 1.9;
+    updateCabGauges(playerBus, state.speed);
     AudioEngine.setEngine(state.speed / busSpec.topSpeed);
 
-    var progress = clamp(-state.z / route.length, 0, 1);
+    var progress = clamp(nearestOnPath(state.x, state.z).s / pathTotal, 0, 1);
     var zone = zoneFor(progress);
     if (zone !== state.zone) {
       state.zone = zone;
@@ -2020,24 +2292,26 @@ import * as THREE from 'three';
       for (var i = 0; i < passengersAtStops.length; i++) {
         var s = passengersAtStops[i];
         if (s.served) continue;
-        var dz = state.z - s.z;
-        if (dz > 0 && dz < 90 && state.speed > 8) {
+        var distToStop = Math.hypot(state.x - s.x, state.z - s.z);
+        var ahead = nearestOnPath(state.x, state.z).s < s.s;
+        if (ahead && distToStop < 90 && state.speed > 8) {
           setMsg('🛑 ' + s.name + ' ahead — slow down to pick up passengers!');
         }
-        if (dz > 0 && dz < 45 && state.speed < 28 && state.speed > 0) {
-          state.speed -= 28 * dt;
+        if (ahead && distToStop < 45 && state.speed < 28 && state.speed > 0) {
+          state.speed -= 40 * dt; // brake assist near a stop (stronger than the gas)
           if (state.speed < 0) state.speed = 0;
         }
-        if (Math.abs(state.z - s.z) < 18 && state.speed < 8) {
+        if (distToStop < 18 && state.speed < 8) {
           if (!state.doorsOpen) {
             setMsg('🚪 Open the doors to let passengers board! (DOOR button)');
           } else {
             // passengers whose destination is this stop get off first
             var sIdx = passengersAtStops.indexOf(s);
+            var dw = doorWorld();
             seatedPassengers.slice().forEach(function (sp) {
               if (sp.alight === sIdx) {
                 playerBus.remove(sp.mesh);
-                sp.mesh.position.set(state.x + 1.4, 0, state.z - 2);
+                sp.mesh.position.set(dw.x, 0, dw.z);
                 sp.mesh.rotation.y = Math.PI / 2; // walk away from the bus
                 scene.add(sp.mesh);
                 poseHumanoid(sp.mesh, 'walk', 0);
@@ -2055,10 +2329,11 @@ import * as THREE from 'three';
       boarding.t += dt;
       state.speed = 0;
       var s2 = boarding.stop;
+      var dw2 = doorWorld();
       s2.people.forEach(function (p) {
         poseHumanoid(p, 'walk', performance.now() / 1000);
-        p.position.x = lerp(p.position.x, state.x + 1.4, dt * 2);
-        p.position.z = lerp(p.position.z, state.z - 2, dt * 2);
+        p.position.x = lerp(p.position.x, dw2.x, dt * 2);
+        p.position.z = lerp(p.position.z, dw2.z, dt * 2);
       });
       if (boarding.t > 1.6) {
         var n = s2.people.length;
@@ -2124,7 +2399,7 @@ import * as THREE from 'three';
       dd.position.z = lerp(dd.position.z, state.doorsOpen ? -2.7 : -1.6, dt * 6);
     }
 
-    if (state.z <= -route.length) { endYatra('done'); return; }
+    if (progress >= 0.995) { endYatra('done'); return; }
 
     $('hud-speed').textContent = Math.round(Math.abs(state.speed) * 2.2) + ' km/h';
     $('hud-fare').textContent = String(state.fare);
@@ -2134,7 +2409,7 @@ import * as THREE from 'three';
       if (!passengersAtStops[k].served) { next = passengersAtStops[k]; break; }
     }
     $('hud-stop').textContent = next
-      ? 'NEXT STOP: ' + next.name + ' · ' + Math.max(0, Math.round((state.z - next.z) / route.length * route.km * 10) / 10) + ' km'
+      ? 'NEXT STOP: ' + next.name + ' · ' + Math.max(0, Math.round(Math.hypot(state.x - next.x, state.z - next.z) / pathTotal * route.km * 10) / 10) + ' km'
       : 'LAST STOP: ' + route.stops[route.stops.length - 1];
   }
 
@@ -2144,6 +2419,7 @@ import * as THREE from 'three';
   function updatePassenger(dt) {
     if (!rideBus) return;
     var b = rideBus;
+    if (b.s === undefined) b.s = 0; // arc length along the route
     var target = state.fastForward ? 42 : 16;
     var nextStop = null;
     for (var i = 0; i < passengersAtStops.length; i++) {
@@ -2159,20 +2435,25 @@ import * as THREE from 'three';
         setMsg('Chalo! Next stop: ' + (nextStop ? nextStop.name : route.stops[route.stops.length - 1]));
       }
     } else if (nextStop && !state.fastForward) {
-      var dz = b.mesh.position.z - nextStop.z;
-      if (dz < 50 && dz > 0) b.speed = lerp(b.speed, Math.max(0, dz * 0.25), dt * 2);
+      var distStop = nextStop.s - b.s;
+      if (distStop < 50 && distStop > 0) b.speed = lerp(b.speed, Math.max(0, distStop * 0.25), dt * 2);
       else b.speed = lerp(b.speed, target, dt * 2);
-      if (dz < 6 && b.speed < 1.5) {
+      if (distStop < 6 && distStop > -2 && b.speed < 1.5) {
         b.halt = { stop: nextStop, t: 0 };
         setMsg('🛑 ' + nextStop.name + ' — 2 minute halt. Chai peelo!');
       }
     } else {
       b.speed = lerp(b.speed, target, dt * 2);
     }
-    b.mesh.position.z -= b.speed * dt;
-    b.mesh.position.x = 3.5;
-    state.rideDist = (state.rideDist || 0) + (b.speed * dt) / route.length * route.km;
-    var progress = clamp(-b.mesh.position.z / route.length, 0, 1);
+    b.s += b.speed * dt;
+    var bp = pointAtPath(b.s);
+    // keep left (Indian traffic): the bus rides on the left side of the road
+    b.mesh.position.set(bp.x + Math.cos(bp.heading) * -3.5, 0, bp.z + Math.sin(bp.heading) * -3.5);
+    b.mesh.rotation.y = bp.heading;
+    if (b.mesh.userData.cabWheel) b.mesh.userData.cabWheel.rotation.z = 0;
+    updateCabGauges(b.mesh, b.speed);
+    state.rideDist = (state.rideDist || 0) + (b.speed * dt) / pathTotal * route.km;
+    var progress = clamp(b.s / pathTotal, 0, 1);
     var zone = zoneFor(progress);
     if (zone !== state.zone) {
       state.zone = zone;
@@ -2183,29 +2464,38 @@ import * as THREE from 'three';
       setMsg('📍 ' + route.zones[zone] + ' — 📻 ' + STATIONS[AudioEngine.station].name);
     }
     if (headlight) {
-      headlight.position.set(b.mesh.position.x, 1.4, b.mesh.position.z - 3);
-      headTarget.position.set(b.mesh.position.x, 0.5, b.mesh.position.z - 30);
+      var hfx = Math.sin(bp.heading), hfz = -Math.cos(bp.heading);
+      headlight.position.set(b.mesh.position.x + hfx * 3, 1.4, b.mesh.position.z + hfz * 3);
+      headTarget.position.set(b.mesh.position.x + hfx * 30, 0.5, b.mesh.position.z + hfz * 30);
       headlight.intensity = state.lightsOn ? 2.2 : 0;
     }
     $('hud-speed').textContent = Math.round(b.speed * 2.2) + ' km/h';
     $('hud-fare').textContent = '—';
     $('hud-dist').textContent = ((1 - progress) * route.km).toFixed(1) + ' km';
     $('hud-stop').textContent = 'RIDING · ' + route.stops[route.stops.length - 1] + ' BOUND';
-    if (b.mesh.position.z <= -route.length) { endYatra('done'); }
+    if (b.s >= pathTotal) { endYatra('done'); }
   }
 
   function updateTraffic(dt) {
-    var L = route.length;
+    // every vehicle drives along the winding road (arc-length s); oncoming
+    // traffic uses the opposite lane (left-hand traffic, like India)
+    function moveOnPath(v, lane) {
+      v.s += v.dir * v.speed * dt;
+      if (v.s > pathTotal) v.s -= pathTotal;
+      if (v.s < 0) v.s += pathTotal;
+      var p = pointAtPath(v.s);
+      var lat = v.dir > 0 ? -lane : lane; // keep left for the direction of travel
+      var mx = p.x + Math.cos(p.heading) * lat;
+      var mz = p.z + Math.sin(p.heading) * lat;
+      v.mesh.position.set(mx, 0, mz);
+      v.mesh.rotation.y = p.heading + (v.dir < 0 ? Math.PI : 0);
+    }
     botBuses.forEach(function (b) {
-      b.mesh.position.z += b.dir * b.speed * dt;
-      if (b.dir < 0 && b.mesh.position.z < -L - 120) b.mesh.position.z = 120;
-      if (b.dir > 0 && b.mesh.position.z > 120) b.mesh.position.z = -L - 120;
+      moveOnPath(b, 3.5);
       if (b.mesh.userData.wheels) b.mesh.userData.wheels.forEach(function (w) { w.rotation.x += b.speed * dt * 0.6; });
     });
     cars.forEach(function (c) {
-      c.mesh.position.z += c.dir * c.speed * dt;
-      if (c.dir < 0 && c.mesh.position.z < -L - 120) c.mesh.position.z = 120;
-      if (c.dir > 0 && c.mesh.position.z > 120) c.mesh.position.z = -L - 120;
+      moveOnPath(c, c.kind === 'bike' ? 1.5 : 3.5);
     });
     clouds.forEach(function (cl) {
       cl.position.x += dt * 1.2;
@@ -2252,9 +2542,12 @@ import * as THREE from 'three';
       var bx = playerBus.position.x, bz = playerBus.position.z;
       var fx = Math.sin(state.heading), fz = -Math.cos(state.heading);
       if (state.camView === 1) {
-        // cab — driver's seat, looking out the windshield
-        camera.position.set(bx + fx * 2.2, 2.1, bz + fz * 2.2);
-        camera.lookAt(bx + fx * 40, 1.6, bz + fz * 40);
+        // cab — driver's seat (right-hand drive), over the low dashboard,
+        // looking out the windshield. A near-level gaze keeps the road in
+        // view instead of the roof.
+        var rx = Math.cos(state.heading), rz = Math.sin(state.heading);
+        camera.position.set(bx + fx * 1.8 + rx * 0.6, 2.15, bz + fz * 1.8 + rz * 0.6);
+        camera.lookAt(bx + fx * 40 + rx * 0.6, 1.9, bz + fz * 40 + rz * 0.6);
       } else if (state.camView === 2) {
         // front bumper, low
         camera.position.set(bx + fx * 3.6, 0.9, bz + fz * 3.6);
@@ -2617,7 +2910,7 @@ import * as THREE from 'three';
   }
   window.addEventListener('orientationchange', function () { setTimeout(checkOrientation, 100); });
 
-  // ---- route minimap ----
+  // ---- route minimap: draws the winding city road, not a straight line ----
   var mapTimer = 0;
   function drawMinimap() {
     var cv = $('minimap');
@@ -2627,33 +2920,54 @@ import * as THREE from 'three';
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(0, 0, W, H);
-    var x0 = W / 2, yTop = 12, yBot = H - 12;
-    // route line
+    if (!pathPoints.length) return;
+    // fit the whole route into the canvas
+    var minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+    pathPoints.forEach(function (p) {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+    });
+    var pad = 10;
+    var sx = (W - pad * 2) / Math.max(1, maxX - minX);
+    var sz = (H - pad * 2) / Math.max(1, maxZ - minZ);
+    var sc = Math.min(sx, sz);
+    var ox = pad + ((W - pad * 2) - (maxX - minX) * sc) / 2;
+    var oy = pad + ((H - pad * 2) - (maxZ - minZ) * sc) / 2;
+    function mx(x) { return ox + (x - minX) * sc; }
+    function mz(z) { return oy + (z - minZ) * sc; }
+    // route line (the winding road)
     ctx.strokeStyle = '#facc15';
     ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(x0, yTop); ctx.lineTo(x0, yBot); ctx.stroke();
+    ctx.beginPath();
+    pathPoints.forEach(function (p, i) {
+      if (i === 0) ctx.moveTo(mx(p.x), mz(p.z));
+      else ctx.lineTo(mx(p.x), mz(p.z));
+    });
+    ctx.stroke();
+    // chowk
+    if (chowk) {
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath(); ctx.arc(mx(chowk.x), mz(chowk.z), 4, 0, Math.PI * 2); ctx.fill();
+    }
     // stops
-    var n = route.stops.length;
-    route.stops.forEach(function (name, i) {
-      var y = yTop + (yBot - yTop) * ((i + 1) / (n + 0.0)) * 0.92;
-      if (i === n - 1) y = yBot - 4;
-      var served = passengersAtStops[i] && passengersAtStops[i].served;
-      var isNext = passengersAtStops[i] && !passengersAtStops[i].served;
-      ctx.fillStyle = served ? '#22c55e' : (isNext ? '#FFB020' : '#ffffff');
-      ctx.beginPath(); ctx.arc(x0, y, served ? 4 : 5, 0, Math.PI * 2); ctx.fill();
+    passengersAtStops.forEach(function (s) {
+      var served = s.served;
+      ctx.fillStyle = served ? '#22c55e' : '#FFB020';
+      ctx.beginPath(); ctx.arc(mx(s.x), mz(s.z), served ? 4 : 5, 0, Math.PI * 2); ctx.fill();
     });
     // bus dot
-    var prog = 0;
-    if (state.mode === 'driving') prog = clamp(-state.z / route.length, 0, 1);
-    else if (state.mode === 'passenger' && rideBus) prog = clamp(-rideBus.mesh.position.z / route.length, 0, 1);
-    var by = yTop + (yBot - yTop) * prog;
+    var prog = 0, bx = 0, bz = 0;
+    if (state.mode === 'driving') { prog = clamp(nearestOnPath(state.x, state.z).s / pathTotal, 0, 1); bx = state.x; bz = state.z; }
+    else if (state.mode === 'passenger' && rideBus) { prog = clamp((rideBus.s || 0) / pathTotal, 0, 1); bx = rideBus.mesh.position.x; bz = rideBus.mesh.position.z; }
+    else if (state.mode === 'walk') { bx = state.px; bz = state.pz; }
     ctx.fillStyle = '#FF2DA6';
-    ctx.beginPath(); ctx.arc(x0, by, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx(bx), mz(bz), 6, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(x0, by, 6, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(mx(bx), mz(bz), 6, 0, Math.PI * 2); ctx.stroke();
     // destination flag
+    var end = pathPoints[pathPoints.length - 1];
     ctx.fillStyle = '#22c55e';
-    ctx.fillRect(x0 + 6, yBot - 12, 10, 8);
+    ctx.fillRect(mx(end.x) + 4, mz(end.z) - 10, 10, 8);
   }
 
   // ============================================================================
@@ -2706,15 +3020,23 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.20.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.21.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
     parkedNames: function () { return parkedBuses.map(function (pb) { return pb.spec.name; }); },
-    routeInfo: function () { return { length: route.length, stops: passengersAtStops.map(function (ps) { return ps.z; }) }; },
+    routeInfo: function () { return { length: route.length, pathTotal: pathTotal, stops: passengersAtStops.map(function (ps) { return { x: ps.x, z: ps.z, s: ps.s, name: ps.name }; }) }; },
+    path: function () { return pathPoints.map(function (p) { return { x: p.x, z: p.z }; }); },
+    chowk: function () { return chowk ? { x: chowk.x, z: chowk.z, r: chowk.r } : null; },
+    crossings: function () { return crossStreets.length; },
     warp: function (z) {
       if (state.mode === 'passenger' && rideBus) rideBus.mesh.position.z = z;
       else state.z = z;
+    },
+    warpTo: function (x, z, heading) {
+      state.x = x; state.z = z;
+      if (heading !== undefined) state.heading = heading;
+      if (playerBus) { playerBus.position.set(x, 0, z); playerBus.rotation.y = state.heading; }
     },
     cam: function () { return camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null; },
     player: function () { return { x: state.px, z: state.pz }; },
@@ -2732,5 +3054,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.20.0 loaded');
+  log('BUS YATRA 2.21.0 loaded');
 })();
