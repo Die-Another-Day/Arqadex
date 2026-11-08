@@ -1,4 +1,4 @@
-/* BUS YATRA skin — v2.17.1. Landscape-first on phones (v2.15.0 was portrait;
+/* BUS YATRA skin — v2.18.0. Landscape-first on phones (v2.15.0 was portrait;
    the brief now demands landscape). Theme system as before: dark by default,
    light when the OS is light or the Arqadex shell says daylight. */
 :root {
@@ -65,12 +65,12 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   padding: 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.6; }
 .hint b { color: var(--gold); }
 .btn-row { display: flex; gap: 10px; margin: 18px 0; }
-/* v2.17.1: the lobby is long on a landscape phone (2064px in a 390px
+/* v2.18.0: the lobby is long on a landscape phone (2064px in a 390px
    viewport) and ENTER THE CITY sat at the very bottom — users never
    reached it. Pin the CTA to the bottom of the visible lobby area. */
 #screen-lobby .btn-row { position: sticky; bottom: 0; z-index: 5;
   background: var(--bg); padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px)); margin-bottom: 0; }
-/* v2.17.1: compact landscape lobby — two-column route/garage grids so the
+/* v2.18.0: compact landscape lobby — two-column route/garage grids so the
    whole lobby is ~half as tall on short (landscape) screens. */
 @media (max-height: 500px) {
   #screen-lobby h1 { font-size: 34px; }
@@ -94,12 +94,10 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 #debug-log.on { display: block; }
 
 /* Rotate overlay (landscape only on phones) */
-#rotate-overlay { position: fixed; inset: 0; z-index: 50; background: var(--bg);
-  display: flex; align-items: center; justify-content: center; padding: 24px; }
-.rotate-card { text-align: center; }
-.rotate-icon { font-size: 64px; margin-bottom: 16px; animation: wiggle 1.2s ease-in-out infinite; }
-@keyframes wiggle { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(78deg); } }
-.rotate-card h2 { font-size: 22px; }
+#rotate-tip { align-self: center; pointer-events: auto; background: rgba(0,0,0,.75); color: #fff; font-size: 12px;
+  padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,.3); white-space: nowrap;
+  max-width: 94vw; overflow: hidden; text-overflow: ellipsis; margin-top: 6px; }
+#rotate-tip button { background: none; border: none; color: #fff; font-size: 13px; cursor: pointer; padding: 0 0 0 6px; }
 .rotate-card p { color: var(--muted); font-size: 13px; line-height: 1.6; }
 
 /* HUD */
@@ -148,7 +146,7 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 .mp-item.sel { background: var(--gold-soft); color: var(--gold); }
 
 /* Walk joystick */
-#joystick { position: fixed; left: 18px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 6; text-align: center; }
+#joystick { position: absolute; left: 18px; bottom: 96px; z-index: 6; text-align: center; pointer-events: auto; }
 #joy-base { width: 116px; height: 116px; border-radius: 50%; background: rgba(0,0,0,.4);
   border: 2px solid rgba(255,255,255,.45); position: relative; touch-action: none; backdrop-filter: blur(4px); }
 #joy-nub { width: 50px; height: 50px; border-radius: 50%; background: var(--pink);
@@ -156,10 +154,20 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 .joy-label { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .2em; color: #fff;
   text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
 /* First-walk hint: big, unmissable, sits above the joystick until you move */
-#walk-hint { position: fixed; left: 18px; bottom: calc(232px + env(safe-area-inset-bottom, 0px)); z-index: 7;
+#walk-hint { position: absolute; left: 18px; bottom: 232px; z-index: 7;
   background: var(--pink); color: #fff; font-family: Orbitron, sans-serif; font-weight: 700; font-size: 13px;
   letter-spacing: .05em; padding: 10px 14px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.5);
   animation: hint-bob 1s ease-in-out infinite; pointer-events: none; max-width: 240px; }
+/* D-pad: hold an arrow to walk that way. Bottom-right, walk mode only. */
+#dpad { position: absolute; right: 18px; bottom: 96px; z-index: 6; pointer-events: auto;
+  display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; }
+#dpad button { background: rgba(0,0,0,.55); border: 2px solid rgba(255,255,255,.45); color: #fff;
+  border-radius: 12px; font-size: 18px; cursor: pointer; touch-action: none; backdrop-filter: blur(4px); }
+#dpad button:active { background: var(--pink); transform: scale(.94); }
+#dp-up { grid-column: 2; grid-row: 1; }
+#dp-left { grid-column: 1; grid-row: 2; }
+#dp-down { grid-column: 2; grid-row: 3; }
+#dp-right { grid-column: 3; grid-row: 2; }
 @keyframes hint-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 /* Pulsing ring on the joystick nub until the player first walks */
 #joystick.hint-pulse #joy-nub { animation: nub-pulse 1s ease-in-out infinite; }
@@ -222,4 +230,18 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   .pedals button { width: 58px; height: 58px; }
   #bus-prompt, #ticket-panel, #seat-panel { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
   #music-panel { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* YouTube hook player: small, top-right under the minimap, visible while a
+   YouTube station plays. */
+#yt-box { position: fixed; top: calc(128px + env(safe-area-inset-top, 0px)); right: 10px; width: 180px; z-index: 4;
+  background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.3); border-radius: 12px; overflow: hidden;
+  backdrop-filter: blur(4px); }
+#yt-player { width: 180px; height: 101px; }
+#yt-player iframe { width: 100%; height: 100%; border: 0; }
+#yt-title { font-size: 10px; color: #fff; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Tall screens (portrait phones): lift the walk hint above the objective text */
+@media (min-height: 600px) {
+  #walk-hint { bottom: 310px; }
 }
