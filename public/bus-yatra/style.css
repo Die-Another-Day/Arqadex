@@ -1,4 +1,4 @@
-/* BUS YATRA skin — v2.19.0. Landscape-first on phones (v2.15.0 was portrait;
+/* BUS YATRA skin — v2.20.0. Landscape-first on phones (v2.15.0 was portrait;
    the brief now demands landscape). Theme system as before: dark by default,
    light when the OS is light or the Arqadex shell says daylight. */
 :root {
@@ -65,12 +65,12 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   padding: 12px; border-radius: 10px; font-size: 12px; margin-top: 16px; line-height: 1.6; }
 .hint b { color: var(--gold); }
 .btn-row { display: flex; gap: 10px; margin: 18px 0; }
-/* v2.19.0: the lobby is long on a landscape phone (2064px in a 390px
+/* v2.20.0: the lobby is long on a landscape phone (2064px in a 390px
    viewport) and ENTER THE CITY sat at the very bottom — users never
    reached it. Pin the CTA to the bottom of the visible lobby area. */
 #screen-lobby .btn-row { position: sticky; bottom: 0; z-index: 5;
   background: var(--bg); padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px)); margin-bottom: 0; }
-/* v2.19.0: compact landscape lobby — two-column route/garage grids so the
+/* v2.20.0: compact landscape lobby — two-column route/garage grids so the
    whole lobby is ~half as tall on short (landscape) screens. */
 @media (max-height: 500px) {
   #screen-lobby h1 { font-size: 34px; }
@@ -145,25 +145,29 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   font-size: 12px; color: rgba(255,255,255,.8); }
 .mp-item.sel { background: var(--gold-soft); color: var(--gold); }
 
-/* Walk joystick */
+/* Walk joystick — Swordigo-style: big, chunky, unmissable */
 #joystick { position: absolute; left: 18px; bottom: 96px; z-index: 6; text-align: center; pointer-events: auto; }
-#joy-base { width: 116px; height: 116px; border-radius: 50%; background: rgba(0,0,0,.4);
-  border: 2px solid rgba(255,255,255,.45); position: relative; touch-action: none; backdrop-filter: blur(4px); }
-#joy-nub { width: 50px; height: 50px; border-radius: 50%; background: var(--pink);
-  position: absolute; left: 33px; top: 33px; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+#joy-base { width: 140px; height: 140px; border-radius: 28px; background: rgba(120,20,20,.45);
+  border: 3px solid rgba(255,255,255,.7); position: relative; touch-action: none; backdrop-filter: blur(4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
+#joy-nub { width: 60px; height: 60px; border-radius: 50%; background: var(--pink);
+  border: 3px solid rgba(255,255,255,.85);
+  position: absolute; left: 37px; top: 37px; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
 .joy-label { font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: .2em; color: #fff;
   text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
 /* First-walk hint: big, unmissable, sits above the joystick until you move */
-#walk-hint { position: absolute; left: 18px; bottom: 232px; z-index: 7;
+#walk-hint { position: absolute; left: 18px; bottom: 268px; z-index: 7;
   background: var(--pink); color: #fff; font-family: Orbitron, sans-serif; font-weight: 700; font-size: 13px;
   letter-spacing: .05em; padding: 10px 14px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.5);
   animation: hint-bob 1s ease-in-out infinite; pointer-events: none; max-width: 240px; }
-/* D-pad: hold an arrow to walk that way. Bottom-right, walk mode only. */
+/* D-pad: Swordigo-style — big chunky translucent-red keys with a thick light
+   border and a large white arrow. Hold to walk; release to stop. */
 #dpad { position: absolute; right: 18px; bottom: 96px; z-index: 6; pointer-events: auto;
-  display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; }
-#dpad button { background: rgba(0,0,0,.55); border: 2px solid rgba(255,255,255,.45); color: #fff;
-  border-radius: 12px; font-size: 18px; cursor: pointer; touch-action: none; backdrop-filter: blur(4px); }
-#dpad button:active { background: var(--pink); transform: scale(.94); }
+  display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 64px); gap: 6px; }
+#dpad button { background: rgba(120,20,20,.55); border: 3px solid rgba(255,255,255,.7); color: #fff;
+  border-radius: 16px; font-size: 28px; cursor: pointer; touch-action: none; backdrop-filter: blur(4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
+#dpad button:active, #dpad button.held { background: rgba(200,30,30,.8); transform: scale(.92); }
 #dp-up { grid-column: 2; grid-row: 1; }
 #dp-left { grid-column: 1; grid-row: 2; }
 #dp-down { grid-column: 2; grid-row: 3; }
@@ -174,20 +178,22 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 @keyframes nub-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(225,6,0,.7), 0 4px 14px rgba(0,0,0,.5); }
   50% { box-shadow: 0 0 0 16px rgba(225,6,0,0), 0 4px 14px rgba(0,0,0,.5); } }
 
-/* Drive controls */
+/* Drive controls — Swordigo-style chunky keys */
 #drive-controls { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 6;
   display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; pointer-events: none; }
 #wheel-wrap { text-align: center; pointer-events: auto; }
-#wheel { width: 92px; height: 92px; border-radius: 50%; background: rgba(0,0,0,.5);
-  border: 3px solid rgba(255,255,255,.5); color: #fff; font-size: 32px; line-height: 86px; text-align: center;
-  touch-action: none; backdrop-filter: blur(4px); transition: transform .08s linear; }
+#wheel { width: 110px; height: 110px; border-radius: 28px; background: rgba(120,20,20,.5);
+  border: 3px solid rgba(255,255,255,.7); color: #fff; font-size: 38px; line-height: 104px; text-align: center;
+  touch-action: none; backdrop-filter: blur(4px); transition: transform .08s linear;
+  box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
 .wheel-label { font-family: Orbitron, sans-serif; font-size: 9px; letter-spacing: .18em; color: #fff;
   text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
-.pedals { display: flex; gap: 10px; pointer-events: auto; }
-.pedals button { width: 66px; height: 66px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5);
-  background: rgba(0,0,0,.45); color: #fff; font-family: Orbitron, sans-serif; font-size: 11px; font-weight: 700;
-  cursor: pointer; backdrop-filter: blur(4px); touch-action: none; }
-.pedals button.held { background: rgba(255,45,166,.55); border-color: #fff; }
+.pedals { display: flex; gap: 12px; pointer-events: auto; }
+.pedals button { width: 80px; height: 80px; border-radius: 20px; border: 3px solid rgba(255,255,255,.7);
+  background: rgba(120,20,20,.55); color: #fff; font-family: Orbitron, sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; backdrop-filter: blur(4px); touch-action: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
+.pedals button.held { background: rgba(200,30,30,.8); border-color: #fff; transform: scale(.94); }
 #btn-gas { border-color: var(--green) !important; }
 #btn-brake { border-color: var(--red) !important; }
 #btn-rev { border-color: var(--cyan) !important; }
@@ -199,16 +205,21 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   border-radius: 24px; padding: 13px 18px; font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .06em;
   cursor: pointer; backdrop-filter: blur(4px); }
 
-/* Prompt cards (bus / ticket / seat) */
+/* Prompt cards (bus / ticket / seat) — big and unmissable, Swordigo-style */
 #bus-prompt, #ticket-panel, #seat-panel { position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(200px + env(safe-area-inset-bottom, 0px)); z-index: 7;
-  width: min(420px, calc(100% - 24px)); pointer-events: none; display: flex; justify-content: center; }
-.prompt-card { pointer-events: auto; width: 100%; background: rgba(10,10,26,.88);
-  border: 1px solid var(--gold); border-radius: 16px; padding: 16px; text-align: center; backdrop-filter: blur(6px); }
-.prompt-bus { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 20px; letter-spacing: .08em; color: var(--gold); }
-.prompt-sub { font-size: 12px; color: rgba(255,255,255,.75); margin: 4px 0 12px; }
-.prompt-btns { display: flex; gap: 10px; }
-.prompt-btns .btn { flex: 1; padding: 14px 10px; font-size: 13px; }
+  bottom: calc(200px + env(safe-area-inset-bottom, 0px)); z-index: 9;
+  width: min(460px, calc(100% - 24px)); pointer-events: none; display: flex; justify-content: center; }
+.prompt-card { pointer-events: auto; width: 100%; background: rgba(10,10,26,.92);
+  border: 2px solid var(--gold); border-radius: 20px; padding: 20px; text-align: center; backdrop-filter: blur(6px);
+  box-shadow: 0 10px 32px rgba(0,0,0,.6); }
+.prompt-bus { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 24px; letter-spacing: .08em; color: var(--gold); }
+.prompt-sub { font-size: 13px; color: rgba(255,255,255,.8); margin: 6px 0 14px; }
+.prompt-btns { display: flex; gap: 12px; }
+.prompt-btns .btn { flex: 1; padding: 18px 10px; font-size: 16px; font-weight: 700; border-radius: 16px;
+  border: 3px solid rgba(255,255,255,.7); box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
+.prompt-btns .btn.primary { background: linear-gradient(180deg, #b45309, #78350f); color: #fff; }
+.prompt-btns .btn.ghost { background: rgba(255,255,255,.12); color: #fff; }
+.prompt-btns .btn:active { transform: scale(.95); }
 .prompt-note { font-size: 11px; line-height: 1.5; color: rgba(255,255,255,.55); margin-top: 10px; }
 #seat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
 .seat { padding: 12px 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.06);
@@ -224,11 +235,19 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 /* Landscape phones: tighten the HUD so controls never overlap */
 @media (orientation: landscape) and (max-height: 500px) {
   #minimap { width: 84px; height: 84px; }
-  #joy-base { width: 96px; height: 96px; }
-  #joy-nub { width: 42px; height: 42px; left: 27px; top: 27px; }
-  #wheel { width: 80px; height: 80px; line-height: 74px; font-size: 28px; }
-  .pedals button { width: 58px; height: 58px; }
-  #bus-prompt, #ticket-panel, #seat-panel { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  #joy-base { width: 120px; height: 120px; }
+  #joy-nub { width: 52px; height: 52px; left: 31px; top: 31px; }
+  #dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); bottom: 64px; }
+  #dpad button { font-size: 24px; }
+  #walk-hint { bottom: 240px; }
+  #wheel { width: 96px; height: 96px; line-height: 90px; font-size: 32px; }
+  .pedals button { width: 68px; height: 68px; }
+  #bus-prompt, #ticket-panel, #seat-panel { bottom: calc(138px + env(safe-area-inset-bottom, 0px)); }
+  .prompt-card { padding: 12px; }
+  .prompt-bus { font-size: 20px; }
+  .prompt-sub { margin: 4px 0 10px; }
+  .prompt-btns .btn { padding: 15px 10px; font-size: 15px; }
+  .prompt-note { margin-top: 8px; }
   #music-panel { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
 
