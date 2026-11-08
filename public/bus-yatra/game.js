@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.18.0
+// BUS YATRA — Indian Bus Simulator · v2.19.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -443,9 +443,19 @@ import * as THREE from 'three';
   // ============================================================================
   var renderer, scene, camera, clock;
   var playerBus = null, rideBus = null, parkedBuses = [], botBuses = [], cars = [];
+  var driverMesh = null, seatedPassengers = [], alighting = [];
+  // seat positions inside the bus (local coords; front = -Z, driver at x=-0.6).
+  // A seated humanoid's root sits at y=-0.15 so its feet rest on the bus floor
+  // (y=0.3 local) and its hips land on the seat (y=0.7 local).
+  var BUS_SEATS = [
+    { x: -0.55, z: -1.2 }, { x: 0.55, z: -1.2 },
+    { x: -0.55, z: -0.2 }, { x: 0.55, z: -0.2 },
+    { x: -0.55, z: 0.8 }, { x: 0.55, z: 0.8 },
+    { x: -0.55, z: 1.8 }, { x: 0.55, z: 1.8 },
+  ];
   var passengersAtStops = [], stopGroups = [], npcs = [], colliders = [];
   var clouds = [], wheels = [];
-  var playerMesh = null, playerLegL = null, playerLegR = null, walkCycle = 0;
+  var playerMesh = null, walkCycle = 0;
   var headlight = null, headTarget = null, rainPoints = null, roadMat = null, sunLight = null, hemiLight = null, sunDir = { x: 40, y: 80, z: 30 };
   var keys = {};
   var joy = { x: 0, y: 0, active: false };
@@ -595,6 +605,15 @@ import * as THREE from 'three';
     dash.position.set(0, 1.55, -3.1); g.add(dash);
     var wheel = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.04, 8, 20), darkMat);
     wheel.position.set(-0.6, 1.75, -2.85); wheel.rotation.x = -0.5; g.add(wheel);
+    // passenger seats (8: 2 columns x 4 rows) — seated riders sit on these
+    var seatMat = new THREE.MeshLambertMaterial({ color: 0x374151 });
+    [[-0.55, -1.2], [0.55, -1.2], [-0.55, -0.2], [0.55, -0.2],
+     [-0.55, 0.8], [0.55, 0.8], [-0.55, 1.8], [0.55, 1.8]].forEach(function (sp) {
+      var cushion = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.45), seatMat);
+      cushion.position.set(sp[0], 0.65, sp[1]); g.add(cushion);
+      var back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.08), seatMat);
+      back.position.set(sp[0], 0.95, sp[1] + 0.24); g.add(back);
+    });
     // wheels: tire + silver hub + centre cap, grouped so rotation.x spins them
     var wg = [];
     [[-1.2, -2.3], [1.2, -2.3], [-1.2, 2.3], [1.2, 2.3]].forEach(function (p) {
@@ -629,21 +648,322 @@ import * as THREE from 'three';
     return g;
   }
 
-  function makePerson(shirtColor, skinColor) {
+  // ============================================================================
+  // HUMANOID CHARACTER SYSTEM (v2.19.0) — procedural Indian characters.
+  // The game builds everything from Three.js primitives (no imported models),
+  // so characters are assembled from a reusable jointed humanoid: an
+  // articulated skeleton (spine, neck, shoulders, elbows, hips, knees) with
+  // faces, hair, Indian clothing and accessories, driven by one shared
+  // procedural animation system (poseHumanoid). This is a stylised-realistic
+  // look matching the reference direction (uniformed driver, saree passenger,
+  // college student, kurta elder) — not photorealism, which this engine
+  // cannot do. Hands are shaped (no individual fingers); faces have eyes,
+  // brows, nose, mouth, moustache/beard and hair.
+  // ============================================================================
+  var SKIN_TONES = [0x8d5524, 0x9c6b30, 0xb07a45, 0xc68642, 0xd9a066, 0xe8b07a];
+  var HAIR_COLORS = [0x141414, 0x2d1a0e, 0x4a2c14, 0x777777];
+
+  // spec: { sex:'m'|'f', outfit:'shirt'|'kurta'|'saree'|'salwar'|'uniform'|
+  //   'police'|'school'|'office'|'jacket'|'vendor',
+  //   skin, hairColor, hair:'short'|'bun'|'ponytail'|'long'|'turban'|'cap'|'scarf'|'white',
+  //   shirt, pants, shoes, height (0.65-1.1), build (0.9-1.2), belly, hunch,
+  //   beard, moustache, glasses, backpack, ticketBag, phone, watch, stick, cap, badge, apron }
+  function makeHumanoid(spec) {
+    spec = spec || {};
+    var skin = spec.skin !== undefined ? spec.skin : pick(SKIN_TONES);
+    var hairC = spec.hairColor !== undefined ? spec.hairColor : pick(HAIR_COLORS);
+    var build = spec.build || 1;
+    var isF = spec.sex === 'f';
     var g = new THREE.Group();
-    var body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.9, 8),
-      new THREE.MeshLambertMaterial({ color: shirtColor }));
-    body.position.y = 0.75; body.castShadow = true; g.add(body);
-    var head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8),
-      new THREE.MeshLambertMaterial({ color: skinColor || 0xd9a066 }));
-    head.position.y = 1.35; g.add(head);
-    var legMat = new THREE.MeshLambertMaterial({ color: 0x1f2937 });
-    var legL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.5, 0.14), legMat);
-    legL.position.set(-0.12, 0.25, 0); g.add(legL);
-    var legR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.5, 0.14), legMat);
-    legR.position.set(0.12, 0.25, 0); g.add(legR);
-    g.userData.legL = legL; g.userData.legR = legR;
+    var M = function (c) { return new THREE.MeshLambertMaterial({ color: c }); };
+    var skinMat = M(skin), hairMat = M(hairC);
+    var shirtMat = M(spec.shirt !== undefined ? spec.shirt : 0x3b82f6);
+    var pantsMat = M(spec.pants !== undefined ? spec.pants : 0x1f2937);
+    var shoeMat = M(spec.shoes !== undefined ? spec.shoes : 0x111827);
+    var outfit = spec.outfit || 'shirt';
+    function mesh(geo, mat, x, y, z, parent) {
+      var m = new THREE.Mesh(geo, mat);
+      m.position.set(x || 0, y || 0, z || 0);
+      m.castShadow = true;
+      (parent || g).add(m);
+      return m;
+    }
+    var J = {};
+
+    // ---- spine (torso pivot at the hips) ----
+    var spine = new THREE.Group(); spine.position.y = 0.85; g.add(spine); J.spine = spine;
+    if (spec.hunch) spine.rotation.x = 0.18; // elderly stoop
+    // ---- torso by outfit ----
+    if (outfit === 'kurta') {
+      // long tunic to the knees
+      mesh(new THREE.CylinderGeometry(0.26 * build, 0.32 * build, 0.85, 10), shirtMat, 0, 0.1, 0, spine);
+      mesh(new THREE.BoxGeometry(0.16, 0.06, 0.04), M(0xffffff), 0, 0.48, 0.24, spine); // collar
+    } else if (outfit === 'saree') {
+      // blouse + long skirt + draped pallu over the left shoulder
+      mesh(new THREE.CylinderGeometry(0.24 * build, 0.26 * build, 0.42, 10), shirtMat, 0, 0.32, 0, spine);
+      var sareeCol = spec.saree !== undefined ? spec.saree : 0x7f1d1d;
+      mesh(new THREE.CylinderGeometry(0.27 * build, 0.38 * build, 0.95, 10), M(sareeCol), 0, -0.45, 0, spine);
+      var pallu = mesh(new THREE.BoxGeometry(0.14, 0.55, 0.03), M(spec.pallu !== undefined ? spec.pallu : 0xd4a017), -0.12, 0.28, 0.24, spine);
+      pallu.rotation.z = 0.35;
+    } else if (outfit === 'salwar') {
+      mesh(new THREE.CylinderGeometry(0.25 * build, 0.3 * build, 0.7, 10), shirtMat, 0, 0.15, 0, spine);
+      mesh(new THREE.CylinderGeometry(0.28 * build, 0.34 * build, 0.5, 10), M(spec.saree !== undefined ? spec.saree : spec.shirt), 0, -0.55, 0, spine);
+    } else if (outfit === 'office') {
+      // shirt + tie + blazer (open, darker)
+      mesh(new THREE.BoxGeometry(0.5 * build, 0.5, 0.3), shirtMat, 0, 0.25, 0, spine);
+      mesh(new THREE.BoxGeometry(0.07, 0.34, 0.02), M(0x7f1d1d), 0, 0.32, 0.16, spine); // tie
+      mesh(new THREE.BoxGeometry(0.56 * build, 0.52, 0.34), M(spec.jacket !== undefined ? spec.jacket : 0x1f2937), 0, 0.24, -0.01, spine);
+    } else if (outfit === 'school') {
+      mesh(new THREE.BoxGeometry(0.44 * build, 0.42, 0.26), M(0xffffff), 0, 0.28, 0, spine);
+      mesh(new THREE.BoxGeometry(0.06, 0.3, 0.02), M(0x1d4ed8), 0, 0.34, 0.15, spine); // tie
+    } else {
+      // shirt / uniform / police / jacket / vendor
+      mesh(new THREE.BoxGeometry(0.5 * build, 0.5, 0.3), shirtMat, 0, 0.25, 0, spine);
+      if (outfit === 'uniform' || outfit === 'police') {
+        mesh(new THREE.BoxGeometry(0.52 * build, 0.05, 0.32), M(0x111827), 0, 0.02, 0, spine); // belt
+        if (spec.badge) mesh(new THREE.PlaneGeometry(0.09, 0.05), new THREE.MeshBasicMaterial({ color: 0xfacc15 }), -0.14, 0.38, 0.16, spine);
+        if (spec.badge) mesh(new THREE.PlaneGeometry(0.12, 0.03), new THREE.MeshBasicMaterial({ color: 0xffffff }), 0.1, 0.38, 0.16, spine); // name tag
+      }
+      if (outfit === 'vendor' && spec.apron) {
+        mesh(new THREE.BoxGeometry(0.4 * build, 0.45, 0.02), M(0xf8fafc), 0, 0.1, 0.17, spine); // apron
+      }
+      if (spec.belly) mesh(new THREE.SphereGeometry(0.24 * build, 10, 8), shirtMat, 0, 0.12, 0.1, spine); // middle-age belly
+    }
+    // ---- neck + head ----
+    var neck = new THREE.Group(); neck.position.y = 0.52; spine.add(neck); J.neck = neck;
+    var head = new THREE.Group(); head.position.y = 0.16; neck.add(head); J.head = head;
+    mesh(new THREE.SphereGeometry(0.16, 12, 10), skinMat, 0, 0, 0, head);
+    // face: eyes, brows, nose, mouth, ears
+    var eyeMat = M(0x111111);
+    mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat, -0.06, 0.02, 0.145, head);
+    mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat, 0.06, 0.02, 0.145, head);
+    mesh(new THREE.BoxGeometry(0.05, 0.012, 0.01), hairMat, -0.06, 0.06, 0.15, head);
+    mesh(new THREE.BoxGeometry(0.05, 0.012, 0.01), hairMat, 0.06, 0.06, 0.15, head);
+    var nose = mesh(new THREE.ConeGeometry(0.02, 0.05, 6), skinMat, 0, -0.02, 0.155, head);
+    nose.rotation.x = Math.PI / 2;
+    mesh(new THREE.BoxGeometry(0.05, 0.008, 0.01), M(0x7f1d1d), 0, -0.09, 0.15, head); // mouth
+    mesh(new THREE.SphereGeometry(0.03, 6, 6), skinMat, -0.16, 0, 0, head); // ears
+    mesh(new THREE.SphereGeometry(0.03, 6, 6), skinMat, 0.16, 0, 0, head);
+    if (spec.moustache) mesh(new THREE.BoxGeometry(0.09, 0.015, 0.015), hairMat, 0, -0.06, 0.15, head);
+    if (spec.beard) {
+      mesh(new THREE.SphereGeometry(0.11, 8, 6), hairMat, 0, -0.1, 0.06, head); // beard
+      mesh(new THREE.BoxGeometry(0.09, 0.015, 0.015), hairMat, 0, -0.06, 0.15, head);
+    }
+    if (spec.glasses) {
+      var gm = new THREE.MeshBasicMaterial({ color: 0x111827 });
+      mesh(new THREE.TorusGeometry(0.035, 0.006, 6, 12), gm, -0.06, 0.02, 0.15, head);
+      mesh(new THREE.TorusGeometry(0.035, 0.006, 6, 12), gm, 0.06, 0.02, 0.15, head);
+      mesh(new THREE.BoxGeometry(0.05, 0.006, 0.006), gm, 0, 0.02, 0.15, head);
+    }
+    // ---- hair ----
+    var hair = spec.hair || (isF ? 'bun' : 'short');
+    if (hair === 'short' || hair === 'white') {
+      var hm = hair === 'white' ? M(0xd1d5db) : hairMat;
+      var cap = mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hm, 0, 0.02, -0.01, head);
+      cap.scale.set(1, 0.9, 1);
+    } else if (hair === 'bun') {
+      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat, 0, 0.02, -0.01, head);
+      mesh(new THREE.SphereGeometry(0.06, 8, 8), hairMat, 0, 0.06, -0.16, head);
+    } else if (hair === 'ponytail') {
+      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat, 0, 0.02, -0.01, head);
+      mesh(new THREE.CylinderGeometry(0.035, 0.02, 0.3, 6), hairMat, 0, -0.08, -0.18, head);
+    } else if (hair === 'long') {
+      var lg = mesh(new THREE.SphereGeometry(0.17, 12, 10), hairMat, 0, -0.02, -0.03, head);
+      lg.scale.set(1, 1.15, 1);
+      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), skinMat, 0, 0.02, 0.01, head); // face opening
+    } else if (hair === 'turban') {
+      mesh(new THREE.CylinderGeometry(0.17, 0.18, 0.14, 12), M(spec.turban !== undefined ? spec.turban : 0xd97706), 0, 0.08, 0, head);
+      mesh(new THREE.SphereGeometry(0.05, 8, 8), M(spec.turban !== undefined ? spec.turban : 0xd97706), 0, 0.17, 0, head);
+    } else if (hair === 'cap') {
+      mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.07, 12), M(spec.capColor !== undefined ? spec.capColor : 0x365314), 0, 0.12, 0, head);
+      mesh(new THREE.BoxGeometry(0.16, 0.015, 0.1), M(0x111827), 0, 0.1, 0.18, head); // brim
+    } else if (hair === 'scarf') {
+      var sc = mesh(new THREE.SphereGeometry(0.18, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.6), M(spec.scarf !== undefined ? spec.scarf : 0xbe185d), 0, 0.02, -0.02, head);
+      sc.scale.set(1, 1.1, 1);
+      mesh(new THREE.SphereGeometry(0.16, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), skinMat, 0, 0.02, 0.02, head);
+    }
+    // ---- arms (shoulder pivots in the spine) ----
+    function arm(side) { // side: -1 left, +1 right
+      var sh = new THREE.Group();
+      sh.position.set(0.28 * build * side, 0.44, 0);
+      spine.add(sh);
+      var upperLen = 0.3;
+      var sleeveMat = (outfit === 'saree' || outfit === 'salwar') ? shirtMat : shirtMat;
+      mesh(new THREE.CylinderGeometry(0.06, 0.055, upperLen, 8), sleeveMat, 0, -upperLen / 2, 0, sh);
+      var el = new THREE.Group(); el.position.y = -upperLen; sh.add(el);
+      var foreLen = 0.28;
+      mesh(new THREE.CylinderGeometry(0.05, 0.045, foreLen, 8), skinMat, 0, -foreLen / 2, 0, el);
+      var hand = mesh(new THREE.SphereGeometry(0.05, 8, 8), skinMat, 0, -foreLen - 0.04, 0, el);
+      hand.scale.set(0.8, 1.2, 0.9);
+      return { shoulder: sh, elbow: el, hand: hand };
+    }
+    var armL = arm(-1), armR = arm(1);
+    J.shoulderL = armL.shoulder; J.elbowL = armL.elbow; J.handL = armL.hand;
+    J.shoulderR = armR.shoulder; J.elbowR = armR.elbow; J.handR = armR.hand;
+    // ---- legs (hip pivots at the root) ----
+    function leg(side) {
+      var hip = new THREE.Group();
+      hip.position.set(0.12 * build * side, 0.85, 0);
+      g.add(hip);
+      var thighLen = 0.42;
+      var longOutfit = (outfit === 'kurta' || outfit === 'saree' || outfit === 'salwar');
+      mesh(new THREE.CylinderGeometry(0.075, 0.065, thighLen, 8), longOutfit ? shirtMat : pantsMat, 0, -thighLen / 2, 0, hip);
+      var knee = new THREE.Group(); knee.position.y = -thighLen; hip.add(knee);
+      var shinLen = 0.4;
+      var shinMat = (outfit === 'saree') ? skinMat : (longOutfit ? M(0xf8fafc) : pantsMat);
+      mesh(new THREE.CylinderGeometry(0.06, 0.05, shinLen, 8), shinMat, 0, -shinLen / 2, 0, knee);
+      var shoe = mesh(new THREE.BoxGeometry(0.11, 0.06, 0.24), shoeMat, 0, -shinLen - 0.02, 0.04, knee);
+      shoe.castShadow = true;
+      return { hip: hip, knee: knee };
+    }
+    var legL = leg(-1), legR = leg(1);
+    J.hipL = legL.hip; J.kneeL = legL.knee; J.hipR = legR.hip; J.kneeR = legR.knee;
+    // ---- accessories ----
+    if (spec.backpack) {
+      var bp = mesh(new THREE.BoxGeometry(0.34, 0.42, 0.14), M(spec.bpColor !== undefined ? spec.bpColor : 0x1d4ed8), 0, 0.3, -0.24, spine);
+      bp.castShadow = true;
+      mesh(new THREE.BoxGeometry(0.3, 0.06, 0.02), M(0x111827), 0, 0.48, -0.24, spine);
+    }
+    if (spec.ticketBag) {
+      mesh(new THREE.BoxGeometry(0.2, 0.26, 0.08), M(0x7c2d12), 0.22, -0.1, 0.1, spine); // pouch on the hip
+      mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), M(0x111827), 0.22, 0.18, 0.1, spine); // ticket machine
+    }
+    if (spec.phone) {
+      mesh(new THREE.BoxGeometry(0.05, 0.1, 0.015), M(0x111827), 0, -0.36, 0.02, J.elbowR);
+    }
+    if (spec.watch) mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.03, 8), M(0x111827), 0, -0.26, 0, J.elbowL);
+    if (spec.stick) {
+      var st = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.95, 6), M(0x7c4a21), 0, -0.5, 0.02, J.elbowR);
+      st.rotation.x = 0.1;
+    }
+    if (spec.scarfNeck) {
+      mesh(new THREE.TorusGeometry(0.16, 0.05, 8, 12), M(spec.scarfNeck), 0, 0.48, 0, spine);
+    }
+    g.scale.setScalar(spec.height !== undefined ? spec.height : 1);
+    g.userData.joints = J;
+    g.userData.spec = spec;
+    g.userData.clip = spec.clip || 'idle';
+    g.userData.phase = Math.random() * 6.28;
+    g.userData.legL = J.hipL; // backward compat: old code swings userData.legL
+    g.userData.legR = J.hipR;
     return g;
+  }
+
+  // Backward-compatible wrapper for the old call sites.
+  function makePerson(shirtColor, skinColor) {
+    return makeHumanoid({ shirt: shirtColor, skin: skinColor, outfit: 'shirt' });
+  }
+
+  // ---- Character archetypes (the reference direction: driver, saree passenger,
+  // college student, kurta elder + the full station cast) ----
+  var ARCHETYPES = {
+    driverM: { sex: 'm', outfit: 'uniform', shirt: 0xc2a878, pants: 0x5b4a2f, hair: 'cap', capColor: 0x365314, badge: true, age: 'adult' },
+    driverF: { sex: 'f', outfit: 'uniform', shirt: 0x7fb3d5, pants: 0x1f2937, hair: 'bun', badge: true },
+    conductorM: { sex: 'm', outfit: 'uniform', shirt: 0x3b82f6, pants: 0x1f2937, hair: 'short', ticketBag: true },
+    conductorF: { sex: 'f', outfit: 'uniform', shirt: 0x3b82f6, pants: 0x1f2937, hair: 'bun', ticketBag: true },
+    officeM: { sex: 'm', outfit: 'office', shirt: 0xf8fafc, jacket: 0x1e3a5f, pants: 0x1f2937, hair: 'short', watch: true, glasses: false },
+    officeF: { sex: 'f', outfit: 'office', shirt: 0xfef3c7, jacket: 0x7f1d1d, pants: 0x1f2937, hair: 'bun', watch: true },
+    studentM: { sex: 'm', outfit: 'jacket', shirt: 0x1e3a5f, pants: 0x1e40af, hair: 'short', backpack: true, bpColor: 0x111827, phone: true, shoes: 0xf8fafc },
+    studentF: { sex: 'f', outfit: 'jacket', shirt: 0xec4899, pants: 0x1e40af, hair: 'ponytail', backpack: true, bpColor: 0xbe185d, shoes: 0xf8fafc },
+    elderlyM: { sex: 'm', outfit: 'kurta', shirt: 0x78716c, pants: 0xf8fafc, hair: 'white', beard: true, stick: true, height: 0.95, hunch: true },
+    elderlyF: { sex: 'f', outfit: 'saree', shirt: 0x7c2d12, saree: 0x92400e, pallu: 0xd4a017, hair: 'white', stick: true, height: 0.92, hunch: true },
+    sareeWoman: { sex: 'f', outfit: 'saree', shirt: 0x166534, saree: 0x7f1d1d, pallu: 0xd4a017, hair: 'bun' },
+    salwarWoman: { sex: 'f', outfit: 'salwar', shirt: 0x0e7490, saree: 0xf59e0b, hair: 'scarf', scarf: 0xbe185d },
+    kurtaMan: { sex: 'm', outfit: 'kurta', shirt: 0x15803d, pants: 0xf8fafc, hair: 'turban', turban: 0xd97706, beard: true },
+    middleM: { sex: 'm', outfit: 'shirt', shirt: 0xdc2626, pants: 0x1f2937, hair: 'short', moustache: true, build: 1.15, belly: true },
+    middleF: { sex: 'f', outfit: 'salwar', shirt: 0x7c3aed, saree: 0xdb2777, hair: 'bun', build: 1.1 },
+    schoolBoy: { sex: 'm', outfit: 'school', pants: 0x1e3a5f, hair: 'short', backpack: true, bpColor: 0xdc2626, height: 0.74 },
+    schoolGirl: { sex: 'f', outfit: 'school', pants: 0x1e3a5f, hair: 'ponytail', backpack: true, bpColor: 0x2563eb, height: 0.72 },
+    child: { sex: 'm', outfit: 'shirt', shirt: 0xf59e0b, pants: 0x1e40af, hair: 'short', height: 0.64 },
+    shopkeeper: { sex: 'm', outfit: 'vendor', shirt: 0x92400e, pants: 0x1f2937, hair: 'short', moustache: true, apron: true, build: 1.12 },
+    teaVendor: { sex: 'm', outfit: 'vendor', shirt: 0xea580c, pants: 0x1f2937, hair: 'cap', capColor: 0xffffff, apron: true },
+    trafficPolice: { sex: 'm', outfit: 'police', shirt: 0xf8fafc, pants: 0x1f2937, hair: 'cap', capColor: 0x1d4ed8, badge: true },
+    securityGuard: { sex: 'm', outfit: 'uniform', shirt: 0x1f2937, pants: 0x111827, hair: 'cap', capColor: 0x111827, badge: true, build: 1.12 },
+    traveller: { sex: 'm', outfit: 'jacket', shirt: 0xFF2DA6, pants: 0x1e40af, hair: 'short', backpack: true, bpColor: 0x111827 },
+    travellerF: { sex: 'f', outfit: 'jacket', shirt: 0xFF2DA6, pants: 0x1e40af, hair: 'ponytail', backpack: true, bpColor: 0x111827 },
+  };
+  var PASSENGER_ARCHETYPES = ['officeM', 'officeF', 'studentM', 'studentF', 'elderlyM', 'elderlyF', 'sareeWoman', 'salwarWoman', 'kurtaMan', 'middleM', 'middleF', 'schoolBoy', 'schoolGirl', 'child', 'traveller'];
+  var PEDESTRIAN_ARCHETYPES = ['shopkeeper', 'teaVendor', 'trafficPolice', 'securityGuard', 'studentM', 'studentF', 'elderlyM', 'elderlyF', 'traveller', 'kurtaMan', 'sareeWoman', 'middleM'];
+  function randomArchetype(list) {
+    var key = pick(list);
+    var spec = {};
+    for (var k in ARCHETYPES[key]) spec[k] = ARCHETYPES[key][k];
+    // vary skin / shirt shade so no two look identical
+    spec.skin = pick(SKIN_TONES);
+    if (Math.random() < 0.4) spec.hairColor = pick(HAIR_COLORS);
+    spec.height = (spec.height || 1) * (0.96 + Math.random() * 0.08);
+    return spec;
+  }
+
+  // ============================================================================
+  // ANIMATION SYSTEM — one reusable pose driver for every humanoid.
+  // poseHumanoid(h, clip, t, opt): sets all joint rotations for the clip at
+  // time t (seconds). Clips: idle, walk, run, sit, wave, phone, steer,
+  // celebrate, look. opt.steer = steering angle (-1..1) for the steer clip;
+  // opt.lookYaw = head yaw for look/idle. Joints are set every frame, so the
+  // walk/run/idle motion is continuous; clip changes blend because walk/idle
+  // both pass through the neutral pose.
+  // ============================================================================
+  function poseHumanoid(h, clip, t, opt) {
+    var J = h.userData.joints;
+    if (!J) return;
+    opt = opt || {};
+    var s = Math.sin, ph = h.userData.phase || 0;
+    // neutral
+    J.spine.rotation.set(0, 0, 0);
+    J.neck.rotation.set(0, 0, 0);
+    J.shoulderL.rotation.set(0, 0, 0.12); J.shoulderR.rotation.set(0, 0, -0.12);
+    J.elbowL.rotation.set(-0.15, 0, 0); J.elbowR.rotation.set(-0.15, 0, 0);
+    J.hipL.rotation.set(0, 0, 0); J.hipR.rotation.set(0, 0, 0);
+    J.kneeL.rotation.set(0, 0, 0); J.kneeR.rotation.set(0, 0, 0);
+    var w = t + ph;
+    if (clip === 'walk' || clip === 'run') {
+      var amp = clip === 'run' ? 0.85 : 0.55;
+      var sw = s(w * (clip === 'run' ? 11 : 7));
+      var sw2 = s(w * (clip === 'run' ? 11 : 7) + Math.PI);
+      J.hipL.rotation.x = sw * amp; J.hipR.rotation.x = sw2 * amp;
+      J.kneeL.rotation.x = Math.max(0, -sw) * (clip === 'run' ? 1.1 : 0.8);
+      J.kneeR.rotation.x = Math.max(0, -sw2) * (clip === 'run' ? 1.1 : 0.8);
+      J.shoulderL.rotation.x = sw2 * amp * 0.7; J.shoulderR.rotation.x = sw * amp * 0.7;
+      J.elbowL.rotation.x = -0.35; J.elbowR.rotation.x = -0.35;
+      J.spine.rotation.x = 0.06 + (clip === 'run' ? 0.08 : 0);
+      J.spine.position.y = 0.85 + Math.abs(Math.cos(w * (clip === 'run' ? 11 : 7))) * 0.03;
+    } else if (clip === 'sit') {
+      J.hipL.rotation.x = -1.45; J.hipR.rotation.x = -1.45;
+      J.kneeL.rotation.x = 1.35; J.kneeR.rotation.x = 1.35;
+      J.shoulderL.rotation.x = -0.25; J.shoulderR.rotation.x = -0.25;
+      J.elbowL.rotation.x = -0.5; J.elbowR.rotation.x = -0.5;
+      J.spine.rotation.x = 0.08;
+    } else if (clip === 'wave') {
+      J.shoulderR.rotation.z = -2.4; J.shoulderR.rotation.x = -0.3;
+      J.elbowR.rotation.x = -0.4;
+      J.shoulderR.rotation.x += s(w * 6) * 0.25; // wave
+      J.shoulderL.rotation.x = -0.2;
+    } else if (clip === 'phone') {
+      J.shoulderR.rotation.x = -0.9; J.elbowR.rotation.x = -1.9; // hand to ear
+      J.shoulderL.rotation.x = -0.15;
+      J.neck.rotation.z = 0.12;
+    } else if (clip === 'steer') {
+      var st = opt.steer || 0;
+      J.shoulderL.rotation.x = -0.85; J.shoulderR.rotation.x = -0.85;
+      J.shoulderL.rotation.z = 0.35 - st * 0.3; J.shoulderR.rotation.z = -0.35 - st * 0.3;
+      J.elbowL.rotation.x = -0.55; J.elbowR.rotation.x = -0.55;
+      J.spine.rotation.x = 0.12;
+      J.neck.rotation.y = opt.lookYaw || 0;
+      J.hipL.rotation.x = -1.35; J.hipR.rotation.x = -1.35;
+      J.kneeL.rotation.x = 1.25; J.kneeR.rotation.x = 1.25;
+    } else if (clip === 'celebrate') {
+      J.shoulderL.rotation.z = 2.6; J.shoulderR.rotation.z = -2.6;
+      J.elbowL.rotation.x = -0.3; J.elbowR.rotation.x = -0.3;
+      J.spine.position.y = 0.85 + Math.abs(s(w * 8)) * 0.12; // little jumps
+    } else { // idle: breathing, sway, occasional look-around
+      var br = s(w * 1.6) * 0.02;
+      J.spine.rotation.x = br;
+      J.spine.position.y = 0.85 + s(w * 1.6) * 0.008;
+      J.shoulderL.rotation.x = -0.05 + br; J.shoulderR.rotation.x = -0.05 + br;
+      J.neck.rotation.y = s(w * 0.35) * 0.45; // look around
+      if (opt.lookYaw !== undefined) J.neck.rotation.y = opt.lookYaw;
+    }
   }
 
   function makeTree() {
@@ -1037,8 +1357,10 @@ import * as THREE from 'three';
       var n = 2 + Math.floor(Math.random() * 3);
       var group = [];
       for (var pi = 0; pi < n; pi++) {
-        var pax = makePerson(pick([0xef4444, 0x3b82f6, 0xf59e0b, 0xec4899, 0x22c55e]));
+        var pax = makeHumanoid(randomArchetype(PASSENGER_ARCHETYPES));
         pax.position.set(9.5 + rand(-1.5, 1.5), 0, z + rand(-2, 2));
+        pax.rotation.y = rand(-0.6, 0.6);
+        poseHumanoid(pax, 'idle', 0);
         scene.add(pax);
         group.push(pax);
       }
@@ -1047,19 +1369,18 @@ import * as THREE from 'three';
 
     // walking NPCs on the sidewalks
     for (var ni = 0; ni < 6; ni++) {
-      var npc = makePerson(pick([0xef4444, 0x3b82f6, 0xf59e0b, 0xec4899, 0x22c55e, 0x8b5cf6]));
+      var npc = makeHumanoid(randomArchetype(PEDESTRIAN_ARCHETYPES));
       var nx = ni % 2 === 0 ? -10.5 : 10.5;
       npc.position.set(nx, 0, rand(0, 45));
       scene.add(npc);
       npcs.push({ mesh: npc, x: nx, z: npc.position.z, dir: Math.random() < 0.5 ? 1 : -1, speed: rand(1, 2), phase: rand(0, 6) });
     }
 
-    // player figure
-    playerMesh = makePerson(0xFF2DA6);
+    // player figure — a young traveller in the pink jacket, with a backpack
+    playerMesh = makeHumanoid({ sex: 'm', outfit: 'jacket', shirt: 0xFF2DA6, pants: 0x1e40af, hair: 'short', backpack: true, bpColor: 0x111827, shoes: 0xf8fafc });
     playerMesh.position.set(state.px, 0, state.pz);
     scene.add(playerMesh);
-    playerLegL = playerMesh.userData.legL;
-    playerLegR = playerMesh.userData.legR;
+    poseHumanoid(playerMesh, 'idle', 0);
 
     // bot buses + cars on the route
     var botColors = [0x0ea5e9, 0xf59e0b, 0x8b5cf6, 0xec4899, 0x14b8a6];
@@ -1098,11 +1419,16 @@ import * as THREE from 'three';
     }
     for (var bk = 0; bk < 2; bk++) {
       var bike = new THREE.Group();
-      var rider = makePerson(pick([0xef4444, 0x3b82f6, 0xf59e0b]));
+      var rider = makeHumanoid(randomArchetype(['kurtaMan', 'middleM', 'studentM', 'traveller']));
       rider.scale.set(0.9, 0.9, 0.9);
       rider.position.y = 0.35;
-      bike.add(rider);
       var laneB = bk % 2 === 0 ? 1.5 : -1.5;
+      rider.rotation.y = laneB > 0 ? Math.PI : 0; // face the bike's direction of travel
+      poseHumanoid(rider, 'sit', 0);
+      rider.userData.joints.spine.rotation.x = 0.25; // lean forward over the bars
+      rider.userData.joints.shoulderL.rotation.x = -0.9;
+      rider.userData.joints.shoulderR.rotation.x = -0.9;
+      bike.add(rider);
       bike.position.set(laneB, 0, -Math.random() * route.length);
       scene.add(bike);
       cars.push({ mesh: bike, lane: laneB, dir: laneB > 0 ? -1 : 1, speed: rand(26, 36), kind: 'bike' });
@@ -1297,6 +1623,10 @@ import * as THREE from 'three';
 
   function showEnd(title, line, rows) {
     state.mode = 'end';
+    removeDriver();
+    clearSeatedPassengers();
+    alighting.forEach(function (a) { if (a.mesh.parent) a.mesh.parent.remove(a.mesh); });
+    alighting = [];
     $('hud').classList.add('hidden');
     $('joystick').classList.add('hidden');
     $('dpad').classList.add('hidden');
@@ -1360,6 +1690,46 @@ import * as THREE from 'three';
   }
 
   // choose a parked bus: drive it or ride it
+  // ---- driver character in the cab (seated, hands on the wheel) ----
+  function addDriverToBus(busMesh) {
+    removeDriver();
+    var spec = {};
+    for (var k in ARCHETYPES.driverM) spec[k] = ARCHETYPES.driverM[k];
+    if (Math.random() < 0.3) {
+      for (var k2 in ARCHETYPES.driverF) spec[k2] = ARCHETYPES.driverF[k2];
+    }
+    spec.skin = pick(SKIN_TONES);
+    driverMesh = makeHumanoid(spec);
+    driverMesh.position.set(-0.6, -0.15, -2.2); // driver seat, behind the wheel
+    driverMesh.rotation.y = Math.PI; // face forward (-Z)
+    poseHumanoid(driverMesh, 'steer', 0, { steer: 0 });
+    busMesh.add(driverMesh);
+  }
+  function removeDriver() {
+    if (driverMesh && driverMesh.parent) driverMesh.parent.remove(driverMesh);
+    driverMesh = null;
+  }
+  // ---- seated passengers inside the bus ----
+  function seatPassenger(pax, alightStopIdx) {
+    var free = null;
+    for (var i = 0; i < BUS_SEATS.length; i++) {
+      var taken = false;
+      seatedPassengers.forEach(function (sp) { if (sp.seat === i) taken = true; });
+      if (!taken) { free = i; break; }
+    }
+    if (free === null) return false;
+    var seat = BUS_SEATS[free];
+    pax.position.set(seat.x, -0.15, seat.z);
+    pax.rotation.y = Math.PI; // face forward
+    poseHumanoid(pax, 'sit', 0);
+    seatedPassengers.push({ mesh: pax, seat: free, alight: alightStopIdx });
+    return true;
+  }
+  function clearSeatedPassengers() {
+    seatedPassengers.forEach(function (sp) { if (sp.mesh.parent) sp.mesh.parent.remove(sp.mesh); });
+    seatedPassengers = [];
+  }
+
   function chooseBus(parked, asDriver) {
     busSpec = parked.spec;
     state.chosenBusIdx = BUSES.indexOf(parked.spec);
@@ -1379,6 +1749,7 @@ import * as THREE from 'three';
       state.doorsOpen = false; state.indicator = 0; state.handbrake = false;
       state.lightsOn = state.timeOfDay === 'night';
       wheels = playerBus.userData.wheels;
+      addDriverToBus(playerBus); // the driver character sits in the cab
       state.mode = 'driving';
       $('drive-controls').classList.remove('hidden');
       $('hud-drive-row').classList.remove('hidden');
@@ -1419,6 +1790,7 @@ import * as THREE from 'three';
     if (!parked) return;
     rideBus = { mesh: parked.mesh, lane: 3.5, dir: -1, speed: 0, kind: 'bus', halt: null };
     rideBus.mesh.position.set(3.5, 0, parked.z);
+    addDriverToBus(rideBus.mesh); // the bot driver sits in the cab
     playerMesh.visible = false;
     $('seat-panel').classList.add('hidden');
     $('ticket-panel').classList.add('hidden');
@@ -1485,6 +1857,38 @@ import * as THREE from 'three';
     return { x: px, z: pz };
   }
 
+  // ---- shared people animation (runs in every mode) ----
+  // NPCs stroll the sidewalks; waiting passengers idle at their stops.
+  // Distant people are culled: only animate within 80 units of the camera.
+  function updatePeople(dt) {
+    var now = performance.now() / 1000;
+    npcs.forEach(function (n) {
+      n.z += n.dir * n.speed * dt;
+      if (n.z > 45) n.dir = -1;
+      if (n.z < 0) n.dir = 1;
+      n.mesh.position.z = n.z;
+      n.mesh.rotation.y = n.dir > 0 ? Math.PI : 0;
+      n.phase += dt * n.speed * 2;
+      if (camera && Math.abs(n.mesh.position.z - camera.position.z) < 80) poseHumanoid(n.mesh, 'walk', n.phase);
+    });
+    passengersAtStops.forEach(function (s) {
+      if (s.served) return;
+      s.people.forEach(function (p) {
+        if (camera && Math.abs(p.position.z - camera.position.z) < 80) poseHumanoid(p, 'idle', now);
+      });
+    });
+    // the driver steers with the wheel
+    if (driverMesh && driverMesh.visible) {
+      poseHumanoid(driverMesh, 'steer', now, { steer: state.steer || 0, lookYaw: state.indicator ? (state.indicator === 1 ? -0.5 : 0.5) : 0 });
+    }
+    // seated riders breathe and look around
+    seatedPassengers.forEach(function (sp) {
+      if (camera && sp.mesh.parent && Math.abs(sp.mesh.getWorldPosition(new THREE.Vector3()).z - camera.position.z) < 80) {
+        poseHumanoid(sp.mesh, 'sit', now);
+      }
+    });
+  }
+
   function updateWalk(dt) {
     var fx = 0, fz = 0; // forward/strafe in camera space
     if (joy.active) { fx = joy.x; fz = -joy.y; }
@@ -1533,25 +1937,12 @@ import * as THREE from 'three';
       while (dh < -Math.PI) dh += Math.PI * 2;
       state.pHeading += dh * Math.min(1, dt * 10);
       walkCycle += dt * speed * 1.6;
-      playerLegL.rotation.x = Math.sin(walkCycle) * 0.6;
-      playerLegR.rotation.x = -Math.sin(walkCycle) * 0.6;
+      poseHumanoid(playerMesh, 'walk', walkCycle);
     } else {
-      playerLegL.rotation.x = lerp(playerLegL.rotation.x, 0, dt * 8);
-      playerLegR.rotation.x = lerp(playerLegR.rotation.x, 0, dt * 8);
+      poseHumanoid(playerMesh, 'idle', performance.now() / 1000);
     }
     playerMesh.position.set(state.px, 0, state.pz);
     playerMesh.rotation.y = state.pHeading;
-    // NPCs stroll
-    npcs.forEach(function (n) {
-      n.z += n.dir * n.speed * dt;
-      if (n.z > 45) n.dir = -1;
-      if (n.z < 0) n.dir = 1;
-      n.mesh.position.z = n.z;
-      n.mesh.rotation.y = n.dir > 0 ? Math.PI : 0;
-      n.phase += dt * n.speed * 2;
-      n.mesh.userData.legL.rotation.x = Math.sin(n.phase) * 0.5;
-      n.mesh.userData.legR.rotation.x = -Math.sin(n.phase) * 0.5;
-    });
     // near a parked bus? show the DRIVE / TRAVEL prompt
     var found = null;
     parkedBuses.forEach(function (pb) {
@@ -1641,6 +2032,19 @@ import * as THREE from 'three';
           if (!state.doorsOpen) {
             setMsg('🚪 Open the doors to let passengers board! (DOOR button)');
           } else {
+            // passengers whose destination is this stop get off first
+            var sIdx = passengersAtStops.indexOf(s);
+            seatedPassengers.slice().forEach(function (sp) {
+              if (sp.alight === sIdx) {
+                playerBus.remove(sp.mesh);
+                sp.mesh.position.set(state.x + 1.4, 0, state.z - 2);
+                sp.mesh.rotation.y = Math.PI / 2; // walk away from the bus
+                scene.add(sp.mesh);
+                poseHumanoid(sp.mesh, 'walk', 0);
+                alighting.push({ mesh: sp.mesh, t: 0 });
+                seatedPassengers.splice(seatedPassengers.indexOf(sp), 1);
+              }
+            });
             boarding = { stop: s, t: 0 };
             setMsg('🛑 ' + s.name + ' — passengers boarding…');
             break;
@@ -1652,12 +2056,20 @@ import * as THREE from 'three';
       state.speed = 0;
       var s2 = boarding.stop;
       s2.people.forEach(function (p) {
+        poseHumanoid(p, 'walk', performance.now() / 1000);
         p.position.x = lerp(p.position.x, state.x + 1.4, dt * 2);
         p.position.z = lerp(p.position.z, state.z - 2, dt * 2);
       });
       if (boarding.t > 1.6) {
         var n = s2.people.length;
-        s2.people.forEach(function (p) { scene.remove(p); });
+        var stopIdx = passengersAtStops.indexOf(s2);
+        s2.people.forEach(function (p) {
+          scene.remove(p);
+          // seat them inside the bus (visible through the windows + from the
+          // passenger camera); if the bus is full they still count as boarded
+          var alight = Math.min(passengersAtStops.length - 1, stopIdx + 1 + Math.floor(Math.random() * 2));
+          if (playerBus && seatPassenger(p, alight)) playerBus.add(p);
+        });
         s2.people = [];
         s2.served = true;
         state.fare += busSpec.fare * n;
@@ -1669,6 +2081,15 @@ import * as THREE from 'three';
         boarding = null;
       }
     }
+
+    // passengers who got off walk away from the bus, then leave the scene
+    alighting.slice().forEach(function (a) {
+      a.t += dt;
+      a.mesh.position.x += dt * 1.6;
+      a.mesh.position.z += dt * 0.4;
+      poseHumanoid(a.mesh, 'walk', a.t * 3);
+      if (a.t > 2.5) { scene.remove(a.mesh); alighting.splice(alighting.indexOf(a), 1); }
+    });
 
     var now = performance.now();
     if (now - lastCollide > 1000) {
@@ -2211,6 +2632,7 @@ import * as THREE from 'three';
       updateTraffic(dt);
       updateCamera(dt);
     }
+    updatePeople(dt);
     // rain falls around the active camera
     if (rainPoints && rainPoints.visible && camera) {
       var pos = rainPoints.geometry.attributes.position;
@@ -2235,7 +2657,7 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.18.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.19.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
@@ -2247,9 +2669,19 @@ import * as THREE from 'three';
     },
     cam: function () { return camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null; },
     player: function () { return { x: state.px, z: state.pz }; },
+    archetypes: function () { return Object.keys(ARCHETYPES); },
+    people: function () {
+      return {
+        npcs: npcs.length,
+        waiting: passengersAtStops.reduce(function (a, s) { return a + (s.served ? 0 : s.people.length); }, 0),
+        seated: seatedPassengers.length,
+        driver: !!driverMesh,
+        playerJoints: playerMesh && playerMesh.userData.joints ? Object.keys(playerMesh.userData.joints).length : 0,
+      };
+    },
   };
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.18.0 loaded');
+  log('BUS YATRA 2.19.0 loaded');
 })();
