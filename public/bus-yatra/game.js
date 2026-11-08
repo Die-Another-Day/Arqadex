@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.19.0
+// BUS YATRA — Indian Bus Simulator · v2.20.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -2293,15 +2293,48 @@ import * as THREE from 'three';
   }
 
   // ============================================================================
-  // CONTROLS — joystick, steering wheel, camera orbit, buttons, keyboard
+  // CONTROLS — joystick, steering wheel, camera orbit, buttons, keyboard.
+  // Release-to-stop: every hold control captures its own pointer (so the
+  // pointerup reliably lands on it even if the finger slides off), clears
+  // only on THAT pointer's release/cancel/lost-capture, and a global blur
+  // handler clears everything if the page loses focus mid-press — so a
+  // stuck key can never keep the player or the bus moving.
   // ============================================================================
+  function clearAllMovement() {
+    dpad.x = 0; dpad.y = 0;
+    joy.active = false; joy.x = 0; joy.y = 0;
+    input.gas = false; input.brake = false; input.rev = false; input.hb = false;
+    walkTarget = null;
+    ['btn-gas', 'btn-brake', 'btn-rev', 'btn-hb'].forEach(function (id) {
+      var el = $(id); if (el) el.classList.remove('held');
+    });
+    ['dp-up', 'dp-down', 'dp-left', 'dp-right'].forEach(function (id) {
+      var el = $(id); if (el) el.classList.remove('held');
+    });
+    var nub = $('joy-nub'); if (nub) nub.style.transform = 'translate(0px,0px)';
+    var wheel = $('wheel'); if (wheel) wheel.style.transform = 'rotate(0deg)';
+    wheelDrag.active = false; wheelDrag.steer = 0;
+  }
+  window.addEventListener('blur', clearAllMovement);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) clearAllMovement(); });
+
   function bindHold(el, prop) {
-    var on = function (e) { e.preventDefault(); input[prop] = true; el.classList.add('held'); };
-    var off = function (e) { e.preventDefault(); input[prop] = false; el.classList.remove('held'); };
+    var pid = null;
+    var on = function (e) {
+      e.preventDefault();
+      pid = e.pointerId;
+      try { el.setPointerCapture(pid); } catch (err) {}
+      input[prop] = true; el.classList.add('held');
+    };
+    var off = function (e) {
+      if (pid !== null && e.pointerId !== pid) return;
+      pid = null;
+      input[prop] = false; el.classList.remove('held');
+    };
     el.addEventListener('pointerdown', on);
     el.addEventListener('pointerup', off);
-    el.addEventListener('pointerleave', off);
     el.addEventListener('pointercancel', off);
+    el.addEventListener('lostpointercapture', off);
   }
   bindHold($('btn-gas'), 'gas');
   bindHold($('btn-brake'), 'brake');
@@ -2352,20 +2385,34 @@ import * as THREE from 'three';
     }
     base.addEventListener('pointerup', endJoy);
     base.addEventListener('pointercancel', endJoy);
+    base.addEventListener('lostpointercapture', endJoy);
   })();
 
   // D-pad (walk): hold an arrow to walk that way. A second control if the
-  // stick ever fails to render on a device.
+  // stick ever fails to render on a device. Each button captures its own
+  // pointer so releasing the finger always stops the walk.
   (function () {
     function bind(id, dx, dy) {
       var b = $(id);
       if (!b) return;
-      function on(e) { e.preventDefault(); dpad.x = dx; dpad.y = dy; walkTarget = null; }
-      function off(e) { if (dpad.x === dx && dpad.y === dy) { dpad.x = 0; dpad.y = 0; } }
+      var pid = null;
+      function on(e) {
+        e.preventDefault();
+        pid = e.pointerId;
+        try { b.setPointerCapture(pid); } catch (err) {}
+        dpad.x = dx; dpad.y = dy; walkTarget = null;
+        b.classList.add('held');
+      }
+      function off(e) {
+        if (pid !== null && e.pointerId !== pid) return;
+        pid = null;
+        if (dpad.x === dx && dpad.y === dy) { dpad.x = 0; dpad.y = 0; }
+        b.classList.remove('held');
+      }
       b.addEventListener('pointerdown', on);
       b.addEventListener('pointerup', off);
       b.addEventListener('pointercancel', off);
-      b.addEventListener('pointerleave', off);
+      b.addEventListener('lostpointercapture', off);
     }
     bind('dp-up', 0, 1); bind('dp-down', 0, -1);
     bind('dp-left', -1, 0); bind('dp-right', 1, 0);
@@ -2420,6 +2467,7 @@ import * as THREE from 'three';
     }
     wheel.addEventListener('pointerup', endWheel);
     wheel.addEventListener('pointercancel', endWheel);
+    wheel.addEventListener('lostpointercapture', endWheel);
   })();
 
   // drag on the 3D view to orbit the camera (walk mode)
@@ -2443,6 +2491,7 @@ import * as THREE from 'three';
     }
     window.addEventListener('pointerup', endOrbit);
     window.addEventListener('pointercancel', endOrbit);
+    window.addEventListener('lostpointercapture', endOrbit);
   })();
 
   $('btn-horn').onclick = function () { AudioEngine.horn(); setMsg('Peeeeep! 📣'); };
@@ -2657,7 +2706,7 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.19.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.20.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
@@ -2683,5 +2732,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.19.0 loaded');
+  log('BUS YATRA 2.20.0 loaded');
 })();
