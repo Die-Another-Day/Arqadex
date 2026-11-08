@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.17.0
+// BUS YATRA — Indian Bus Simulator · v2.17.1
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -132,7 +132,7 @@ import * as THREE from 'three';
       this.master.gain.value = 0.9;
       this.master.connect(this.ctx.destination);
       this.radioGain = this.ctx.createGain();
-      this.radioGain.gain.value = this.musicOn ? 0.55 : 0;
+      this.radioGain.gain.value = this.musicOn ? 0.8 : 0;
       this.radioGain.connect(this.master);
       this.engineOsc = this.ctx.createOscillator();
       this.engineOsc.type = 'sawtooth';
@@ -147,11 +147,11 @@ import * as THREE from 'three';
     resume: function () { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
     setMusic: function (on) {
       this.musicOn = on;
-      if (this.radioGain) this.radioGain.gain.value = on ? 0.55 * this.vol : 0;
+      if (this.radioGain) this.radioGain.gain.value = on ? 0.8 * this.vol : 0;
     },
     setVolume: function (v) {
       this.vol = clamp(v, 0, 1);
-      if (this.radioGain) this.radioGain.gain.value = this.musicOn ? 0.55 * this.vol : 0;
+      if (this.radioGain) this.radioGain.gain.value = this.musicOn ? 0.8 * this.vol : 0;
     },
     setEngine: function (speed01) {
       if (!this.ctx) return;
@@ -217,12 +217,15 @@ import * as THREE from 'three';
         var barPos = this.step % 8;
         if (this.step % 16 === 0) {
           var self = this;
-          st.drone.forEach(function (m) { self.note(mf(m), t, beat * 8, 'sine', 0.035); });
+          st.drone.forEach(function (m) { self.note(mf(m), t, beat * 8, 'sine', 0.06); });
         }
         if (barPos === 0 || barPos === 4) {
           this.thump(t, 0.28);
           var bassNote = st.bass[Math.floor(this.step / 8) % 4];
-          this.note(mf(bassNote), t, beat * 1.2, 'sine', 0.14);
+          this.note(mf(bassNote), t, beat * 1.2, 'sine', 0.2);
+          // octave-up bass harmonic — phone speakers can't reproduce the low
+          // sine, so this is the bass the player actually hears
+          this.note(mf(bassNote) * 2, t, beat * 1.2, 'triangle', 0.09);
           this.lastBeatAt = Date.now();
         }
         if ((st.kind === 'folk' || st.kind === 'qawwali') && barPos % 2 === 1) this.tick(t, 0.05);
@@ -232,7 +235,10 @@ import * as THREE from 'three';
         for (var i = 0; i < st.lead.length; i++) {
           var durSteps = st.lead[i][1] * 2;
           if (leadIdx === acc) {
-            this.note(mf(st.lead[i][0]), t, durSteps * stepDur * 0.9, 'sawtooth', 0.09);
+            this.note(mf(st.lead[i][0]), t, durSteps * stepDur * 0.9, 'sawtooth', 0.16);
+            // harmony a major third up — a single sawtooth line sounds like a
+            // beep; two voices sound like a tune
+            this.note(mf(st.lead[i][0] + 4), t, durSteps * stepDur * 0.9, 'triangle', 0.07);
             this.lastBeatAt = Date.now();
           }
           acc += durSteps;
@@ -1135,6 +1141,8 @@ import * as THREE from 'three';
     $('screen-end').classList.add('hidden');
     $('hud').classList.remove('hidden');
     $('joystick').classList.remove('hidden');
+    $('joystick').classList.add('hint-pulse');
+    $('walk-hint').classList.remove('hidden');
     $('drive-controls').classList.add('hidden');
     $('hud-drive-row').classList.add('hidden');
     $('music-panel').classList.add('hidden');
@@ -1147,7 +1155,7 @@ import * as THREE from 'three';
     state.seat = 0; state.ticketPaid = false;
     $('hud-route').textContent = route.name;
     $('hud-stop').textContent = 'WALK TO A BUS AT THE STAND';
-    setMsg('Welcome to ' + route.name.split(' ')[0] + '! Walk to the bus stand 🚶');
+    setMsg('Drag the pink joystick (bottom-left) to walk to the bus stand 🚶');
     if (AudioEngine.started) AudioEngine.setStation(route.station);
     else AudioEngine.startRadio(route.station);
     updateStationLabel();
@@ -1167,6 +1175,7 @@ import * as THREE from 'three';
     state.mode = 'end';
     $('hud').classList.add('hidden');
     $('joystick').classList.add('hidden');
+    $('walk-hint').classList.add('hidden');
     $('drive-controls').classList.add('hidden');
     $('hud-drive-row').classList.add('hidden');
     $('music-panel').classList.add('hidden');
@@ -1233,6 +1242,7 @@ import * as THREE from 'three';
     // remove the other parked buses' colliders (they stay parked, just not chosen)
     playerMesh.visible = false;
     $('bus-prompt').classList.add('hidden');
+    $('walk-hint').classList.add('hidden');
     $('joystick').classList.add('hidden');
     nearBus = null;
     state.startTime = performance.now();
@@ -1361,6 +1371,11 @@ import * as THREE from 'three';
     var speed = len > 0.05 ? 6 : 0;
     state.walkSpeed = speed;
     if (speed > 0) {
+      // first step: the player found the joystick — drop the hint for good
+      if (!$('walk-hint').classList.contains('hidden')) {
+        $('walk-hint').classList.add('hidden');
+        $('joystick').classList.remove('hint-pulse');
+      }
       // camera yaw: 0 = looking -Z
       var sin = Math.sin(state.camYaw), cos = Math.cos(state.camYaw);
       var mx = (fx * cos - fz * sin);
@@ -2008,7 +2023,7 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.17.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.17.1', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
@@ -2024,5 +2039,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.17.0 loaded');
+  log('BUS YATRA 2.17.1 loaded');
 })();
