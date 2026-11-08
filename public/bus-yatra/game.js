@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.17.1
+// BUS YATRA — Indian Bus Simulator · v2.18.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -114,6 +114,124 @@ import * as THREE from 'three';
   ];
 
   // ============================================================================
+  // YOUTUBE HOOK RADIO — the famous part only (mukhda / first sher, ~60s).
+  // Real recordings from the user's own playlists, played via the YouTube
+  // IFrame API with start/end times. Hook timestamps are estimates from each
+  // song's structure — they land inside the famous part. Needs internet; if
+  // YouTube won't load or a video refuses to embed, the game falls back to
+  // the synthesized radio above and says so.
+  // ============================================================================
+  var YT_SONGS = [
+    { id: 'D8XFTglfSMg', title: 'Pee Loon — Once Upon A Time in Mumbaai', start: 25, end: 85 },
+    { id: '84TjXsRHf6Q', title: 'Tumhe Jo Maine Dekha — Main Hoon Na', start: 15, end: 75 },
+    { id: 'ig35c88dpQc', title: 'Jiye To Jiye Kaise — Saajan', start: 25, end: 85 },
+    { id: 'BpLyDTEw3Z4', title: 'Aaj Phir Jeene Ki Tamanna Hai — Guide', start: 10, end: 70 },
+    { id: 'q23nz7yXaWk', title: 'Diwana Hua Badal — Kashmir Ki Kali', start: 18, end: 80 },
+    { id: 'oR3aAbNVCX0', title: 'Kuch To Log Kahenge — Amar Prem', start: 28, end: 90 },
+    { id: 'qsiHgJbwJUE', title: 'Tadap Tadap Ke — Hum Dil De Chuke Sanam', start: 20, end: 80 },
+    { id: 'kuaY_qKBUAM', title: 'Ruk Jaana Nahin — Imtihan', start: 10, end: 70 },
+  ];
+  var YT_GHAZALS = [
+    { id: 'vjuoA8WJleE', title: 'Hazaron Khwahishen Aisi — Jagjit Singh', start: 5, end: 65 },
+    { id: 'gFDXMNvidQ0', title: 'Kahin Door Jab Din Dhal Jaye — Jagjit Singh', start: 10, end: 70 },
+    { id: 'veLSFpMS6B0', title: 'Jhuki Jhuki Si Nazar — Jagjit Singh', start: 10, end: 70 },
+    { id: 'bg1aVF8xCsg', title: 'Kabhi Khamosh Baithoge — Jagjit Singh', start: 12, end: 72 },
+    { id: 'c03XNYhRO3Q', title: 'Kiya Hai Pyar Jise — Jagjit & Chitra Singh', start: 10, end: 70 },
+    { id: 'g-_CY0iP1CM', title: 'Zindagi Jab Bhi Teri Bazm Mein — Talat Aziz', start: 15, end: 75 },
+    { id: 'SK49I5xq7e8', title: 'Yaad Nahin Kya Kya Dekha Tha — Jagjit Singh', start: 12, end: 72 },
+    { id: 'vzrj9e0jvfc', title: 'Wo Nahin Mila — Jagjit Singh', start: 12, end: 72 },
+  ];
+  var YT = {
+    player: null, ready: false, loading: false, mode: null, idx: 0, bad: 0,
+    list: function () { return this.mode === 'ghazals' ? YT_GHAZALS : YT_SONGS; },
+    name: function () { return this.mode === 'songs' ? '🎵 YOUTUBE SONGS' : this.mode === 'ghazals' ? '🎤 YOUTUBE GHAZALS' : ''; },
+    current: function () { var l = this.list(); return l[this.idx % l.length]; },
+    // Load the IFrame API lazily (no cost until the user picks YouTube).
+    ensureAPI: function (onReady) {
+      var self = this;
+      if (this.ready) { onReady(); return; }
+      if (this.loading) {
+        var tries = 0;
+        var t = setInterval(function () {
+          tries++;
+          if (self.ready || !self.loading || tries > 30) { clearInterval(t); if (self.ready) onReady(); }
+        }, 300);
+        return;
+      }
+      this.loading = true;
+      window.onYouTubeIframeAPIReady = function () {
+        self.player = new YT.Player('yt-player', {
+          width: '100%', height: '100%',
+          playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1, playsinline: 1 },
+          events: {
+            onReady: function () { self.ready = true; onReady(); },
+            onStateChange: function (e) { if (e.data === YT.PlayerState.ENDED) self.next(); },
+            onError: function () { self.skipBad(); },
+          },
+        });
+      };
+      var s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      s.onerror = function () { self.loading = false; self.fallback('YouTube did not load — check internet, playing synth radio'); };
+      document.head.appendChild(s);
+      // If the API never calls back (offline), fall back after 8s.
+      setTimeout(function () { if (!self.ready && self.mode) self.fallback('YouTube did not load — check internet, playing synth radio'); }, 8000);
+    },
+    // Switch to a YouTube mode (or back to synth with mode=null).
+    play: function (mode, idx) {
+      var self = this;
+      if (!mode) { this.stop(); return; }
+      this.mode = mode; this.idx = idx || 0; this.bad = 0;
+      $('yt-box').classList.remove('hidden');
+      if (AudioEngine.radioGain) AudioEngine.radioGain.gain.value = 0; // synth quiet while YouTube plays
+      this.ensureAPI(function () {
+        if (!self.mode) return; // user switched away while loading
+        self.loadCurrent();
+        setMsg('🎵 ' + self.current().title);
+        updateStationLabel();
+      });
+      updateStationLabel();
+    },
+    loadCurrent: function () {
+      var c = this.current();
+      if (!this.player || !this.ready) return;
+      this.player.setVolume(Math.round(AudioEngine.vol * 100));
+      this.player.loadVideoById({ videoId: c.id, startSeconds: c.start, endSeconds: c.end });
+      $('yt-title').textContent = c.title;
+    },
+    next: function () { if (!this.mode) return; this.idx = (this.idx + 1) % this.list().length; this.loadCurrent(); setMsg('🎵 ' + this.current().title); updateStationLabel(); },
+    prev: function () { if (!this.mode) return; this.idx = (this.idx + this.list().length - 1) % this.list().length; this.loadCurrent(); setMsg('🎵 ' + this.current().title); updateStationLabel(); },
+    skipBad: function () { // a video refused to embed — try the next one
+      this.bad++;
+      if (this.bad >= this.list().length) { this.fallback('That video will not play here — back to synth radio'); return; }
+      this.next();
+    },
+    pause: function () { if (this.player && this.ready) this.player.pauseVideo(); },
+    resume: function () { if (this.player && this.ready) this.player.playVideo(); },
+    stop: function () {
+      this.mode = null;
+      if (this.player && this.ready) this.player.pauseVideo();
+      $('yt-box').classList.add('hidden');
+      if (AudioEngine.radioGain) AudioEngine.radioGain.gain.value = AudioEngine.musicOn ? 0.8 * AudioEngine.vol : 0;
+    },
+    setVolume: function (v) { if (this.player && this.ready) this.player.setVolume(Math.round(v * 100)); },
+    fallback: function (msg) {
+      this.mode = null; this.loading = false;
+      if (this.player && this.ready) this.player.pauseVideo();
+      $('yt-box').classList.add('hidden');
+      if (AudioEngine.radioGain) AudioEngine.radioGain.gain.value = AudioEngine.musicOn ? 0.8 * AudioEngine.vol : 0;
+      setMsg(msg);
+      updateStationLabel(); renderMusicList();
+    },
+    progress: function () {
+      if (!this.player || !this.ready || !this.mode) return 0;
+      var c = this.current();
+      var t = this.player.getCurrentTime ? this.player.getCurrentTime() : c.start;
+      return Math.max(0, Math.min(1, (t - c.start) / (c.end - c.start)));
+    },
+  };
+
+  // ============================================================================
   // AUDIO — WebAudio radio + SFX. Everything synthesized, no audio files.
   // Louder mix in 2.15.0 (the 2.13.0 lead was too quiet to hear on a phone),
   // plus a music toggle and a visible beat indicator.
@@ -147,11 +265,12 @@ import * as THREE from 'three';
     resume: function () { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
     setMusic: function (on) {
       this.musicOn = on;
-      if (this.radioGain) this.radioGain.gain.value = on ? 0.8 * this.vol : 0;
+      // while YouTube is playing the synth radio stays silent
+      if (this.radioGain && !YT.mode) this.radioGain.gain.value = on ? 0.8 * this.vol : 0;
     },
     setVolume: function (v) {
       this.vol = clamp(v, 0, 1);
-      if (this.radioGain) this.radioGain.gain.value = this.musicOn ? 0.8 * this.vol : 0;
+      if (this.radioGain && !YT.mode) this.radioGain.gain.value = this.musicOn ? 0.8 * this.vol : 0;
     },
     setEngine: function (speed01) {
       if (!this.ctx) return;
@@ -330,6 +449,10 @@ import * as THREE from 'three';
   var headlight = null, headTarget = null, rainPoints = null, roadMat = null, sunLight = null, hemiLight = null, sunDir = { x: 40, y: 80, z: 30 };
   var keys = {};
   var joy = { x: 0, y: 0, active: false };
+  // D-pad (hold an arrow) and tap-to-move share the walk input with the stick
+  var dpad = { x: 0, y: 0 };
+  var walkTarget = null; // {x, z} on the ground, or null
+  var tipDismissed = false;
   var wheelDrag = { active: false, startX: 0, steer: 0 };
   var input = { gas: false, brake: false, rev: false, hb: false };
   var camOrbit = { active: false, lastX: 0 };
@@ -1142,6 +1265,7 @@ import * as THREE from 'three';
     $('hud').classList.remove('hidden');
     $('joystick').classList.remove('hidden');
     $('joystick').classList.add('hint-pulse');
+    $('dpad').classList.remove('hidden');
     $('walk-hint').classList.remove('hidden');
     $('drive-controls').classList.add('hidden');
     $('hud-drive-row').classList.add('hidden');
@@ -1155,7 +1279,7 @@ import * as THREE from 'three';
     state.seat = 0; state.ticketPaid = false;
     $('hud-route').textContent = route.name;
     $('hud-stop').textContent = 'WALK TO A BUS AT THE STAND';
-    setMsg('Drag the pink joystick (bottom-left) to walk to the bus stand 🚶');
+    setMsg('Drag the joystick, hold the arrows, or tap the road to walk 🚶');
     if (AudioEngine.started) AudioEngine.setStation(route.station);
     else AudioEngine.startRadio(route.station);
     updateStationLabel();
@@ -1165,7 +1289,7 @@ import * as THREE from 'three';
   }
 
   function setMsg(m) { $('hud-msg').textContent = m; }
-  function updateStationLabel() { $('hud-station').textContent = STATIONS[AudioEngine.station].name; }
+  function updateStationLabel() { $('hud-station').textContent = YT.mode ? YT.name() : STATIONS[AudioEngine.station].name; }
   function updateMusicButton() {
     $('hud-music').textContent = AudioEngine.musicOn ? 'MUSIC ON' : 'MUSIC OFF';
     $('btn-music').classList.toggle('playing', AudioEngine.musicOn);
@@ -1175,6 +1299,7 @@ import * as THREE from 'three';
     state.mode = 'end';
     $('hud').classList.add('hidden');
     $('joystick').classList.add('hidden');
+    $('dpad').classList.add('hidden');
     $('walk-hint').classList.add('hidden');
     $('drive-controls').classList.add('hidden');
     $('hud-drive-row').classList.add('hidden');
@@ -1244,6 +1369,7 @@ import * as THREE from 'three';
     $('bus-prompt').classList.add('hidden');
     $('walk-hint').classList.add('hidden');
     $('joystick').classList.add('hidden');
+    $('dpad').classList.add('hidden');
     nearBus = null;
     state.startTime = performance.now();
     if (asDriver) {
@@ -1362,10 +1488,26 @@ import * as THREE from 'three';
   function updateWalk(dt) {
     var fx = 0, fz = 0; // forward/strafe in camera space
     if (joy.active) { fx = joy.x; fz = -joy.y; }
+    if (dpad.x || dpad.y) { fx += dpad.x; fz += dpad.y; }
     if (keys['w'] || keys['arrowup']) fz += 1;
     if (keys['s'] || keys['arrowdown']) fz -= 1;
     if (keys['a'] || keys['arrowleft']) fx -= 1;
     if (keys['d'] || keys['arrowright']) fx += 1;
+    // tap-to-move: steer toward the tapped ground point (no stick/d-pad/key)
+    if (!joy.active && !dpad.x && !dpad.y && !keys['w'] && !keys['s'] && !keys['a'] && !keys['d']
+        && !keys['arrowup'] && !keys['arrowdown'] && !keys['arrowleft'] && !keys['arrowright'] && walkTarget) {
+      var dx = walkTarget.x - state.px, dz = walkTarget.z - state.pz;
+      var dist = Math.hypot(dx, dz);
+      if (dist < 0.6) { walkTarget = null; }
+      else {
+        // convert world direction into camera-space input (inverse of the
+        // mx/mz rotation below, which is its own inverse)
+        var sin = Math.sin(state.camYaw), cos = Math.cos(state.camYaw);
+        var wx = dx / dist, wz = dz / dist;
+        fx = wx * cos - wz * sin;
+        fz = -wx * sin - wz * cos;
+      }
+    }
     var len = Math.hypot(fx, fz);
     if (len > 1) { fx /= len; fz /= len; }
     var speed = len > 0.05 ? 6 : 0;
@@ -1476,7 +1618,7 @@ import * as THREE from 'three';
     if (zone !== state.zone) {
       state.zone = zone;
       if (!state.manualStation) {
-        AudioEngine.setStation(zoneStation(zone));
+        if (!YT.mode) AudioEngine.setStation(zoneStation(zone)); // zone radio never overrides a YouTube pick
         updateStationLabel();
       }
       setMsg('📍 ' + route.zones[zone] + ' — 📻 ' + STATIONS[AudioEngine.station].name);
@@ -1614,7 +1756,7 @@ import * as THREE from 'three';
     if (zone !== state.zone) {
       state.zone = zone;
       if (!state.manualStation) {
-        AudioEngine.setStation(zoneStation(zone));
+        if (!YT.mode) AudioEngine.setStation(zoneStation(zone)); // zone radio never overrides a YouTube pick
         updateStationLabel();
       }
       setMsg('📍 ' + route.zones[zone] + ' — 📻 ' + STATIONS[AudioEngine.station].name);
@@ -1791,6 +1933,46 @@ import * as THREE from 'three';
     base.addEventListener('pointercancel', endJoy);
   })();
 
+  // D-pad (walk): hold an arrow to walk that way. A second control if the
+  // stick ever fails to render on a device.
+  (function () {
+    function bind(id, dx, dy) {
+      var b = $(id);
+      if (!b) return;
+      function on(e) { e.preventDefault(); dpad.x = dx; dpad.y = dy; walkTarget = null; }
+      function off(e) { if (dpad.x === dx && dpad.y === dy) { dpad.x = 0; dpad.y = 0; } }
+      b.addEventListener('pointerdown', on);
+      b.addEventListener('pointerup', off);
+      b.addEventListener('pointercancel', off);
+      b.addEventListener('pointerleave', off);
+    }
+    bind('dp-up', 0, 1); bind('dp-down', 0, -1);
+    bind('dp-left', -1, 0); bind('dp-right', 1, 0);
+  })();
+
+  // Portrait tip dismiss
+  $('btn-tip-x').onclick = function () { tipDismissed = true; $('rotate-tip').classList.add('hidden'); };
+
+  // Tap-to-move (walk): tap the ground and the player walks there. A third
+  // way to move, for phones where the stick is hard to reach. Listens on the
+  // game root (exists from load) rather than the canvas (rebuilt per entry).
+  (function () {
+    var ray = new THREE.Raycaster();
+    var groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    var hit = new THREE.Vector3();
+    function onTap(e) {
+      if (state.mode !== 'walk' || !renderer || !camera) return;
+      if (e.target.closest('#joystick, #dpad, #hud, #bus-prompt, #drive-controls, #touch-passenger, button')) return;
+      var nx = (e.clientX / window.innerWidth) * 2 - 1;
+      var ny = -(e.clientY / window.innerHeight) * 2 + 1;
+      ray.setFromCamera({ x: nx, y: ny }, camera);
+      if (ray.ray.intersectPlane(groundPlane, hit)) {
+        walkTarget = { x: hit.x, z: hit.z };
+      }
+    }
+    $('game-root').addEventListener('pointerdown', onTap);
+  })();
+
   // steering wheel (drive) — drag sideways, springs back to centre
   (function () {
     var wheel = $('wheel');
@@ -1844,10 +2026,16 @@ import * as THREE from 'three';
 
   $('btn-horn').onclick = function () { AudioEngine.horn(); setMsg('Peeeeep! 📣'); };
   $('btn-radio').onclick = function () {
-    AudioEngine.setStation((AudioEngine.station + 1) % STATIONS.length);
-    state.manualStation = true;
-    updateStationLabel();
-    setMsg('📻 Now playing: ' + STATIONS[AudioEngine.station].name);
+    // Cycle: 4 synth stations, then YouTube songs, then YouTube ghazals.
+    if (YT.mode === 'songs') { YT.play('ghazals', 0); state.manualStation = true; }
+    else if (YT.mode === 'ghazals') { YT.play(null); AudioEngine.setStation(0); state.manualStation = true; updateStationLabel(); setMsg('📻 Now playing: ' + STATIONS[0].name); }
+    else if (AudioEngine.station === STATIONS.length - 1) { YT.play('songs', 0); state.manualStation = true; setMsg('🎵 YouTube songs — famous hooks only'); }
+    else {
+      AudioEngine.setStation(AudioEngine.station + 1);
+      state.manualStation = true;
+      updateStationLabel();
+      setMsg('📻 Now playing: ' + STATIONS[AudioEngine.station].name);
+    }
   };
   $('btn-music').onclick = function () {
     var panel = $('music-panel');
@@ -1859,9 +2047,10 @@ import * as THREE from 'three';
     list.innerHTML = '';
     STATIONS.forEach(function (st, i) {
       var d = document.createElement('div');
-      d.className = 'mp-item' + (i === AudioEngine.station ? ' sel' : '');
+      d.className = 'mp-item' + (!YT.mode && i === AudioEngine.station ? ' sel' : '');
       d.innerHTML = '<span>♪ ' + st.name + '</span><span>' + st.bpm + ' BPM</span>';
       d.onclick = function () {
+        YT.play(null);
         AudioEngine.setStation(i);
         updateStationLabel();
         renderMusicList();
@@ -1869,29 +2058,49 @@ import * as THREE from 'three';
       };
       list.appendChild(d);
     });
-    $('mp-now').textContent = STATIONS[AudioEngine.station].name;
+    // YouTube hook stations (real songs/ghazals, famous part only)
+    [['songs', '🎵 YOUTUBE SONGS — famous hooks', '8 hooks'], ['ghazals', '🎤 YOUTUBE GHAZALS — famous hooks', '8 hooks']].forEach(function (row) {
+      var d = document.createElement('div');
+      d.className = 'mp-item' + (YT.mode === row[0] ? ' sel' : '');
+      d.innerHTML = '<span>' + row[1] + '</span><span>' + row[2] + '</span>';
+      d.onclick = function () {
+        YT.play(row[0], 0);
+        renderMusicList();
+        setMsg('🎵 Loading YouTube — ' + (row[0] === 'songs' ? 'famous song hooks' : 'famous ghazal hooks'));
+      };
+      list.appendChild(d);
+    });
+    $('mp-now').textContent = YT.mode ? YT.name() + (YT.ready ? ' — ' + YT.current().title : '') : STATIONS[AudioEngine.station].name;
     $('mp-play').textContent = AudioEngine.musicOn ? '⏸' : '▶';
   }
   function updateMusicPanel() {
     if ($('music-panel').classList.contains('hidden')) return;
-    $('mp-bar').style.width = Math.round(AudioEngine.progress() * 100) + '%';
-    $('mp-now').textContent = STATIONS[AudioEngine.station].name;
+    if (YT.mode) {
+      $('mp-bar').style.width = Math.round(YT.progress() * 100) + '%';
+      $('mp-now').textContent = YT.name() + ' — ' + YT.current().title;
+    } else {
+      $('mp-bar').style.width = Math.round(AudioEngine.progress() * 100) + '%';
+      $('mp-now').textContent = STATIONS[AudioEngine.station].name;
+    }
   }
   $('mp-play').onclick = function () {
     AudioEngine.setMusic(!AudioEngine.musicOn);
+    if (YT.mode) { if (AudioEngine.musicOn) YT.resume(); else YT.pause(); }
     updateMusicButton();
     renderMusicList();
-    setMsg(AudioEngine.musicOn ? '♪ Music on — ' + STATIONS[AudioEngine.station].name : '♪ Music off');
+    setMsg(AudioEngine.musicOn ? '♪ Music on — ' + (YT.mode ? YT.current().title : STATIONS[AudioEngine.station].name) : '♪ Music off');
   };
   $('mp-prev').onclick = function () {
+    if (YT.mode) { YT.prev(); renderMusicList(); return; }
     AudioEngine.setStation((AudioEngine.station + STATIONS.length - 1) % STATIONS.length);
     updateStationLabel(); renderMusicList();
   };
   $('mp-next').onclick = function () {
+    if (YT.mode) { YT.next(); renderMusicList(); return; }
     AudioEngine.setStation((AudioEngine.station + 1) % STATIONS.length);
     updateStationLabel(); renderMusicList();
   };
-  $('mp-vol').oninput = function (e) { AudioEngine.setVolume(e.target.value / 100); };
+  $('mp-vol').oninput = function (e) { AudioEngine.setVolume(e.target.value / 100); YT.setVolume(e.target.value / 100); };
   $('btn-cam').onclick = function () {
     state.camView = (state.camView + 1) % (state.mode === 'driving' ? 5 : 3);
     updateCamButton();
@@ -1925,12 +2134,16 @@ import * as THREE from 'three';
   // ============================================================================
   // PORTRAIT LOCK — phones only; desktop landscape keeps working
   // ============================================================================
+  // Portrait tip only — the game plays in BOTH orientations now. Never blocks
+  // input and never freezes the loop (an earlier full-screen rotate wall made
+  // the game unplayable on phones with auto-rotate off). Returns false always.
   function checkOrientation() {
     var coarse = window.matchMedia('(pointer: coarse)').matches;
     var portrait = window.innerHeight > window.innerWidth;
-    var show = coarse && portrait && state.mode !== 'lobby';
-    $('rotate-overlay').classList.toggle('hidden', !show);
-    return show;
+    var show = coarse && portrait && state.mode !== 'lobby' && !tipDismissed;
+    var tip = $('rotate-tip');
+    if (tip) tip.classList.toggle('hidden', !show);
+    return false;
   }
   window.addEventListener('orientationchange', function () { setTimeout(checkOrientation, 100); });
 
@@ -1982,7 +2195,6 @@ import * as THREE from 'three';
     var dt = Math.min(0.1, (t - lastT) / 1000 || 0.016);
     lastT = t;
     if (!renderer || !scene) return;
-    if (checkOrientation()) { renderer.render(scene, camera); return; }
     if (state.mode === 'walk') {
       state.elapsed = (performance.now() - state.startTime) / 1000;
       updateWalk(dt);
@@ -2023,7 +2235,7 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.17.1', save: save, route: function () { return route.id; },
+    state: state, version: '2.18.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
@@ -2039,5 +2251,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.17.1 loaded');
+  log('BUS YATRA 2.18.0 loaded');
 })();
