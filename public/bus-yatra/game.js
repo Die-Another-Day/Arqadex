@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.16.1
+// BUS YATRA — Indian Bus Simulator · v2.17.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -321,7 +321,7 @@ import * as THREE from 'three';
   var passengersAtStops = [], stopGroups = [], npcs = [], colliders = [];
   var clouds = [], wheels = [];
   var playerMesh = null, playerLegL = null, playerLegR = null, walkCycle = 0;
-  var headlight = null, headTarget = null, rainPoints = null, roadMat = null, sunLight = null, hemiLight = null;
+  var headlight = null, headTarget = null, rainPoints = null, roadMat = null, sunLight = null, hemiLight = null, sunDir = { x: 40, y: 80, z: 30 };
   var keys = {};
   var joy = { x: 0, y: 0, active: false };
   var wheelDrag = { active: false, startX: 0, steer: 0 };
@@ -337,71 +337,147 @@ import * as THREE from 'three';
     return tex;
   }
 
+  // Realistic bus: painted metal body, individual glass panes, chrome trim,
+  // grille + destination board + raked windshield, mirrors, roof AC, detailed
+  // wheels with hubs, bumpers, number plates and a cab dashboard. Front = -Z.
+  // Keeps the same userData contract: door (slides on z), headMat, indMatL/R,
+  // wheels (spin on rotation.x).
   function makeBus(color, stripe, destText) {
     var g = new THREE.Group();
-    var bodyMat = new THREE.MeshLambertMaterial({ color: color });
-    var stripeMat = new THREE.MeshLambertMaterial({ color: stripe });
-    var darkMat = new THREE.MeshLambertMaterial({ color: 0x1a202c });
-    var body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.0, 7), bodyMat);
-    body.position.y = 1.6;
-    g.add(body);
-    var roof = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.25, 7.1), stripeMat);
-    roof.position.y = 2.7;
-    g.add(roof);
-    var band = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.35, 7.02), stripeMat);
-    band.position.y = 1.05;
-    g.add(band);
-    var shield = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.9), darkMat);
-    shield.position.set(0, 2.0, -3.51); shield.rotation.y = Math.PI;
-    g.add(shield);
-    [-1.31, 1.31].forEach(function (x) {
-      var win = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 0.8), darkMat);
-      win.position.set(x, 2.0, 0); win.rotation.y = x < 0 ? -Math.PI / 2 : Math.PI / 2;
-      g.add(win);
+    var paintMat = new THREE.MeshStandardMaterial({ color: color, metalness: 0.35, roughness: 0.42 });
+    var stripeMat = new THREE.MeshStandardMaterial({ color: stripe, metalness: 0.3, roughness: 0.45 });
+    var glassMat = new THREE.MeshStandardMaterial({ color: 0x101c2e, metalness: 0.9, roughness: 0.12 });
+    var chromeMat = new THREE.MeshStandardMaterial({ color: 0xd7dde3, metalness: 0.95, roughness: 0.22 });
+    var darkMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.2, roughness: 0.7 });
+    var tireMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95 });
+    var hubMat = new THREE.MeshStandardMaterial({ color: 0xb8c0c8, metalness: 0.9, roughness: 0.3 });
+    var lightGrey = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.2, roughness: 0.6 });
+    function solid(mesh) { mesh.castShadow = true; return mesh; }
+    // lower skirt + main body
+    var skirt = solid(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.5, 7), darkMat));
+    skirt.position.y = 0.75; g.add(skirt);
+    var body = solid(new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 7), paintMat));
+    body.position.y = 1.8; g.add(body);
+    // roof + AC pod + marker lights
+    var roof = solid(new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.18, 7.1), stripeMat));
+    roof.position.y = 2.68; g.add(roof);
+    var ac = solid(new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.32, 2.4), lightGrey));
+    ac.position.set(0, 2.9, 0.8); g.add(ac);
+    var markerMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    [-0.7, 0, 0.7].forEach(function (x) {
+      var mk = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), markerMat);
+      mk.position.set(x, 2.78, -3.45); g.add(mk);
     });
+    // side stripe band below the windows
+    var band = solid(new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.35, 7.02), stripeMat));
+    band.position.y = 1.05; g.add(band);
+    // individual side windows (pillars of body show between panes)
+    [-1.31, 1.31].forEach(function (x) {
+      [-2.4, -0.8, 0.8, 2.4].forEach(function (z) {
+        var win = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.8, 1.05), glassMat);
+        win.position.set(x, 2.05, z);
+        g.add(win);
+      });
+    });
+    // raked windshield (thin box, top leans back) + rear window
+    var shield = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.0, 0.06), glassMat);
+    shield.position.set(0, 2.05, -3.52); shield.rotation.x = -0.12;
+    g.add(shield);
+    var rearWin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.8, 0.06), glassMat);
+    rearWin.position.set(0, 2.05, 3.52); g.add(rearWin);
+    // front grille + chrome slats
+    var grille = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.45, 0.1), darkMat);
+    grille.position.set(0, 0.85, -3.52); g.add(grille);
+    [0.75, 0.85, 0.95].forEach(function (y) {
+      var slat = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.03), chromeMat);
+      slat.position.set(0, y, -3.58); g.add(slat);
+    });
+    // destination board (canvas text)
     if (destText) {
       var tex = canvasTexture(function (ctx, w, h) {
         ctx.fillStyle = '#111827'; ctx.fillRect(0, 0, w, h);
         ctx.fillStyle = '#facc15'; ctx.font = 'bold 26px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(destText, w / 2, h / 2);
       }, 256, 48);
-      var board = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.4),
+      var board = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.35),
         new THREE.MeshBasicMaterial({ map: tex }));
-      board.position.set(0, 1.15, -3.52); board.rotation.y = Math.PI;
+      board.position.set(0, 1.35, -3.53); board.rotation.y = Math.PI;
       g.add(board);
     }
+    // bumpers (chrome) front + rear
+    var bumpF = solid(new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.28, 0.18), chromeMat));
+    bumpF.position.set(0, 0.55, -3.55); g.add(bumpF);
+    var bumpR = solid(new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.28, 0.18), chromeMat));
+    bumpR.position.set(0, 0.55, 3.55); g.add(bumpR);
+    // number plates (Gujarat plate, fits the Vadodara routes)
+    var plateTex = canvasTexture(function (ctx, w, h) {
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#111827'; ctx.font = 'bold 20px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('GJ 06 AB 1234', w / 2, h / 2);
+    }, 256, 48);
+    var plateF = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.18),
+      new THREE.MeshBasicMaterial({ map: plateTex }));
+    plateF.position.set(0, 0.55, -3.66); plateF.rotation.y = Math.PI; g.add(plateF);
+    var plateR = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.18),
+      new THREE.MeshBasicMaterial({ map: plateTex }));
+    plateR.position.set(0, 0.55, 3.66); g.add(plateR);
+    // headlights: chrome bezel + lamp; taillights red; indicators at the corners
     var headMat = new THREE.MeshBasicMaterial({ color: 0xfff7cc });
     var indMatL = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
     var indMatR = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
     [-0.85, 0.85].forEach(function (x) {
-      var hl = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), headMat);
-      hl.position.set(x, 0.85, -3.55); g.add(hl);
+      var bez = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.08, 14), chromeMat);
+      bez.rotation.x = Math.PI / 2; bez.position.set(x, 0.95, -3.55); g.add(bez);
+      var hl = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), headMat);
+      hl.position.set(x, 0.95, -3.6); g.add(hl);
       var tl = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8),
         new THREE.MeshBasicMaterial({ color: 0xef4444 }));
-      tl.position.set(x, 0.85, 3.55); g.add(tl);
-      // indicators (amber, front + rear, blink when on)
+      tl.position.set(x, 0.95, 3.55); g.add(tl);
+    });
+    [-1.15, 1.15].forEach(function (x) {
       var indF = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), x < 0 ? indMatL : indMatR);
       indF.position.set(x, 1.25, -3.55); g.add(indF);
       var indR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), x < 0 ? indMatL : indMatR);
       indR.position.set(x, 1.25, 3.55); g.add(indR);
     });
-    // passenger door (left side, near the front) — slides open/closed
-    var door = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.9, 1.1),
-      new THREE.MeshLambertMaterial({ color: 0x1a202c }));
-    door.position.set(-1.32, 1.35, -1.6);
-    g.add(door);
-    g.userData.door = door;
+    // side mirrors (arm + mirror box) on both front sides
+    [-1, 1].forEach(function (s) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 0.05), darkMat);
+      arm.position.set(s * 1.45, 2.25, -3.3); g.add(arm);
+      var mir = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.32, 0.2), darkMat);
+      mir.position.set(s * 1.62, 2.25, -3.35); g.add(mir);
+    });
+    // passenger door (left side, near the front) — slides open/closed on z
+    var doorG = new THREE.Group();
+    var panel = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.9, 1.1), darkMat);
+    doorG.add(panel);
+    var doorWin = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.7), glassMat);
+    doorWin.position.set(-0.05, 0.35, 0); doorWin.rotation.y = -Math.PI / 2; doorG.add(doorWin);
+    var handle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, 0.5), chromeMat);
+    handle.position.set(-0.06, 0, 0.35); doorG.add(handle);
+    doorG.position.set(-1.32, 1.35, -1.6);
+    g.add(doorG);
+    g.userData.door = doorG;
     g.userData.headMat = headMat;
     g.userData.indMatL = indMatL;
     g.userData.indMatR = indMatR;
-    var wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.3, 12);
-    var wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    // cab dashboard + steering wheel (seen from the CAB camera)
+    var dash = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 0.6), darkMat);
+    dash.position.set(0, 1.55, -3.1); g.add(dash);
+    var wheel = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.04, 8, 20), darkMat);
+    wheel.position.set(-0.6, 1.75, -2.85); wheel.rotation.x = -0.5; g.add(wheel);
+    // wheels: tire + silver hub + centre cap, grouped so rotation.x spins them
     var wg = [];
     [[-1.2, -2.3], [1.2, -2.3], [-1.2, 2.3], [1.2, 2.3]].forEach(function (p) {
-      var w = new THREE.Mesh(wheelGeo, wheelMat);
-      w.rotation.z = Math.PI / 2;
-      w.position.set(p[0], 0.45, p[1]);
-      g.add(w); wg.push(w);
+      var wgrp = new THREE.Group();
+      var tire = solid(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.3, 14), tireMat));
+      tire.rotation.z = Math.PI / 2; wgrp.add(tire);
+      var hub = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.32, 12), hubMat);
+      hub.rotation.z = Math.PI / 2; wgrp.add(hub);
+      var cap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.34, 8), darkMat);
+      cap.rotation.z = Math.PI / 2; wgrp.add(cap);
+      wgrp.position.set(p[0], 0.45, p[1]);
+      g.add(wgrp); wg.push(wgrp);
     });
     g.userData.wheels = wg;
     return g;
@@ -411,7 +487,7 @@ import * as THREE from 'three';
     var g = new THREE.Group();
     var body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.55, 3.6),
       new THREE.MeshLambertMaterial({ color: color }));
-    body.position.y = 0.55; g.add(body);
+    body.position.y = 0.55; body.castShadow = true; g.add(body);
     var cab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 1.8),
       new THREE.MeshLambertMaterial({ color: 0x1a202c }));
     cab.position.set(0, 1.05, -0.2); g.add(cab);
@@ -428,7 +504,7 @@ import * as THREE from 'three';
     var g = new THREE.Group();
     var body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.9, 8),
       new THREE.MeshLambertMaterial({ color: shirtColor }));
-    body.position.y = 0.75; g.add(body);
+    body.position.y = 0.75; body.castShadow = true; g.add(body);
     var head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8),
       new THREE.MeshLambertMaterial({ color: skinColor || 0xd9a066 }));
     head.position.y = 1.35; g.add(head);
@@ -509,6 +585,7 @@ import * as THREE from 'three';
     if (sunLight) {
       sunLight.intensity = cfg.sun;
       sunLight.position.set(cfg.sunPos[0], cfg.sunPos[1], cfg.sunPos[2]);
+      sunDir = { x: cfg.sunPos[0], y: cfg.sunPos[1], z: cfg.sunPos[2] };
     }
     if (hemiLight) hemiLight.intensity = cfg.hemi;
     if (roadMat) roadMat.color.setHex(state.weather === 'rain' ? 0x1f2937 : 0x2f3540);
@@ -525,13 +602,22 @@ import * as THREE from 'three';
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     $('game-root').appendChild(renderer.domElement);
 
     hemiLight = new THREE.HemisphereLight(0xcfe8ff, 0x8a7a5a, 0.95);
     scene.add(hemiLight);
     sunLight = new THREE.DirectionalLight(0xfff2cc, 1.4);
     sunLight.position.set(40, 80, 30);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(1024, 1024);
+    sunLight.shadow.camera.left = -45; sunLight.shadow.camera.right = 45;
+    sunLight.shadow.camera.top = 45; sunLight.shadow.camera.bottom = -45;
+    sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 300;
+    sunLight.shadow.bias = -0.0005;
     scene.add(sunLight);
+    scene.add(sunLight.target);
     // headlight spotlight (attached to the active bus when lights are on)
     headlight = new THREE.SpotLight(0xfff2cc, 0, 60, 0.5, 0.4, 1.2);
     headTarget = new THREE.Object3D();
@@ -557,12 +643,14 @@ import * as THREE from 'three';
       new THREE.MeshLambertMaterial({ color: 0x7fae5a }));
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(0, -0.05, -L / 2);
+    ground.receiveShadow = true;
     scene.add(ground);
     // route road (continues through the city)
     roadMat = new THREE.MeshLambertMaterial({ color: 0x2f3540 });
     var road = new THREE.Mesh(new THREE.PlaneGeometry(14, L + 400), roadMat);
     road.rotation.x = -Math.PI / 2;
     road.position.set(0, 0, -L / 2 + 100);
+    road.receiveShadow = true;
     scene.add(road);
     var dashMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
     for (var z = 100; z > -L - 200; z -= 10) {
@@ -631,14 +719,15 @@ import * as THREE from 'three';
     }
 
     // ---- BUS STAND: roof, bays, 3 parked buses ----
+    // Roof is high (y=6) so the chase camera sees the buses parked under it.
     var roof = new THREE.Mesh(new THREE.BoxGeometry(24, 0.3, 12),
       new THREE.MeshLambertMaterial({ color: 0x0ea5e9 }));
-    roof.position.set(0, 3.8, 5);
+    roof.position.set(0, 6, 5);
     scene.add(roof);
     [[-11, -0.5], [11, -0.5], [-11, 10.5], [11, 10.5]].forEach(function (p) {
-      var post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.8, 6),
+      var post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 6, 6),
         new THREE.MeshLambertMaterial({ color: 0x475569 }));
-      post.position.set(p[0], 1.9, p[1]);
+      post.position.set(p[0], 3, p[1]);
       scene.add(post);
       colliders.push({ x: p[0], z: p[1], hw: 0.3, hd: 0.3 });
     });
@@ -649,7 +738,7 @@ import * as THREE from 'three';
     }, 512, 96);
     var standSign = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.9),
       new THREE.MeshBasicMaterial({ map: standTex }));
-    standSign.position.set(0, 4.9, -0.6);
+    standSign.position.set(0, 7.1, -0.6);
     scene.add(standSign);
     // benches
     [-6, 6].forEach(function (x) {
@@ -998,7 +1087,30 @@ import * as THREE from 'three';
   var lastCollide = 0;
   var nearBus = null; // parked bus the player is standing next to
 
+  // Full landscape screen: fullscreen + orientation lock (needs a user gesture).
+  // Android Chrome locks orientation only while fullscreen; iOS Safari has no
+  // fullscreen API for arbitrary elements, so every call is guarded and silent.
+  function goFullscreen() {
+    function lock() {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          var q = screen.orientation.lock('landscape');
+          if (q && q.catch) q.catch(function () {});
+        }
+      } catch (e) {}
+    }
+    try {
+      var el = document.documentElement;
+      var req = null;
+      if (el.requestFullscreen) req = el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) req = el.webkitRequestFullscreen();
+      if (req && req.then) req.then(lock).catch(function () { lock(); });
+      else lock();
+    } catch (e) { lock(); }
+  }
+
   function enterCity() {
+    goFullscreen();
     AudioEngine.init();
     AudioEngine.resume();
     route = ROUTES[state.routeIdx];
@@ -1770,6 +1882,10 @@ import * as THREE from 'three';
     updateCamButton();
     setMsg('🎥 Camera: ' + $('hud-cam').textContent);
   };
+  $('btn-full').onclick = function () {
+    if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (e) {} }
+    else goFullscreen();
+  };
   $('btn-drive').onclick = function () { if (nearBus) chooseBus(nearBus, true); };
   $('btn-travel').onclick = function () { if (nearBus) chooseBus(nearBus, false); };
   $('btn-getoff').onclick = function () { endYatra('getoff'); };
@@ -1882,11 +1998,17 @@ import * as THREE from 'three';
     }
     mapTimer += dt;
     if (mapTimer > 0.15) { mapTimer = 0; drawMinimap(); updateMusicPanel(); }
+    // keep the sun's shadow camera centred on the action
+    if (sunLight && camera) {
+      sunLight.position.set(camera.position.x + sunDir.x, camera.position.y + sunDir.y, camera.position.z + sunDir.z);
+      sunLight.target.position.copy(camera.position);
+      sunLight.target.updateMatrixWorld();
+    }
     renderer.render(scene, camera);
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.16.1', save: save, route: function () { return route.id; },
+    state: state, version: '2.17.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
@@ -1902,5 +2024,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.16.1 loaded');
+  log('BUS YATRA 2.17.0 loaded');
 })();
