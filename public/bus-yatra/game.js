@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.21.0
+// BUS YATRA — Indian Bus Simulator · v2.24.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -86,20 +86,24 @@ import * as THREE from 'three';
       station: 1, stops: ['SEHORE', 'DEWAS', 'INDORE'],
       zones: ['BHOPAL CITY', 'MALWA PLATEAU', 'DEWAS HILLS', 'INDORE CITY'] },
   ];
+  // Bus body styles (v2.24.0, from the sprite sheet): each of the 8 buses
+  // has its own silhouette — bh = body height, wn = windows per side,
+  // wh = window height, ax = axles (3 = 6-wheel sleeper), ac = roof AC
+  // pods, ts = tall windshield, lv = livery ('band' | 'double' | 'plain').
   var BUSES = [
-    { id: 'lalpari', name: 'LAL PARI', sub: 'Ordinary City Bus · red', cat: 'CITY', color: 0xdc2626, stripe: 0xfacc15, topSpeed: 34, accel: 15, fare: 20, price: 0 },
-    { id: 'rajdhani', name: 'RAJDHANI COACH', sub: 'Deluxe Intercity · blue', cat: 'INTERCITY', color: 0x2563eb, stripe: 0xe2e8f0, topSpeed: 46, accel: 19, fare: 30, price: 0 },
-    { id: 'vintage', name: 'GAADI NO. 1', sub: 'Vintage Tourist · green-yellow', cat: 'TOURIST', color: 0x16a34a, stripe: 0xfacc15, topSpeed: 38, accel: 16, fare: 40, price: 0 },
-    { id: 'state', name: 'STATE TRANSPORT', sub: 'Government Ordinary · orange', cat: 'GOVT', color: 0xea580c, stripe: 0xf8fafc, topSpeed: 36, accel: 15, fare: 25, price: 150 },
-    { id: 'cityac', name: 'CITY AC', sub: 'AC City Bus · sky blue', cat: 'CITY AC', color: 0x0284c7, stripe: 0xf8fafc, topSpeed: 40, accel: 17, fare: 35, price: 200 },
-    { id: 'tourist', name: 'TOURIST COACH', sub: 'Tourist · yellow', cat: 'TOURIST', color: 0xeab308, stripe: 0x111827, topSpeed: 42, accel: 17, fare: 50, price: 250 },
-    { id: 'sleeper', name: 'AC SLEEPER', sub: 'Private Sleeper · teal', cat: 'SLEEPER', color: 0x0f766e, stripe: 0xfacc15, topSpeed: 44, accel: 18, fare: 60, price: 350 },
-    { id: 'volvo', name: 'VOLVO LUXURY', sub: 'Volvo-style Luxury Coach · purple', cat: 'LUXURY', color: 0x6d28d9, stripe: 0xe2e8f0, topSpeed: 50, accel: 20, fare: 80, price: 500 },
+    { id: 'lalpari', name: 'LAL PARI', sub: 'Ordinary City Bus · red', cat: 'CITY', color: 0xdc2626, stripe: 0xfacc15, topSpeed: 34, accel: 15, fare: 20, price: 0, style: { bh: 1.6, wn: 4, wh: 0.95, ax: 2, ac: 1, ts: 0, lv: 'band' } },
+    { id: 'rajdhani', name: 'RAJDHANI COACH', sub: 'Deluxe Intercity · blue', cat: 'INTERCITY', color: 0x2563eb, stripe: 0xe2e8f0, topSpeed: 46, accel: 19, fare: 30, price: 0, style: { bh: 1.6, wn: 4, wh: 0.8, ax: 2, ac: 1, ts: 0, lv: 'double' } },
+    { id: 'vintage', name: 'GAADI NO. 1', sub: 'Vintage Tourist · green-yellow', cat: 'TOURIST', color: 0x16a34a, stripe: 0xfacc15, topSpeed: 38, accel: 16, fare: 40, price: 0, style: { bh: 1.6, wn: 4, wh: 0.8, ax: 2, ac: 1, ts: 0, lv: 'band' } },
+    { id: 'state', name: 'STATE TRANSPORT', sub: 'Government Ordinary · orange', cat: 'GOVT', color: 0xea580c, stripe: 0xf8fafc, topSpeed: 36, accel: 15, fare: 25, price: 150, style: { bh: 1.6, wn: 4, wh: 0.8, ax: 2, ac: 0, ts: 0, lv: 'band' } },
+    { id: 'cityac', name: 'CITY AC', sub: 'AC City Bus · sky blue', cat: 'CITY AC', color: 0x0284c7, stripe: 0xf8fafc, topSpeed: 40, accel: 17, fare: 35, price: 200, style: { bh: 1.6, wn: 4, wh: 0.9, ax: 2, ac: 1, ts: 0, lv: 'double' } },
+    { id: 'tourist', name: 'TOURIST COACH', sub: 'Tourist · yellow', cat: 'TOURIST', color: 0xeab308, stripe: 0x111827, topSpeed: 42, accel: 17, fare: 50, price: 250, style: { bh: 1.6, wn: 4, wh: 0.8, ax: 2, ac: 1, ts: 0, lv: 'band' } },
+    { id: 'sleeper', name: 'AC SLEEPER', sub: 'Private Sleeper · teal', cat: 'SLEEPER', color: 0x0f766e, stripe: 0xfacc15, topSpeed: 44, accel: 18, fare: 60, price: 350, style: { bh: 1.78, wn: 6, wh: 0.5, ax: 3, ac: 2, ts: 0, lv: 'band' } },
+    { id: 'volvo', name: 'VOLVO LUXURY', sub: 'Volvo-style Luxury Coach · purple', cat: 'LUXURY', color: 0x6d28d9, stripe: 0xe2e8f0, topSpeed: 50, accel: 20, fare: 80, price: 500, style: { bh: 1.72, wn: 5, wh: 1.0, ax: 2, ac: 2, ts: 1, lv: 'double' } },
   ];
   function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
 
   // ============================================================================
-  // CITY PATH (v2.21.0) — the route is a winding road through a real Indian
+  // CITY PATH (v2.22.0) — the route is a winding road through a real Indian
   // city, not a straight highway. The path is a polyline of waypoints with
   // turns at crossings, a chowk (square) at the midpoint, and cross streets
   // at regular intervals. All road geometry, stops, traffic and the minimap
@@ -118,6 +122,35 @@ import * as THREE from 'three';
       var last = pathPoints[pathPoints.length - 1];
       pathPoints.push({ x: last.x + sg[0] * sg[2] * L, z: last.z + sg[1] * sg[2] * L });
     });
+    // round the corners so the road curves instead of zig-zagging at 90°:
+    // a bus can follow a curve at speed, but a sharp corner throws it off
+    // the road into the fields. Each corner becomes a quadratic Bezier
+    // (control point = the corner itself) sampled at 6 points. The chowk
+    // (waypoint 3) keeps its sharp corner — it is a paved roundabout
+    // square, so the bus turns on the disc itself.
+    var chowkPt = pathPoints[3];
+    var R = 30;
+    var rounded = [pathPoints[0]];
+    for (var ci = 1; ci < pathPoints.length - 1; ci++) {
+      var pv = pathPoints[ci - 1], cu = pathPoints[ci], nx = pathPoints[ci + 1];
+      if (cu === chowkPt) { rounded.push(cu); continue; }
+      var d1x = cu.x - pv.x, d1z = cu.z - pv.z;
+      var l1 = Math.hypot(d1x, d1z); d1x /= l1; d1z /= l1;
+      var d2x = nx.x - cu.x, d2z = nx.z - cu.z;
+      var l2 = Math.hypot(d2x, d2z); d2x /= l2; d2z /= l2;
+      var rr = Math.min(R, l1 / 2, l2 / 2);
+      var p1 = { x: cu.x - d1x * rr, z: cu.z - d1z * rr };
+      var p2 = { x: cu.x + d2x * rr, z: cu.z + d2z * rr };
+      for (var k = 0; k <= 6; k++) {
+        var t = k / 6, mt = 1 - t;
+        rounded.push({
+          x: mt * mt * p1.x + 2 * mt * t * cu.x + t * t * p2.x,
+          z: mt * mt * p1.z + 2 * mt * t * cu.z + t * t * p2.z,
+        });
+      }
+    }
+    rounded.push(pathPoints[pathPoints.length - 1]);
+    pathPoints = rounded;
     pathSegs = [];
     pathTotal = 0;
     for (var i = 0; i < pathPoints.length - 1; i++) {
@@ -129,7 +162,7 @@ import * as THREE from 'three';
       pathTotal += len;
     }
     // chowk (square) at the 3rd waypoint — where the route turns west
-    chowk = { x: pathPoints[3].x, z: pathPoints[3].z, r: 22 };
+    chowk = { x: chowkPt.x, z: chowkPt.z, r: 22 };
     // cross streets: a perpendicular road every ~180 units along each segment
     crossStreets = [];
     pathSegs.forEach(function (sg) {
@@ -541,7 +574,15 @@ import * as THREE from 'three';
     { x: -0.55, z: 1.8 }, { x: 0.55, z: 1.8 },
   ];
   var passengersAtStops = [], stopGroups = [], npcs = [], colliders = [];
-  var clouds = [], wheels = [];
+  var clouds = [], wheels = [], windowMats = [], lampMats = [];
+  // windowMats: every building's window material, so applyWeather can
+  // light them at night and darken them by day. lampMats: every street
+  // lamp head, so the lamps glow only after dark. carHeadMat/carTailMat
+  // are shared by all traffic cars, so their lights follow lightsOn.
+  var carHeadMat = new THREE.MeshBasicMaterial({ color: 0x9ca3af });
+  var carTailMat = new THREE.MeshBasicMaterial({ color: 0x991b1b });
+  var lampHeadMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
+  lampMats.push(lampHeadMat); // one shared head for every street lamp, so they all switch together
   var playerMesh = null, walkCycle = 0;
   var headlight = null, headTarget = null, rainPoints = null, roadMat = null, sunLight = null, hemiLight = null, sunDir = { x: 40, y: 80, z: 30 };
   var keys = {};
@@ -568,49 +609,87 @@ import * as THREE from 'three';
   // wheels with hubs, bumpers, number plates and a cab dashboard. Front = -Z.
   // Keeps the same userData contract: door (slides on z), headMat, indMatL/R,
   // wheels (spin on rotation.x).
-  function makeBus(color, stripe, destText) {
+  // v2.24.0: each bus type gets its own silhouette from the sprite sheet via
+  // `style` — body height, window count/height, axles, AC pods, tall
+  // windshield and livery. The body stays 7 long and the cab/seats/door keep
+  // their coordinates, so the driving, boarding and seat map are untouched;
+  // only the visible shape changes. Defaults reproduce the old bus.
+  function makeBus(color, stripe, destText, style) {
+    var st = style || { bh: 1.6, wn: 4, wh: 0.8, ax: 2, ac: 1, ts: 0, lv: 'band' };
+    var bodyH = st.bh, winY = 1.0 + bodyH / 2 + 0.25, roofY = 1.0 + bodyH + 0.09;
     var g = new THREE.Group();
     var paintMat = new THREE.MeshStandardMaterial({ color: color, metalness: 0.35, roughness: 0.42 });
     var stripeMat = new THREE.MeshStandardMaterial({ color: stripe, metalness: 0.3, roughness: 0.45 });
-    var glassMat = new THREE.MeshStandardMaterial({ color: 0x101c2e, metalness: 0.9, roughness: 0.12 });
+    var glassMat = new THREE.MeshStandardMaterial({ color: 0x101c2e, metalness: 0.9, roughness: 0.12, transparent: true, opacity: 0.4 });
+    // the glass must be see-through: the windows are thin boxes, and from
+    // the passenger's seat (or the CAB) the camera looks THROUGH a pane.
+    // Opaque glass turns the whole window into a black slab that blocks
+    // the view. Tinted (0.4) still reads as dark glass from outside.
     var chromeMat = new THREE.MeshStandardMaterial({ color: 0xd7dde3, metalness: 0.95, roughness: 0.22 });
     var darkMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.2, roughness: 0.7 });
     var tireMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95 });
     var hubMat = new THREE.MeshStandardMaterial({ color: 0xb8c0c8, metalness: 0.9, roughness: 0.3 });
     var lightGrey = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.2, roughness: 0.6 });
     function solid(mesh) { mesh.castShadow = true; return mesh; }
-    // lower skirt + main body
+    // lower skirt + main body (height follows the bus type's silhouette)
     var skirt = solid(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.5, 7), darkMat));
     skirt.position.y = 0.75; g.add(skirt);
-    var body = solid(new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 7), paintMat));
-    body.position.y = 1.8; g.add(body);
-    // roof + AC pod + marker lights
+    var body = solid(new THREE.Mesh(new THREE.BoxGeometry(2.6, bodyH, 7), paintMat));
+    body.position.y = 1.0 + bodyH / 2; g.add(body);
+    // roof + AC pods + marker lights (pod count follows the bus type:
+    // sleeper and Volvo carry two, the ordinary state bus carries none)
     var roof = solid(new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.18, 7.1), stripeMat));
-    roof.position.y = 2.68; g.add(roof);
-    var ac = solid(new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.32, 2.4), lightGrey));
-    ac.position.set(0, 2.9, 0.8); g.add(ac);
+    roof.position.y = roofY; g.add(roof);
+    for (var ai = 0; ai < (st.ac || 0); ai++) {
+      var ac = solid(new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.32, 1.1), lightGrey));
+      ac.position.set(0, roofY + 0.22, 0.2 + ai * 1.6); g.add(ac);
+    }
     var markerMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
     [-0.7, 0, 0.7].forEach(function (x) {
       var mk = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), markerMat);
-      mk.position.set(x, 2.78, -3.45); g.add(mk);
+      mk.position.set(x, roofY + 0.1, -3.45); g.add(mk);
     });
-    // side stripe band below the windows
-    var band = solid(new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.35, 7.02), stripeMat));
-    band.position.y = 1.05; g.add(band);
-    // individual side windows (pillars of body show between panes)
+    // side stripe livery: 'band' is one stripe, 'double' adds a second thin
+    // one above it, 'plain' leaves the side clean
+    if (st.lv !== 'plain') {
+      var band = solid(new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.35, 7.02), stripeMat));
+      band.position.y = 1.05; g.add(band);
+    }
+    if (st.lv === 'double') {
+      var band2 = solid(new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.12, 7.02), stripeMat));
+      band2.position.y = 1.5; g.add(band2);
+    }
+    // individual side windows (pillars of body show between panes). Count
+    // and height follow the bus type: the sleeper has six small berth
+    // windows, the Volvo five tall ones, the city bus four big ones.
+    var winZs = [];
+    for (var wi = 0; wi < st.wn; wi++) winZs.push(-2.5 + (5 / Math.max(1, st.wn - 1)) * wi);
     [-1.31, 1.31].forEach(function (x) {
-      [-2.4, -0.8, 0.8, 2.4].forEach(function (z) {
-        var win = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.8, 1.05), glassMat);
-        win.position.set(x, 2.05, z);
+      winZs.forEach(function (z) {
+        var win = new THREE.Mesh(new THREE.BoxGeometry(0.04, st.wh, 1.05), glassMat);
+        win.position.set(x, winY, z);
         g.add(win);
       });
     });
-    // raked windshield (thin box, top leans back) + rear window
-    var shield = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.0, 0.06), glassMat);
-    shield.position.set(0, 2.05, -3.52); shield.rotation.x = -0.12;
+    // raked windshield (thin box, top leans back) + rear window. The Volvo
+    // gets a taller windshield; the wipers sit on it either way.
+    var shieldH = st.ts ? 1.2 : 1.0;
+    var shield = new THREE.Mesh(new THREE.BoxGeometry(2.2, shieldH, 0.06), glassMat);
+    shield.position.set(0, winY, -3.52); shield.rotation.x = -0.12;
     g.add(shield);
-    var rearWin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.8, 0.06), glassMat);
-    rearWin.position.set(0, 2.05, 3.52); g.add(rearWin);
+    var rearWin = new THREE.Mesh(new THREE.BoxGeometry(2.0, st.wh, 0.06), glassMat);
+    rearWin.position.set(0, winY, 3.52); g.add(rearWin);
+    // windshield wipers — two arms on the glass, sweeping when it rains
+    var wipers = [];
+    [-0.55, 0.55].forEach(function (x) {
+      var wp = new THREE.Group();
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.75, 0.03), darkMat);
+      arm.position.y = 0.35; wp.add(arm);
+      wp.position.set(x, 1.6, -3.56);
+      wp.rotation.x = -0.12; // lie on the raked windshield
+      g.add(wp); wipers.push(wp);
+    });
+    g.userData.wipers = wipers;
     // front grille + chrome slats
     var grille = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.45, 0.1), darkMat);
     grille.position.set(0, 0.85, -3.52); g.add(grille);
@@ -649,6 +728,9 @@ import * as THREE from 'three';
     plateR.position.set(0, 0.55, 3.66); g.add(plateR);
     // headlights: chrome bezel + lamp; taillights red; indicators at the corners
     var headMat = new THREE.MeshBasicMaterial({ color: 0xfff7cc });
+    var tailMat = new THREE.MeshBasicMaterial({ color: 0x991b1b }); // shared:
+    // dim red while driving, flares bright when you brake (see updateDriver)
+    var revMat = new THREE.MeshBasicMaterial({ color: 0x444444 }); // reverse lamp
     var indMatL = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
     var indMatR = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
     [-0.85, 0.85].forEach(function (x) {
@@ -656,10 +738,12 @@ import * as THREE from 'three';
       bez.rotation.x = Math.PI / 2; bez.position.set(x, 0.95, -3.55); g.add(bez);
       var hl = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), headMat);
       hl.position.set(x, 0.95, -3.6); g.add(hl);
-      var tl = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+      var tl = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), tailMat);
       tl.position.set(x, 0.95, 3.55); g.add(tl);
     });
+    // reverse lamp (white, centre rear) — lights up in reverse gear
+    var rl = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), revMat);
+    rl.position.set(0, 0.95, 3.55); g.add(rl);
     [-1.15, 1.15].forEach(function (x) {
       var indF = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), x < 0 ? indMatL : indMatR);
       indF.position.set(x, 1.25, -3.55); g.add(indF);
@@ -685,6 +769,8 @@ import * as THREE from 'three';
     g.add(doorG);
     g.userData.door = doorG;
     g.userData.headMat = headMat;
+    g.userData.tailMat = tailMat;
+    g.userData.revMat = revMat;
     g.userData.indMatL = indMatL;
     g.userData.indMatR = indMatR;
     // cab dashboard + steering wheel (seen from the CAB camera) — built like
@@ -756,9 +842,14 @@ import * as THREE from 'three';
       var back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.08), seatMat);
       back.position.set(sp[0], 0.95, sp[1] + 0.24); g.add(back);
     });
-    // wheels: tire + silver hub + centre cap, grouped so rotation.x spins them
+    // wheels: tire + silver hub + centre cap, grouped so rotation.x spins them.
+    // The sleeper is a 6-wheeler (3 axles) like the sheet's multi-axle bus;
+    // the extra axle goes at the back, so the front pair (wi 0,1) still steers.
     var wg = [];
-    [[-1.2, -2.3], [1.2, -2.3], [-1.2, 2.3], [1.2, 2.3]].forEach(function (p) {
+    var wheelPos = [[-1.2, -2.3], [1.2, -2.3]];
+    if (st.ax >= 3) wheelPos.push([-1.2, 0.9], [1.2, 0.9]);
+    wheelPos.push([-1.2, 2.3], [1.2, 2.3]);
+    wheelPos.forEach(function (p) {
       var wgrp = new THREE.Group();
       var tire = solid(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.3, 14), tireMat));
       tire.rotation.z = Math.PI / 2; wgrp.add(tire);
@@ -781,12 +872,28 @@ import * as THREE from 'three';
     var cab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 1.8),
       new THREE.MeshLambertMaterial({ color: 0x1a202c }));
     cab.position.set(0, 1.05, -0.2); g.add(cab);
+    // windshield (dark glass, raked like a real car) + side windows
+    var shield = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.45),
+      new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+    shield.position.set(0, 1.05, -1.12); shield.rotation.x = -0.25; g.add(shield);
+    // headlights (white, shared material — they switch on with lightsOn)
+    // and taillights (red) at the corners, like a real car
+    [-0.6, 0.6].forEach(function (x) {
+      var hl = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), carHeadMat);
+      hl.position.set(x, 0.55, -1.82); g.add(hl);
+      var tl = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), carTailMat);
+      tl.position.set(x, 0.55, 1.82); g.add(tl);
+    });
     var wheelGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.24, 10);
     var wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    var wg = [];
     [[-0.85, -1.2], [0.85, -1.2], [-0.85, 1.2], [0.85, 1.2]].forEach(function (p) {
+      var wgrp = new THREE.Group();
       var w = new THREE.Mesh(wheelGeo, wheelMat);
-      w.rotation.z = Math.PI / 2; w.position.set(p[0], 0.32, p[1]); g.add(w);
+      w.rotation.z = Math.PI / 2; wgrp.add(w);
+      wgrp.position.set(p[0], 0.32, p[1]); g.add(wgrp); wg.push(wgrp);
     });
+    g.userData.wheels = wg; // updateTraffic spins these with the car's speed
     return g;
   }
 
@@ -1041,10 +1148,9 @@ import * as THREE from 'three';
   // ANIMATION SYSTEM — one reusable pose driver for every humanoid.
   // poseHumanoid(h, clip, t, opt): sets all joint rotations for the clip at
   // time t (seconds). Clips: idle, walk, run, sit, wave, phone, steer,
-  // celebrate, look. opt.steer = steering angle (-1..1) for the steer clip;
-  // opt.lookYaw = head yaw for look/idle. Joints are set every frame, so the
-  // walk/run/idle motion is continuous; clip changes blend because walk/idle
-  // both pass through the neutral pose.
+  // celebrate, look, ticket, lookout, sleep. opt.steer = steering angle
+  // (-1..1) for the steer clip; opt.lookYaw = head yaw for look/idle;
+  // opt.yaw = window side for the lookout clip.
   // ============================================================================
   function poseHumanoid(h, clip, t, opt) {
     var J = h.userData.joints;
@@ -1098,6 +1204,31 @@ import * as THREE from 'three';
       J.shoulderL.rotation.z = 2.6; J.shoulderR.rotation.z = -2.6;
       J.elbowL.rotation.x = -0.3; J.elbowR.rotation.x = -0.3;
       J.spine.position.y = 0.85 + Math.abs(s(w * 8)) * 0.12; // little jumps
+    } else if (clip === 'ticket') {
+      // conductor checks a ticket: right arm out holding it, left arm
+      // across the ticket bag, slight bow, eyes on the ticket
+      J.shoulderR.rotation.x = -1.25; J.elbowR.rotation.x = -0.25;
+      J.shoulderL.rotation.x = -0.5; J.elbowL.rotation.x = -1.1;
+      J.spine.rotation.x = 0.18;
+      J.neck.rotation.x = 0.25;
+    } else if (clip === 'lookout') {
+      // seated passenger gazing out the window: head turned to their
+      // window side (opt.yaw), one hand resting up by the glass
+      J.hipL.rotation.x = -1.45; J.hipR.rotation.x = -1.45;
+      J.kneeL.rotation.x = 1.35; J.kneeR.rotation.x = 1.35;
+      J.neck.rotation.y = opt.yaw || 0.7;
+      J.shoulderL.rotation.x = -0.5; J.elbowL.rotation.x = -0.9;
+      J.spine.rotation.x = 0.05;
+    } else if (clip === 'sleep') {
+      // seated passenger asleep: head drooped to one side, arms folded,
+      // spine slumped, slow breathing
+      J.hipL.rotation.x = -1.45; J.hipR.rotation.x = -1.45;
+      J.kneeL.rotation.x = 1.35; J.kneeR.rotation.x = 1.35;
+      J.neck.rotation.x = 0.35; J.neck.rotation.z = 0.3;
+      J.shoulderL.rotation.x = -0.9; J.shoulderR.rotation.x = -0.9;
+      J.elbowL.rotation.x = -1.2; J.elbowR.rotation.x = -1.2;
+      J.spine.rotation.x = 0.22;
+      J.spine.position.y = 0.85 + s(w * 0.8) * 0.01;
     } else { // idle: breathing, sway, occasional look-around
       var br = s(w * 1.6) * 0.02;
       J.spine.rotation.x = br;
@@ -1125,6 +1256,7 @@ import * as THREE from 'three';
       new THREE.MeshLambertMaterial({ color: color }));
     box.position.y = h / 2; g.add(box);
     var winMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
+    windowMats.push(winMat); // applyWeather lights these at night, darkens them by day
     for (var f = 0; f < Math.floor(h / 2); f++) {
       for (var i = 0; i < Math.max(1, Math.floor(w / 2)); i++) {
         var win = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.6), winMat);
@@ -1181,6 +1313,13 @@ import * as THREE from 'three';
     if (hemiLight) hemiLight.intensity = cfg.hemi;
     if (roadMat) roadMat.color.setHex(state.weather === 'rain' ? 0x1f2937 : 0x2f3540);
     if (rainPoints) rainPoints.visible = state.weather === 'rain';
+    // building windows: dark glass by day, warm and lit after dark. Street
+    // lamps glow only after dark — by day they are plain grey heads.
+    var lit = state.timeOfDay === 'night' || state.timeOfDay === 'evening';
+    windowMats.forEach(function (m) { m.color.setHex(lit ? 0xfde68a : 0x334155); });
+    lampMats.forEach(function (m) { m.color.setHex(lit ? 0xfde68a : 0x64748b); });
+    carHeadMat.color.setHex(state.lightsOn ? 0xffffff : 0x9ca3af);
+    carTailMat.color.setHex(state.lightsOn ? 0xef4444 : 0x991b1b);
     state.lightsOn = state.timeOfDay === 'night' ? true : state.lightsOn;
   }
 
@@ -1259,7 +1398,9 @@ import * as THREE from 'three';
     pathSegs.forEach(function (sg) {
       var midX = (sg.ax + sg.bx) / 2, midZ = (sg.az + sg.bz) / 2;
       var heading = Math.atan2(sg.dx, -sg.dz);
-      roadSeg(midX, midZ, heading, sg.len, 14);
+      // +2 length so the rectangles overlap at the curve joints and no
+      // green sliver shows between two segments of a bend
+      roadSeg(midX, midZ, heading, sg.len + 2, 14);
       // centre dashes along the segment
       var n = Math.floor(sg.len / 10);
       for (var di = 0; di < n; di++) {
@@ -1269,7 +1410,7 @@ import * as THREE from 'three';
       // yellow edge lines
       [-6.8, 6.8].forEach(function (off) {
         var ex = midX + (-sg.dz) * off, ez = midZ + sg.dx * off;
-        var edge = new THREE.Mesh(new THREE.PlaneGeometry(0.25, sg.len),
+        var edge = new THREE.Mesh(new THREE.PlaneGeometry(0.25, sg.len + 2),
           new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
         edge.rotation.x = -Math.PI / 2;
         edge.rotation.z = heading;
@@ -1364,10 +1505,29 @@ import * as THREE from 'three';
       var lz = 10 + Math.floor(li / 2) * 24;
       pole.position.set(lx, 2.25, lz);
       scene.add(pole);
-      var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xfde68a }));
+      var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), lampHeadMat);
       lamp.position.set(lx, 4.6, lz);
       scene.add(lamp);
+    }
+    // streetlights along the whole route (not just the stand): a pole, an
+    // arm reaching over the road, and a lamp head that glows after dark
+    for (var s2 = 150; s2 < pathTotal - 60; s2 += 150) {
+      var pp = pointAtPath(s2);
+      if (chowk && Math.hypot(pp.x - chowk.x, pp.z - chowk.z) < chowk.r + 14) continue;
+      var lside = (Math.floor(s2 / 150) % 2 === 0) ? -1 : 1;
+      var lx2 = pp.x + Math.cos(pp.heading) * lside * 9;
+      var lz2 = pp.z + Math.sin(pp.heading) * lside * 9;
+      var spole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 5, 6),
+        new THREE.MeshLambertMaterial({ color: 0x334155 }));
+      spole.position.set(lx2, 2.5, lz2);
+      scene.add(spole);
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.8),
+        new THREE.MeshLambertMaterial({ color: 0x334155 }));
+      arm.position.set(lx2 - Math.cos(pp.heading) * lside * 0.9, 4.9, lz2 - Math.sin(pp.heading) * lside * 0.9);
+      scene.add(arm);
+      var lhead = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), lampHeadMat);
+      lhead.position.set(lx2 - Math.cos(pp.heading) * lside * 1.8, 4.85, lz2 - Math.sin(pp.heading) * lside * 1.8);
+      scene.add(lhead);
     }
 
     // ---- BUS STAND: roof, bays, 3 parked buses ----
@@ -1404,7 +1564,7 @@ import * as THREE from 'three';
     var bayX = [-7, 0, 7];
     save.stand.forEach(function (busId, i) {
       var bs = busById(busId);
-      var bus = makeBus(bs.color, bs.stripe, route.name);
+      var bus = makeBus(bs.color, bs.stripe, route.name, bs.style);
       bus.position.set(bayX[i], 0, 5);
       scene.add(bus);
       parkedBuses.push({ spec: bs, mesh: bus, x: bayX[i], z: 5, taken: false });
@@ -1485,7 +1645,8 @@ import * as THREE from 'three';
       crossStreets.forEach(function (cs) { if (Math.abs(s - cs.s) < 18) nearCrossing = true; });
       if (nearCrossing) continue;
       var side = Math.random() < 0.5 ? -1 : 1;
-      var off = rand(14, 30);
+      var off = rand(20, 34); // kept back from the road so a building never
+      // crowds the passenger's window or the driver's view (was 14–30)
       var bx = p.x + Math.cos(p.heading) * side * off;
       var bz = p.z + Math.sin(p.heading) * side * off;
       var kind = Math.random();
@@ -1614,7 +1775,9 @@ import * as THREE from 'three';
     // (arc-length position s, direction +1 with the route or -1 against it)
     var botColors = [0x0ea5e9, 0xf59e0b, 0x8b5cf6, 0xec4899, 0x14b8a6];
     for (var b = 0; b < 5; b++) {
-      var bb = makeBus(botColors[b % botColors.length], 0xf8fafc, 'CITY BUS');
+      // bot buses use the garage's own body styles, so traffic is a mix of
+      // city, deluxe, tourist, state and sleeper shapes, not clones
+      var bb = makeBus(botColors[b % botColors.length], 0xf8fafc, 'CITY BUS', BUSES[b % BUSES.length].style);
       var dirB = b % 2 === 0 ? 1 : -1;
       var sB = Math.random() * pathTotal;
       var pB = pointAtPath(sB);
@@ -1864,6 +2027,7 @@ import * as THREE from 'three';
   function showEnd(title, line, rows) {
     state.mode = 'end';
     removeDriver();
+    removeConductor();
     clearSeatedPassengers();
     alighting.forEach(function (a) { if (a.mesh.parent) a.mesh.parent.remove(a.mesh); });
     alighting = [];
@@ -1949,6 +2113,26 @@ import * as THREE from 'three';
     if (driverMesh && driverMesh.parent) driverMesh.parent.remove(driverMesh);
     driverMesh = null;
   }
+  // ---- conductor by the door (checks tickets when it opens) ----
+  var conductorMesh = null;
+  function addConductorToBus(busMesh) {
+    removeConductor();
+    var spec = {};
+    var base = Math.random() < 0.5 ? ARCHETYPES.conductorM : ARCHETYPES.conductorF;
+    for (var k in base) spec[k] = base[k];
+    spec.skin = pick(SKIN_TONES);
+    conductorMesh = makeHumanoid(spec);
+    // stands by the door (left side, just behind it) facing the aisle,
+    // so the driver and the boarding passengers both see them
+    conductorMesh.position.set(-0.85, -0.15, -1.0);
+    conductorMesh.rotation.y = Math.PI / 2; // face the aisle (+X)
+    poseHumanoid(conductorMesh, 'idle', 0);
+    busMesh.add(conductorMesh);
+  }
+  function removeConductor() {
+    if (conductorMesh && conductorMesh.parent) conductorMesh.parent.remove(conductorMesh);
+    conductorMesh = null;
+  }
   // ---- seated passengers inside the bus ----
   function seatPassenger(pax, alightStopIdx) {
     var free = null;
@@ -1962,7 +2146,11 @@ import * as THREE from 'three';
     pax.position.set(seat.x, -0.15, seat.z);
     pax.rotation.y = Math.PI; // face forward
     poseHumanoid(pax, 'sit', 0);
-    seatedPassengers.push({ mesh: pax, seat: free, alight: alightStopIdx });
+    // each rider has their own habit, like the sheet's passenger actions:
+    // most just sit, some gaze out their window, some sleep, some use a phone
+    var r = Math.random();
+    var clip = r < 0.6 ? 'sit' : (r < 0.8 ? 'lookout' : (r < 0.9 ? 'sleep' : 'phone'));
+    seatedPassengers.push({ mesh: pax, seat: free, alight: alightStopIdx, clip: clip, yaw: seat.x < 0 ? 0.7 : -0.7 });
     return true;
   }
   function clearSeatedPassengers() {
@@ -1990,6 +2178,7 @@ import * as THREE from 'three';
       state.lightsOn = state.timeOfDay === 'night';
       wheels = playerBus.userData.wheels;
       addDriverToBus(playerBus); // the driver character sits in the cab
+      addConductorToBus(playerBus); // the conductor stands by the door
       state.mode = 'driving';
       $('drive-controls').classList.remove('hidden');
       $('hud-drive-row').classList.remove('hidden');
@@ -2031,6 +2220,7 @@ import * as THREE from 'three';
     rideBus = { mesh: parked.mesh, lane: 3.5, dir: -1, speed: 0, kind: 'bus', halt: null };
     rideBus.mesh.position.set(3.5, 0, parked.z);
     addDriverToBus(rideBus.mesh); // the bot driver sits in the cab
+    addConductorToBus(rideBus.mesh); // the bot conductor stands by the door
     playerMesh.visible = false;
     $('seat-panel').classList.add('hidden');
     $('ticket-panel').classList.add('hidden');
@@ -2121,10 +2311,14 @@ import * as THREE from 'three';
     if (driverMesh && driverMesh.visible) {
       poseHumanoid(driverMesh, 'steer', now, { steer: state.steer || 0, lookYaw: state.indicator ? (state.indicator === 1 ? -0.5 : 0.5) : 0 });
     }
-    // seated riders breathe and look around
+    // the conductor checks tickets while the door is open, idles otherwise
+    if (conductorMesh && conductorMesh.visible) {
+      poseHumanoid(conductorMesh, state.doorsOpen ? 'ticket' : 'idle', now);
+    }
+    // seated riders breathe and look around — each keeps their own habit
     seatedPassengers.forEach(function (sp) {
       if (camera && sp.mesh.parent && Math.abs(sp.mesh.getWorldPosition(new THREE.Vector3()).z - camera.position.z) < 80) {
-        poseHumanoid(sp.mesh, 'sit', now);
+        poseHumanoid(sp.mesh, sp.clip || 'sit', now, { yaw: sp.yaw || 0 });
       }
     });
   }
@@ -2247,7 +2441,10 @@ import * as THREE from 'three';
     // A bus turns its wheels sharply at low speed and less at high speed
     // (like a real vehicle), so the rate is high when slow, capped when fast.
     var steerRate = clamp(2.2 - Math.abs(state.speed) * 0.03, 0.6, 2.2);
-    state.heading += state.steer * steerRate * dt * (state.speed < 0 ? -1 : 1);
+    // a stopped bus does not rotate (no tank turn): the heading only
+    // changes while the bus is rolling
+    var turnFactor = clamp(Math.abs(state.speed) / 2, 0, 1);
+    state.heading += state.steer * steerRate * dt * (state.speed < 0 ? -1 : 1) * turnFactor;
     if (state.heading > Math.PI) state.heading -= Math.PI * 2;
     if (state.heading < -Math.PI) state.heading += Math.PI * 2;
     if (gas) state.speed += busSpec.accel * dt;
@@ -2255,9 +2452,18 @@ import * as THREE from 'three';
     if (rev) state.speed -= 10 * dt; // reverse gear
     if (hb) { state.speed -= state.speed * 6 * dt; if (Math.abs(state.speed) < 0.3) state.speed = 0; } // handbrake
     state.speed -= state.speed * 0.25 * dt;
-    if (!onRoad(state.x, state.z) && state.speed > 0) state.speed = Math.max(0, state.speed - 10 * dt); // off-road drag (fields, pavements) — never reverses the bus
+    if (!onRoad(state.x, state.z) && state.speed > 0) {
+      // off-road drag: fields and pavements slow the bus, and the faster it
+      // goes off-road the harder it bogs down — the road stays the fast way.
+      // Capped at 40% of the bus's top speed, so no bus (even the slowest)
+      // can ever get trapped in a field.
+      state.speed = Math.max(0, state.speed - 10 * dt);
+      var offCap = busSpec.topSpeed * 0.4;
+      if (state.speed > offCap) state.speed = Math.max(offCap, state.speed - 25 * dt);
+    }
     state.speed = clamp(state.speed, -8, busSpec.topSpeed);
     state.gear = state.speed < -0.3 ? 'R' : state.speed > 0.3 ? 'D' : (hb ? 'N' : 'P');
+    state.braking = brake; // the brake lights read this every frame
     $('hud-gear').textContent = state.gear;
     state.x += Math.sin(state.heading) * state.speed * dt;
     state.z -= Math.cos(state.heading) * state.speed * dt;
@@ -2271,6 +2477,17 @@ import * as THREE from 'three';
       // front wheels (z = -2.3) visibly turn with the steering
       if (wi < 2) w.rotation.y = state.steer * 0.4;
     });
+    // ---- body dynamics: a real bus is not a rigid box. It leans into a
+    // turn, dives when you brake, squats when you pull away, and rides on
+    // soft suspension that bobs gently with speed. ----
+    var spd01 = clamp(Math.abs(state.speed) / busSpec.topSpeed, 0, 1);
+    var accel = (state.speed - (state.prevSpeed || 0)) / Math.max(dt, 0.001);
+    state.prevSpeed = state.speed;
+    var rollTarget = -state.steer * spd01 * 0.05; // lean into the turn
+    var pitchTarget = clamp(-accel * 0.0012, -0.03, 0.035); // dive on brake, squat on pull-away
+    playerBus.rotation.z = lerp(playerBus.rotation.z || 0, rollTarget, dt * 4);
+    playerBus.rotation.x = lerp(playerBus.rotation.x || 0, pitchTarget, dt * 4);
+    playerBus.position.y = Math.sin(performance.now() / 110) * 0.025 * spd01; // suspension bob
     // the cab steering wheel + dashboard gauges follow the driving
     if (playerBus.userData.cabWheel) playerBus.userData.cabWheel.rotation.z = -state.steer * 1.9;
     updateCabGauges(playerBus, state.speed);
@@ -2297,8 +2514,12 @@ import * as THREE from 'three';
         if (ahead && distToStop < 90 && state.speed > 8) {
           setMsg('🛑 ' + s.name + ' ahead — slow down to pick up passengers!');
         }
-        if (ahead && distToStop < 45 && state.speed < 28 && state.speed > 0) {
-          state.speed -= 40 * dt; // brake assist near a stop (stronger than the gas)
+        if (ahead && distToStop < 45 && state.speed > 8 && state.speed < 28 && !gas) {
+          state.speed -= 12 * dt; // brake assist near a stop — gentle, and
+          // weaker than every bus's gas (min accel 15), so the driver can
+          // always overpower it. It only applies while coasting above 8:
+          // a bus already crawling must never be pinned to 0 near a stop
+          // (soft-lock). Below 8 the driver is maneuvering, not overshooting.
           if (state.speed < 0) state.speed = 0;
         }
         if (distToStop < 18 && state.speed < 8) {
@@ -2387,6 +2608,20 @@ import * as THREE from 'three';
       playerBus.userData.indMatL.color.setHex(state.indicator === 1 && blinkOn ? 0xf59e0b : 0x444444);
       playerBus.userData.indMatR.color.setHex(state.indicator === 2 && blinkOn ? 0xf59e0b : 0x444444);
     }
+    // brake lights flare when you brake; the reverse lamp lights in R
+    if (playerBus.userData.tailMat) {
+      playerBus.userData.tailMat.color.setHex(state.braking ? 0xff1a1a : 0x991b1b);
+    }
+    if (playerBus.userData.revMat) {
+      playerBus.userData.revMat.color.setHex(state.gear === 'R' ? 0xffffff : 0x444444);
+    }
+    // wipers sweep when it rains, parked flat otherwise
+    if (playerBus.userData.wipers) {
+      var wsw = state.weather === 'rain' ? Math.sin(performance.now() / 350) * 0.55 : 0;
+      playerBus.userData.wipers.forEach(function (wp, wi) {
+        wp.rotation.z = wi === 0 ? wsw : -wsw;
+      });
+    }
     if (headlight) {
       var hfx = Math.sin(state.heading), hfz = -Math.cos(state.heading);
       headlight.position.set(state.x + hfx * 3, 1.4, state.z + hfz * 3);
@@ -2440,7 +2675,7 @@ import * as THREE from 'three';
       else b.speed = lerp(b.speed, target, dt * 2);
       if (distStop < 6 && distStop > -2 && b.speed < 1.5) {
         b.halt = { stop: nextStop, t: 0 };
-        setMsg('🛑 ' + nextStop.name + ' — 2 minute halt. Chai peelo!');
+        setMsg('🛑 ' + nextStop.name + ' — short halt. Chai peelo!');
       }
     } else {
       b.speed = lerp(b.speed, target, dt * 2);
@@ -2450,6 +2685,16 @@ import * as THREE from 'three';
     // keep left (Indian traffic): the bus rides on the left side of the road
     b.mesh.position.set(bp.x + Math.cos(bp.heading) * -3.5, 0, bp.z + Math.sin(bp.heading) * -3.5);
     b.mesh.rotation.y = bp.heading;
+    // the ride bus leans gently into bends too, and its wipers sweep in rain
+    var dh = bp.heading - (b.prevHeading === undefined ? bp.heading : b.prevHeading);
+    if (dh > Math.PI) dh -= Math.PI * 2;
+    if (dh < -Math.PI) dh += Math.PI * 2;
+    b.prevHeading = bp.heading;
+    b.mesh.rotation.z = lerp(b.mesh.rotation.z || 0, clamp(-dh * 8, -0.04, 0.04), dt * 3);
+    if (b.mesh.userData.wipers) {
+      var wsw2 = state.weather === 'rain' ? Math.sin(performance.now() / 350) * 0.55 : 0;
+      b.mesh.userData.wipers.forEach(function (wp, wi) { wp.rotation.z = wi === 0 ? wsw2 : -wsw2; });
+    }
     if (b.mesh.userData.cabWheel) b.mesh.userData.cabWheel.rotation.z = 0;
     updateCabGauges(b.mesh, b.speed);
     state.rideDist = (state.rideDist || 0) + (b.speed * dt) / pathTotal * route.km;
@@ -2470,6 +2715,8 @@ import * as THREE from 'three';
       headlight.intensity = state.lightsOn ? 2.2 : 0;
     }
     $('hud-speed').textContent = Math.round(b.speed * 2.2) + ' km/h';
+    $('hud-gear').textContent = b.speed > 0.3 ? 'D' : 'P'; // the bot bus's
+    // gear — without this the HUD stays on P while the bus is moving
     $('hud-fare').textContent = '—';
     $('hud-dist').textContent = ((1 - progress) * route.km).toFixed(1) + ' km';
     $('hud-stop').textContent = 'RIDING · ' + route.stops[route.stops.length - 1] + ' BOUND';
@@ -2496,6 +2743,7 @@ import * as THREE from 'three';
     });
     cars.forEach(function (c) {
       moveOnPath(c, c.kind === 'bike' ? 1.5 : 3.5);
+      if (c.mesh.userData.wheels) c.mesh.userData.wheels.forEach(function (w) { w.rotation.x += c.speed * dt * 0.6; });
     });
     clouds.forEach(function (cl) {
       cl.position.x += dt * 1.2;
@@ -2570,11 +2818,22 @@ import * as THREE from 'three';
       }
     } else if (state.mode === 'passenger' && rideBus) {
       var rb = rideBus.mesh.position;
+      var rh = rideBus.mesh.rotation.y; // the bus's heading (it turns)
+      // bus-local axes in world space: right = (cos h, sin h),
+      // forward = (sin h, -cos h). The seat offset and the look direction
+      // must rotate WITH the bus, or the camera ends up on the wrong side
+      // (or inside a wall) as soon as the bus turns.
+      var rrx = Math.cos(rh), rrz = Math.sin(rh);
+      var fwx = Math.sin(rh), fwz = -Math.cos(rh);
       if (state.camView === 0) {
         // your seat — window or aisle, as picked on the seat map
         var so = SEATS[state.seat].off;
-        camera.position.set(rb.x + so[0], so[1], rb.z + so[2]);
-        camera.lookAt(rb.x + (so[0] < 0 ? -14 : 14), 1.2, rb.z - 14);
+        var cwx = rb.x + rrx * so[0] - fwx * so[2];
+        var cwz = rb.z + rrz * so[0] - fwz * so[2];
+        camera.position.set(cwx, so[1], cwz);
+        var side = so[0] < 0 ? -1 : 1;
+        camera.lookAt(cwx + rrx * side * 14 + fwx * 14, 1.2,
+          cwz + rrz * side * 14 + fwz * 14);
       } else if (state.camView === 1) {
         camera.position.set(rb.x, 2.1, rb.z - 2.2);
         camera.lookAt(rb.x, 1.6, rb.z - 40);
@@ -3020,11 +3279,15 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.21.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.24.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
     parkedNames: function () { return parkedBuses.map(function (pb) { return pb.spec.name; }); },
+    busStyles: function () { return BUSES.map(function (b) { return { id: b.id, style: b.style, wheels: b.style.ax * 2 }; }); },
+    spawnBus: function (id, x, z) { var bs = busById(id); var m = makeBus(bs.color, bs.stripe, route.name, bs.style); m.position.set(x, 0, z); scene.add(m); return m.userData.wheels.length; },
+    conductor: function () { return conductorMesh ? { x: conductorMesh.position.x, z: conductorMesh.position.z, parent: !!conductorMesh.parent } : null; },
+    seatedClips: function () { return seatedPassengers.map(function (sp) { return sp.clip; }); },
     routeInfo: function () { return { length: route.length, pathTotal: pathTotal, stops: passengersAtStops.map(function (ps) { return { x: ps.x, z: ps.z, s: ps.s, name: ps.name }; }) }; },
     path: function () { return pathPoints.map(function (p) { return { x: p.x, z: p.z }; }); },
     chowk: function () { return chowk ? { x: chowk.x, z: chowk.z, r: chowk.r } : null; },
@@ -3040,6 +3303,14 @@ import * as THREE from 'three';
     },
     cam: function () { return camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null; },
     player: function () { return { x: state.px, z: state.pz }; },
+    playerBus: function () { return playerBus; },
+    setTimeOfDay: function (t) { state.timeOfDay = t; applyWeather(); },
+    setWeather: function (w) { state.weather = w; applyWeather(); },
+    headlightIntensity: function () { return headlight ? headlight.intensity : null; },
+    windowColor: function () { return windowMats.length ? windowMats[0].color.getHexString() : null; },
+    lampColor: function () { return lampHeadMat.color.getHexString(); },
+    streetlights: function () { return lampMats.length; },
+    carLights: function () { return { head: carHeadMat.color.getHexString(), tail: carTailMat.color.getHexString() }; },
     archetypes: function () { return Object.keys(ARCHETYPES); },
     people: function () {
       return {
@@ -3054,5 +3325,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.21.0 loaded');
+  log('BUS YATRA 2.24.0 loaded');
 })();
