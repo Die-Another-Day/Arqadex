@@ -68,6 +68,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>",
   },
+  // The manifest lives in metadata (not a raw <link> in <head>) so a
+  // game detail page can override it with that game's own manifest —
+  // installing from a detail page puts THAT game on the home screen.
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({
@@ -81,7 +85,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-        <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ARQADEX" />
