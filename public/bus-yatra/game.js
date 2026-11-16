@@ -1,13 +1,35 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.24.0
+// BUS YATRA — Indian Bus Simulator · v2.26.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
 // old Bollywood — short catchy hooks, the way the viral parts play on a
 // real bus. No copyrighted recordings.
 // ============================================================================
+
+// ---- GLB character models (real 3D humans, Ara 3D Gen / MakeHuman, CC0) ----
+// The old procedural humanoids (makeHumanoid) are kept as a fallback while
+// models load and if a file fails. A GLB humanoid exposes the same
+// makeHumanoid/poseHumanoid interface: userData.joints maps the game's joint
+// names onto the model's Mixamo bones, and userData.mixer plays the model's
+// embedded animation clips (idle / walk / sit).
+var GLTF = new GLTFLoader();
+var GLB_CACHE = {};   // name -> { scene, animations } (loaded GLB, never mutated)
+var GLB_READY = {};   // name -> true once loaded
+function loadGLB(name) {
+  if (GLB_CACHE[name]) return Promise.resolve(GLB_CACHE[name]);
+  return new Promise(function (resolve, reject) {
+    GLTF.load('models/' + name + '.glb', function (g) {
+      GLB_CACHE[name] = g; GLB_READY[name] = true; resolve(g);
+    }, undefined, function (err) { reject(err); });
+  });
+}
+// Preload the character models in the background (fire and forget).
+['driverM', 'conductorM', 'sareeWoman', 'studentM', 'officeM', 'trafficPolice', 'elderlyM', 'schoolBoy'].forEach(function (n) { loadGLB(n).catch(function () {}); });
 (function () {
   'use strict';
 
@@ -86,7 +108,7 @@ import * as THREE from 'three';
       station: 1, stops: ['SEHORE', 'DEWAS', 'INDORE'],
       zones: ['BHOPAL CITY', 'MALWA PLATEAU', 'DEWAS HILLS', 'INDORE CITY'] },
   ];
-  // Bus body styles (v2.24.0, from the sprite sheet): each of the 8 buses
+  // Bus body styles (v2.26.0, from the sprite sheet): each of the 8 buses
   // has its own silhouette — bh = body height, wn = windows per side,
   // wh = window height, ax = axles (3 = 6-wheel sleeper), ac = roof AC
   // pods, ts = tall windshield, lv = livery ('band' | 'double' | 'plain').
@@ -609,7 +631,7 @@ import * as THREE from 'three';
   // wheels with hubs, bumpers, number plates and a cab dashboard. Front = -Z.
   // Keeps the same userData contract: door (slides on z), headMat, indMatL/R,
   // wheels (spin on rotation.x).
-  // v2.24.0: each bus type gets its own silhouette from the sprite sheet via
+  // v2.26.0: each bus type gets its own silhouette from the sprite sheet via
   // `style` — body height, window count/height, axles, AC pods, tall
   // windshield and livery. The body stays 7 long and the cab/seats/door keep
   // their coordinates, so the driving, boarding and seat map are untouched;
@@ -917,8 +939,107 @@ import * as THREE from 'three';
   //   skin, hairColor, hair:'short'|'bun'|'ponytail'|'long'|'turban'|'cap'|'scarf'|'white',
   //   shirt, pants, shoes, height (0.65-1.1), build (0.9-1.2), belly, hunch,
   //   beard, moustache, glasses, backpack, ticketBag, phone, watch, stick, cap, badge, apron }
+  // ---- GLB character models (real 3D humans, Ara 3D Gen / MakeHuman, CC0) ----
+  // Archetype key -> GLB model file. Only archetypes with a good match get a
+  // model; the rest fall back to the procedural humanoid below. Female
+  // archetypes without a female GLB (driverF, conductorF, officeF, studentF,
+  // schoolGirl) stay procedural for now — a second batch of female models
+  // is planned.
+  var GLB_FOR = {
+    driverM: 'driverM',
+    conductorM: 'conductorM',
+    sareeWoman: 'sareeWoman', salwarWoman: 'sareeWoman', middleF: 'sareeWoman', elderlyF: 'sareeWoman',
+    studentM: 'studentM', traveller: 'studentM',
+    officeM: 'officeM',
+    trafficPolice: 'trafficPolice', securityGuard: 'trafficPolice',
+    elderlyM: 'elderlyM', kurtaMan: 'elderlyM',
+    schoolBoy: 'schoolBoy', child: 'schoolBoy',
+  };
+  // Game clip name -> GLB animation clip name (Ara 3D Gen names).
+  var GLB_CLIP = {
+    idle: 'Idle', walk: 'Walk', run: 'Walk',
+    sit: 'Sit (passenger)', lookout: 'Look around', sleep: 'Sit (passenger)',
+    phone: 'Phone call', wave: 'Idle', celebrate: 'Idle', look: 'Look around',
+    ticket: 'Idle', steer: 'Drive car',
+  };
+  var GLB_MIXERS = []; // active AnimationMixers, updated every frame in loop()
+  function findBone(root, name) {
+    var found = null;
+    root.traverse(function (o) { if (!found && o.isBone && o.name === name) found = o; });
+    return found;
+  }
+  // Rendered height of each GLB in metres (verified by the generator;
+  // the mesh geometry is stored at ~0.25 scale while the skeleton renders
+  // at full size, so the geometry bounding box alone understates the
+  // height by ~4x — never scale from the geometry box alone).
+  var GLB_HEIGHT = { driverM: 1.79, conductorM: 1.76, sareeWoman: 1.62, studentM: 1.61, officeM: 1.82, trafficPolice: 1.80, elderlyM: 1.59, schoolBoy: 1.26 };
+  function makeGLBHumanoid(modelName, spec) {
+    var g = GLB_CACHE[modelName];
+    if (!g) return null;
+    // SkeletonUtils.clone (not a plain .clone()) — a plain clone does not
+    // re-bind skinned meshes to the cloned skeleton, so the model renders
+    // collapsed/invisible.
+    var m = SkeletonUtils.clone(g.scene);
+    // normalise: scale to the game's character height and shift the feet
+    // onto y = 0. The geometry box gives the pre-skinning size; the
+    // skeleton renders ~4x larger, so the scale and shift are derived
+    // from the model's verified rendered height, not the geometry box.
+    var bb = new THREE.Box3().setFromObject(m);
+    var geoH = bb.getSize(new THREE.Vector3()).y;
+    var modelH = GLB_HEIGHT[modelName] || 1.7;
+    var targetH = (spec.height || 1) * 1.7;
+    var k = targetH / modelH;                 // scale for the whole model
+    var ratio = geoH > 0.01 ? modelH / geoH : 1; // skeleton vs geometry scale
+    var ctr = bb.getCenter(new THREE.Vector3());
+    m.scale.set(k, k, k);
+    m.position.set(-ctr.x * ratio * k, -bb.min.y * ratio * k, -ctr.z * ratio * k);
+    var grp = new THREE.Group();
+    grp.add(m);
+    // map the game's joint names onto the model's Mixamo bones
+    var J = {
+      spine: findBone(m, 'Spine') || findBone(m, 'Spine1'),
+      neck: findBone(m, 'Neck'),
+      head: findBone(m, 'Head'),
+      shoulderL: findBone(m, 'LeftArm'), shoulderR: findBone(m, 'RightArm'),
+      elbowL: findBone(m, 'LeftForeArm'), elbowR: findBone(m, 'RightForeArm'),
+      hipL: findBone(m, 'LeftUpLeg'), hipR: findBone(m, 'RightUpLeg'),
+      kneeL: findBone(m, 'LeftLeg'), kneeR: findBone(m, 'RightLeg'),
+    };
+    var mixer = new THREE.AnimationMixer(m);
+    var clips = {};
+    g.animations.forEach(function (a) { clips[a.name] = a; });
+    grp.userData.joints = J;
+    grp.userData.isGLB = true;
+    grp.userData.mixer = mixer;
+    grp.userData.clips = clips;
+    grp.userData.curClip = null;
+    grp.userData.curAction = null;
+    grp.userData.model = modelName;
+    GLB_MIXERS.push(mixer);
+    m.traverse(function (o) { if (o.isMesh || o.isSkinnedMesh) o.castShadow = true; });
+    return grp;
+  }
+  function playGLBClip(h, clipName) {
+    var ud = h.userData;
+    if (!ud.mixer || !ud.clips) return;
+    var target = GLB_CLIP[clipName] || 'Idle';
+    var clip = ud.clips[target] || ud.clips['Idle'];
+    if (!clip) return;
+    if (ud.curClip === clip.name) return; // already playing this clip
+    if (ud.curAction) ud.curAction.stop();
+    var action = ud.mixer.clipAction(clip);
+    action.reset().setLoop(THREE.LoopRepeat, Infinity).play();
+    ud.curAction = action;
+    ud.curClip = clip.name;
+  }
   function makeHumanoid(spec) {
     spec = spec || {};
+    // real 3D model when one exists for this archetype and it has loaded;
+    // otherwise fall back to the procedural humanoid below
+    if (spec._key && GLB_FOR[spec._key] && GLB_READY[GLB_FOR[spec._key]]) {
+      var glb = makeGLBHumanoid(GLB_FOR[spec._key], spec);
+      if (glb) return glb;
+    }
     var skin = spec.skin !== undefined ? spec.skin : pick(SKIN_TONES);
     var hairC = spec.hairColor !== undefined ? spec.hairColor : pick(HAIR_COLORS);
     var build = spec.build || 1;
@@ -978,25 +1099,39 @@ import * as THREE from 'three';
       }
       if (spec.belly) mesh(new THREE.SphereGeometry(0.24 * build, 10, 8), shirtMat, 0, 0.12, 0.1, spine); // middle-age belly
     }
+    // v2.26.0: shoulders — a plain box torso reads as a plank. A rounded
+    // shoulder bar across the top gives every outfit a human silhouette,
+    // and a waist band breaks the torso into chest and hips.
+    mesh(new THREE.BoxGeometry(0.58 * build, 0.14, 0.32), shirtMat, 0, 0.44, 0, spine);
+    mesh(new THREE.BoxGeometry(0.5 * build, 0.07, 0.3), pantsMat, 0, -0.02, 0, spine); // waist
     // ---- neck + head ----
+    // v2.26.0: the face is the first thing a player reads, and the old one
+    // was invisible at game distance (0.018 eyes on a 0.16 head). The new
+    // face is bigger and higher-contrast — white sclera + dark iris, thick
+    // brows, a real nose and a wide mouth — so a character reads as a
+    // person, not a mannequin, from a few steps away. A short neck stops
+    // the head sitting straight on the torso.
     var neck = new THREE.Group(); neck.position.y = 0.52; spine.add(neck); J.neck = neck;
+    mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.1, 8), skinMat, 0, -0.02, 0, neck); // neck
     var head = new THREE.Group(); head.position.y = 0.16; neck.add(head); J.head = head;
-    mesh(new THREE.SphereGeometry(0.16, 12, 10), skinMat, 0, 0, 0, head);
-    // face: eyes, brows, nose, mouth, ears
-    var eyeMat = M(0x111111);
-    mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat, -0.06, 0.02, 0.145, head);
-    mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat, 0.06, 0.02, 0.145, head);
-    mesh(new THREE.BoxGeometry(0.05, 0.012, 0.01), hairMat, -0.06, 0.06, 0.15, head);
-    mesh(new THREE.BoxGeometry(0.05, 0.012, 0.01), hairMat, 0.06, 0.06, 0.15, head);
-    var nose = mesh(new THREE.ConeGeometry(0.02, 0.05, 6), skinMat, 0, -0.02, 0.155, head);
+    var skull = mesh(new THREE.SphereGeometry(0.16, 12, 10), skinMat, 0, 0, 0, head);
+    skull.scale.set(0.94, 1.08, 0.98); // a slightly taller, narrower head
+    // face: big eyes (white + dark iris), thick brows, nose, wide mouth, ears
+    var scleraMat = M(0xf8fafc), irisMat = M(0x1a1a1a);
+    [-0.06, 0.06].forEach(function (x) {
+      mesh(new THREE.SphereGeometry(0.032, 8, 8), scleraMat, x, 0.03, 0.135, head);
+      mesh(new THREE.SphereGeometry(0.016, 8, 8), irisMat, x, 0.03, 0.16, head);
+      mesh(new THREE.BoxGeometry(0.065, 0.02, 0.012), hairMat, x, 0.085, 0.145, head); // brow
+    });
+    var nose = mesh(new THREE.ConeGeometry(0.028, 0.07, 6), skinMat, 0, -0.02, 0.155, head);
     nose.rotation.x = Math.PI / 2;
-    mesh(new THREE.BoxGeometry(0.05, 0.008, 0.01), M(0x7f1d1d), 0, -0.09, 0.15, head); // mouth
-    mesh(new THREE.SphereGeometry(0.03, 6, 6), skinMat, -0.16, 0, 0, head); // ears
-    mesh(new THREE.SphereGeometry(0.03, 6, 6), skinMat, 0.16, 0, 0, head);
-    if (spec.moustache) mesh(new THREE.BoxGeometry(0.09, 0.015, 0.015), hairMat, 0, -0.06, 0.15, head);
+    mesh(new THREE.BoxGeometry(0.075, 0.016, 0.012), M(0x991b1b), 0, -0.095, 0.145, head); // mouth
+    mesh(new THREE.SphereGeometry(0.03, 6, 6), skinMat, -0.155, 0, 0, head); // ears
+    mesh(new THREE.SphereGeometry(0.03, 6, 6), skinMat, 0.155, 0, 0, head);
+    if (spec.moustache) mesh(new THREE.BoxGeometry(0.1, 0.02, 0.018), hairMat, 0, -0.065, 0.15, head);
     if (spec.beard) {
-      mesh(new THREE.SphereGeometry(0.11, 8, 6), hairMat, 0, -0.1, 0.06, head); // beard
-      mesh(new THREE.BoxGeometry(0.09, 0.015, 0.015), hairMat, 0, -0.06, 0.15, head);
+      mesh(new THREE.SphereGeometry(0.115, 8, 6), hairMat, 0, -0.1, 0.06, head); // beard
+      mesh(new THREE.BoxGeometry(0.1, 0.02, 0.018), hairMat, 0, -0.065, 0.15, head);
     }
     if (spec.glasses) {
       var gm = new THREE.MeshBasicMaterial({ color: 0x111827 });
@@ -1008,13 +1143,13 @@ import * as THREE from 'three';
     var hair = spec.hair || (isF ? 'bun' : 'short');
     if (hair === 'short' || hair === 'white') {
       var hm = hair === 'white' ? M(0xd1d5db) : hairMat;
-      var cap = mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hm, 0, 0.02, -0.01, head);
+      var cap = mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.68), hm, 0, 0.02, -0.01, head);
       cap.scale.set(1, 0.9, 1);
     } else if (hair === 'bun') {
-      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat, 0, 0.02, -0.01, head);
+      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.68), hairMat, 0, 0.02, -0.01, head);
       mesh(new THREE.SphereGeometry(0.06, 8, 8), hairMat, 0, 0.06, -0.16, head);
     } else if (hair === 'ponytail') {
-      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat, 0, 0.02, -0.01, head);
+      mesh(new THREE.SphereGeometry(0.165, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.68), hairMat, 0, 0.02, -0.01, head);
       mesh(new THREE.CylinderGeometry(0.035, 0.02, 0.3, 6), hairMat, 0, -0.08, -0.18, head);
     } else if (hair === 'long') {
       var lg = mesh(new THREE.SphereGeometry(0.17, 12, 10), hairMat, 0, -0.02, -0.03, head);
@@ -1137,6 +1272,7 @@ import * as THREE from 'three';
     var key = pick(list);
     var spec = {};
     for (var k in ARCHETYPES[key]) spec[k] = ARCHETYPES[key][k];
+    spec._key = key; // lets makeHumanoid pick the matching GLB model
     // vary skin / shirt shade so no two look identical
     spec.skin = pick(SKIN_TONES);
     if (Math.random() < 0.4) spec.hairColor = pick(HAIR_COLORS);
@@ -1156,6 +1292,15 @@ import * as THREE from 'three';
     var J = h.userData.joints;
     if (!J) return;
     opt = opt || {};
+    // ---- real 3D model: play its motion-captured clip. The clip owns the
+    // bones while it plays, so bone-level poses (steer/ticket) are only
+    // used when the model has no matching clip. The 'Drive car' clip is
+    // driverM-only; other seated models fall back to 'Sit (passenger)'.
+    if (h.userData.isGLB) {
+      if (clip === 'steer' && !h.userData.clips['Drive car']) { playGLBClip(h, 'sit'); return; }
+      playGLBClip(h, clip);
+      return;
+    }
     var s = Math.sin, ph = h.userData.phase || 0;
     // neutral
     J.spine.rotation.set(0, 0, 0);
@@ -2099,8 +2244,10 @@ import * as THREE from 'three';
     removeDriver();
     var spec = {};
     for (var k in ARCHETYPES.driverM) spec[k] = ARCHETYPES.driverM[k];
+    spec._key = 'driverM';
     if (Math.random() < 0.3) {
       for (var k2 in ARCHETYPES.driverF) spec[k2] = ARCHETYPES.driverF[k2];
+      spec._key = 'driverF';
     }
     spec.skin = pick(SKIN_TONES);
     driverMesh = makeHumanoid(spec);
@@ -2119,6 +2266,7 @@ import * as THREE from 'three';
     removeConductor();
     var spec = {};
     var base = Math.random() < 0.5 ? ARCHETYPES.conductorM : ARCHETYPES.conductorF;
+    spec._key = base === ARCHETYPES.conductorM ? 'conductorM' : 'conductorF';
     for (var k in base) spec[k] = base[k];
     spec.skin = pick(SKIN_TONES);
     conductorMesh = makeHumanoid(spec);
@@ -3255,6 +3403,8 @@ import * as THREE from 'three';
       updateCamera(dt);
     }
     updatePeople(dt);
+    // advance every real-3D character's animation mixer
+    for (var mi = 0; mi < GLB_MIXERS.length; mi++) GLB_MIXERS[mi].update(dt);
     // rain falls around the active camera
     if (rainPoints && rainPoints.visible && camera) {
       var pos = rainPoints.geometry.attributes.position;
@@ -3279,13 +3429,42 @@ import * as THREE from 'three';
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.24.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.26.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
     parkedNames: function () { return parkedBuses.map(function (pb) { return pb.spec.name; }); },
     busStyles: function () { return BUSES.map(function (b) { return { id: b.id, style: b.style, wheels: b.style.ax * 2 }; }); },
     spawnBus: function (id, x, z) { var bs = busById(id); var m = makeBus(bs.color, bs.stripe, route.name, bs.style); m.position.set(x, 0, z); scene.add(m); return m.userData.wheels.length; },
+    spawnPerson: function (key, x, z, ry) { var spec = {}; for (var k in ARCHETYPES[key]) spec[k] = ARCHETYPES[key][k]; spec.skin = pick(SKIN_TONES); spec._key = key; var m = makeHumanoid(spec); m.position.set(x, 0, z); m.rotation.y = ry || 0; poseHumanoid(m, 'idle', 0); scene.add(m); return true; },
+    // v2.26.0 pipeline test: load a GLB (CesiumMan) and stand it in the scene.
+    loadGLB: loadGLB,
+    glbReady: function (name) { return !!GLB_READY[name]; },
+    // v2.26.0: inspect a GLB's structure (root transform + bounding box) so
+    // the loader can normalise scale/orientation before the model is used.
+    inspectGLB: function (name) {
+      return loadGLB(name).then(function (g) {
+        var s = g.scene;
+        var bb = new THREE.Box3().setFromObject(s);
+        var size = bb.getSize(new THREE.Vector3());
+        var ctr = bb.getCenter(new THREE.Vector3());
+        var kids = [];
+        s.children.forEach(function (c) {
+          kids.push({ name: c.name || c.type, type: c.type, pos: [c.position.x, c.position.y, c.position.z].map(function (v) { return +v.toFixed(3); }), rot: [c.rotation.x, c.rotation.y, c.rotation.z].map(function (v) { return +v.toFixed(3); }), scale: [c.scale.x, c.scale.y, c.scale.z].map(function (v) { return +v.toFixed(3); }) });
+        });
+        return { size: [size.x, size.y, size.z].map(function (v) { return +v.toFixed(3); }), center: [ctr.x, ctr.y, ctr.z].map(function (v) { return +v.toFixed(3); }), min: [bb.min.x, bb.min.y, bb.min.z].map(function (v) { return +v.toFixed(3); }), children: kids };
+      });
+    },
+    loadGLBTest: function (name, x, z) {
+      return loadGLB(name).then(function (g) {
+        var m = SkeletonUtils.clone(g.scene);
+        m.position.set(x, 0, z);
+        scene.add(m);
+        var bones = [];
+        m.traverse(function (o) { if (o.isBone) bones.push(o.name); });
+        return { bones: bones.slice(0, 20), anims: g.animations.map(function (a) { return a.name; }), height: new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()).y };
+      });
+    },
     conductor: function () { return conductorMesh ? { x: conductorMesh.position.x, z: conductorMesh.position.z, parent: !!conductorMesh.parent } : null; },
     seatedClips: function () { return seatedPassengers.map(function (sp) { return sp.clip; }); },
     routeInfo: function () { return { length: route.length, pathTotal: pathTotal, stops: passengersAtStops.map(function (ps) { return { x: ps.x, z: ps.z, s: ps.s, name: ps.name }; }) }; },
@@ -3325,5 +3504,5 @@ import * as THREE from 'three';
 
   buildLobby();
   requestAnimationFrame(loop);
-  log('BUS YATRA 2.24.0 loaded');
+  log('BUS YATRA 2.26.0 loaded');
 })();
