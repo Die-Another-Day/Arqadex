@@ -5,7 +5,7 @@ import { ArrowLeft, Maximize, Minimize, RefreshCw, Palette, Loader2, Trophy, Inf
 import CustomCursor from '@/components/CustomCursor'
 import { ThemeProvider, useTheme } from '@/components/theme'
 import { THEMES, recordPlay, getPlays, getVault, addVaultScore, getBestVaultScore, ARCADE_EVENT, type ThemeId, type VaultEntry } from '@/lib/arcade'
-import { GAMES } from '@/lib/games'
+import { GAMES, gameDetail } from '@/lib/games'
 
 /**
  * GameShell — the frame every game plays inside.
@@ -117,6 +117,15 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
   const [isFull, setIsFull] = useState(false)
   const [drawer, setDrawer] = useState(false)
   const [shared, setShared] = useState(false)
+  // ?tutorial=1 (from the game's store page): show the how-to-play
+  // guide over the game first. Read client-side: the play page is
+  // statically exported, so the server never sees the query string.
+  const [showTutorial, setShowTutorial] = useState(false)
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get('tutorial') === '1') setShowTutorial(true)
+    } catch {}
+  }, [])
 
   /* v2.6.4 — traffic lever: one-tap share from every game. The link copied
      is this play page itself, so a friend opens the same game instantly.
@@ -357,6 +366,31 @@ function ShellInner({ gameId, title, src }: { gameId: string; title: string; src
             <span className="text-xs tracking-[0.3em]" style={{ fontFamily: 'var(--font-orbitron)' }}>
               LOADING THE LAB…
             </span>
+          </div>
+        )}
+        {showTutorial && game && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }}>
+            <div className="max-w-md w-full rounded-2xl p-6" style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}>
+              <h2 className="font-black text-lg mb-1" style={{ fontFamily: 'var(--font-orbitron)', color: 'var(--accent)' }}>
+                HOW TO PLAY — {title}
+              </h2>
+              <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>A quick guide before you jump in.</p>
+              <ol className="space-y-2.5 mb-5">
+                {(gameDetail(game).howTo).map((step, i) => (
+                  <li key={i} className="flex gap-3 text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
+                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>{i + 1}</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <button
+                onClick={() => setShowTutorial(false)}
+                className="w-full py-3 rounded-xl font-black text-sm tracking-widest transition-transform hover:scale-[1.02] active:scale-95"
+                style={{ background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-orbitron)' }}
+              >
+                GOT IT — PLAY
+              </button>
+            </div>
           </div>
         )}
         <iframe
