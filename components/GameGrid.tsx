@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Lock, Search, Star, X, Zap } from 'lucide-react'
 import { GAMES, ALL_TAGS, type Game } from '@/lib/games'
-import { getFavorites, toggleFavorite, recordPlay, getBestVaultScore, ARCADE_EVENT } from '@/lib/arcade'
+import { getFavorites, toggleFavorite, getBestVaultScore, ARCADE_EVENT } from '@/lib/arcade'
 
 function ShapePreview({ game }: { game: Game }) {
   const c = game.color
@@ -224,12 +224,11 @@ export default function GameGrid() {
                       </div>
                       {game.url ? (
                         <a
-                          href={game.url}
-                          onClick={() => recordPlay(game.id)}
+                          href={`/games/${game.id}`}
                           className="block text-center py-2.5 rounded text-xs font-bold tracking-widest transition-transform hover:scale-[1.01]"
                           style={{ background: `${game.color}18`, border: `1px solid ${game.color}55`, color: game.color, fontFamily: 'var(--font-orbitron)' }}
                         >
-                          PLAY NOW ↗
+                          OPEN ↗
                         </a>
                       ) : (
                         <p className="text-center py-2.5 rounded text-xs tracking-widest" style={{ border: '1px dashed var(--border)', color: 'var(--muted)', fontFamily: 'var(--font-orbitron)' }}>
