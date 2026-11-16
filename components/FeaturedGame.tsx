@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion'
 import { ExternalLink, Zap, Cpu, Globe, Brain } from 'lucide-react'
 import { GAMES } from '@/lib/games'
-import { recordPlay } from '@/lib/arcade'
 
 const GAME = GAMES.find((g) => g.id === 'protocol-zero')!
 
@@ -80,12 +79,11 @@ export default function FeaturedGame() {
             </div>
             <div className="mt-auto">
               <a
-                href={GAME.url}
-                onClick={() => recordPlay(GAME.id)}
+                href={`/games/${GAME.id}`}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-lg text-sm font-bold tracking-widest transition-transform hover:scale-[1.02]"
                 style={{ background: GAME.color, color: '#0a0a12', fontFamily: 'var(--font-orbitron)' }}
               >
-                PLAY NOW <ExternalLink className="w-4 h-4" />
+                OPEN <ExternalLink className="w-4 h-4" />
               </a>
             </div>
           </div>
