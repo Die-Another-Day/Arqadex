@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.26.0
+// BUS YATRA — Indian Bus Simulator · v2.29.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -28,8 +28,10 @@ function loadGLB(name) {
     }, undefined, function (err) { reject(err); });
   });
 }
-// Preload the character models in the background (fire and forget).
-['driverM', 'conductorM', 'sareeWoman', 'studentM', 'officeM', 'trafficPolice', 'elderlyM', 'schoolBoy'].forEach(function (n) { loadGLB(n).catch(function () {}); });
+// Character models load LAZILY (on demand) — no upfront preload. Loading all
+// 8 GLBs (~55 MB) at page start froze the game on phones; now a model is
+// fetched the first time a character of that type is created, and the
+// character is procedural until it arrives (makeHumanoid kicks the load off).
 (function () {
   'use strict';
 
@@ -1035,10 +1037,17 @@ function loadGLB(name) {
   function makeHumanoid(spec) {
     spec = spec || {};
     // real 3D model when one exists for this archetype and it has loaded;
-    // otherwise fall back to the procedural humanoid below
-    if (spec._key && GLB_FOR[spec._key] && GLB_READY[GLB_FOR[spec._key]]) {
-      var glb = makeGLBHumanoid(GLB_FOR[spec._key], spec);
-      if (glb) return glb;
+    // otherwise fall back to the procedural humanoid below. If the model
+    // is not loaded yet, kick its download off now (lazy) and use the
+    // procedural one for this character — the next of this type gets the GLB.
+    if (spec._key && GLB_FOR[spec._key]) {
+      var glbName = GLB_FOR[spec._key];
+      if (GLB_READY[glbName]) {
+        var glb = makeGLBHumanoid(glbName, spec);
+        if (glb) return glb;
+      } else {
+        loadGLB(glbName).catch(function () {});
+      }
     }
     var skin = spec.skin !== undefined ? spec.skin : pick(SKIN_TONES);
     var hairC = spec.hairColor !== undefined ? spec.hairColor : pick(HAIR_COLORS);
@@ -1476,9 +1485,9 @@ function loadGLB(name) {
     camera.position.set(0, 6, 44);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     $('game-root').appendChild(renderer.domElement);
 
     hemiLight = new THREE.HemisphereLight(0xcfe8ff, 0x8a7a5a, 0.95);
@@ -1486,7 +1495,7 @@ function loadGLB(name) {
     sunLight = new THREE.DirectionalLight(0xfff2cc, 1.4);
     sunLight.position.set(40, 80, 30);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(1024, 1024);
+    sunLight.shadow.mapSize.set(512, 512);
     sunLight.shadow.camera.left = -45; sunLight.shadow.camera.right = 45;
     sunLight.shadow.camera.top = 45; sunLight.shadow.camera.bottom = -45;
     sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 300;
@@ -1501,8 +1510,8 @@ function loadGLB(name) {
     scene.add(headlight);
     // rain particles (hidden unless weather is rain)
     var rainGeo = new THREE.BufferGeometry();
-    var rainPos = new Float32Array(600 * 3);
-    for (var ri = 0; ri < 600; ri++) {
+    var rainPos = new Float32Array(300 * 3);
+    for (var ri = 0; ri < 300; ri++) {
       rainPos[ri * 3] = rand(-40, 40);
       rainPos[ri * 3 + 1] = rand(0, 30);
       rainPos[ri * 3 + 2] = rand(-40, 40);
@@ -2438,6 +2447,9 @@ function loadGLB(name) {
   // ---- shared people animation (runs in every mode) ----
   // NPCs stroll the sidewalks; waiting passengers idle at their stops.
   // Distant people are culled: only animate within 80 units of the camera.
+  // One shared temp vector — never allocate a Vector3 per person per frame
+  // (that was a per-frame GC churn source).
+  var _tmpV = new THREE.Vector3();
   function updatePeople(dt) {
     var now = performance.now() / 1000;
     npcs.forEach(function (n) {
@@ -2465,7 +2477,7 @@ function loadGLB(name) {
     }
     // seated riders breathe and look around — each keeps their own habit
     seatedPassengers.forEach(function (sp) {
-      if (camera && sp.mesh.parent && Math.abs(sp.mesh.getWorldPosition(new THREE.Vector3()).z - camera.position.z) < 80) {
+      if (camera && sp.mesh.parent && Math.abs(sp.mesh.getWorldPosition(_tmpV).z - camera.position.z) < 80) {
         poseHumanoid(sp.mesh, sp.clip || 'sit', now, { yaw: sp.yaw || 0 });
       }
     });
@@ -3408,7 +3420,7 @@ function loadGLB(name) {
     // rain falls around the active camera
     if (rainPoints && rainPoints.visible && camera) {
       var pos = rainPoints.geometry.attributes.position;
-      for (var ri = 0; ri < 600; ri++) {
+      for (var ri = 0; ri < 300; ri++) {
         var y = pos.getY(ri) - dt * 22;
         if (y < 0) y = 30;
         pos.setY(ri, y);
@@ -3429,7 +3441,7 @@ function loadGLB(name) {
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.28.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.29.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
