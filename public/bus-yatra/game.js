@@ -2588,7 +2588,7 @@ function loadGLB(name) {
     // 90° at a crossing, do a U-turn, and follow the winding city road.
     // A bus turns its wheels sharply at low speed and less at high speed
     // (like a real vehicle), so the rate is high when slow, capped when fast.
-    var steerRate = clamp(2.2 - Math.abs(state.speed) * 0.03, 0.6, 2.2);
+    var steerRate = clamp(1.1 - Math.abs(state.speed) * 0.02, 0.35, 1.1);
     // a stopped bus does not rotate (no tank turn): the heading only
     // changes while the bus is rolling
     var turnFactor = clamp(Math.abs(state.speed) / 2, 0, 1);
@@ -3148,14 +3148,14 @@ function loadGLB(name) {
     wheel.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       pid = e.pointerId;
-      wheel.setPointerCapture(pid);
+      try { wheel.setPointerCapture(pid); } catch (err) {}
       wheelDrag.active = true;
       wheelDrag.startX = e.clientX;
       wheelDrag.steer = 0;
     });
     wheel.addEventListener('pointermove', function (e) {
       if (pid !== e.pointerId) return;
-      wheelDrag.steer = clamp((e.clientX - wheelDrag.startX) / 60, -1, 1);
+      wheelDrag.steer = clamp((e.clientX - wheelDrag.startX) / 90, -1, 1);
       wheel.style.transform = 'rotate(' + (wheelDrag.steer * 120) + 'deg)';
     });
     function endWheel(e) {
@@ -3429,7 +3429,7 @@ function loadGLB(name) {
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.26.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.28.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
