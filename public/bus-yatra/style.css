@@ -182,14 +182,15 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
 #drive-controls { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 6;
   display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; pointer-events: none; }
 #wheel-wrap { text-align: center; pointer-events: auto; }
-#wheel { width: 130px; height: 130px; border-radius: 32px; background: rgba(120,20,20,.5);
-  border: 3px solid rgba(255,255,255,.7); color: #fff; font-size: 44px; line-height: 124px; text-align: center;
+#wheel { width: 150px; height: 150px; border-radius: 50%; background: rgba(120,20,20,.5);
+  border: 3px solid rgba(255,255,255,.7); display: flex; align-items: center; justify-content: center;
   touch-action: none; backdrop-filter: blur(4px); transition: transform .08s linear;
   box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
+#wheel svg { width: 86%; height: 86%; display: block; pointer-events: none; }
 .wheel-label { font-family: Orbitron, sans-serif; font-size: 9px; letter-spacing: .18em; color: #fff;
   text-shadow: 0 2px 6px rgba(0,0,0,.8); margin-top: 6px; }
 .pedals { display: flex; gap: 12px; pointer-events: auto; }
-.pedals button { width: 80px; height: 80px; border-radius: 20px; border: 3px solid rgba(255,255,255,.7);
+.pedals button { width: 92px; height: 92px; border-radius: 20px; border: 3px solid rgba(255,255,255,.7);
   background: rgba(120,20,20,.55); color: #fff; font-family: Orbitron, sans-serif; font-size: 13px; font-weight: 700;
   cursor: pointer; backdrop-filter: blur(4px); touch-action: none;
   box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.25); }
@@ -240,8 +241,8 @@ h2 { font-family: Orbitron, sans-serif; font-weight: 900; font-size: clamp(24px,
   #dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); bottom: 64px; }
   #dpad button { font-size: 24px; }
   #walk-hint { bottom: 240px; }
-  #wheel { width: 112px; height: 112px; line-height: 106px; font-size: 36px; }
-  .pedals button { width: 68px; height: 68px; }
+  #wheel { width: 132px; height: 132px; }
+  .pedals button { width: 80px; height: 80px; }
   #bus-prompt, #ticket-panel, #seat-panel { bottom: calc(138px + env(safe-area-inset-bottom, 0px)); }
   .prompt-card { padding: 12px; }
   .prompt-bus { font-size: 20px; }
