@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // ============================================================================
-// BUS YATRA — Indian Bus Simulator · v2.29.0
+// BUS YATRA — Indian Bus Simulator · v2.30.0
 // Walk through a 3D Indian city, reach the bus stand, stand next to any bus
 // and choose DRIVE or TRAVEL. Bot buses, real routes, and a radio that
 // changes with the place. All music is ORIGINAL, composed in the style of
@@ -2598,13 +2598,20 @@ function loadGLB(name) {
     state.steer = lerp(state.steer, steer, dt * 8);
     // FULL steering: the heading is free (no clamp), so the bus can turn
     // 90° at a crossing, do a U-turn, and follow the winding city road.
-    // A bus turns its wheels sharply at low speed and less at high speed
-    // (like a real vehicle), so the rate is high when slow, capped when fast.
-    var steerRate = clamp(1.1 - Math.abs(state.speed) * 0.02, 0.35, 1.1);
-    // a stopped bus does not rotate (no tank turn): the heading only
-    // changes while the bus is rolling
+    // Bicycle-model steering: the turn radius depends on the steering
+    // angle, not on speed, so the bus turns the same tight radius at any
+    // rolling speed (like a real vehicle). The old model cut the turn rate
+    // as speed rose, so the radius ballooned (up to ~80 units at top
+    // speed) and the bus could not make a city crossing — that is why
+    // turning felt impossible. The rate is capped so the bus never spins
+    // out at top speed.
+    // A stopped bus does not rotate (no tank turn): the heading only
+    // changes while the bus is rolling.
     var turnFactor = clamp(Math.abs(state.speed) / 2, 0, 1);
-    state.heading += state.steer * steerRate * dt * (state.speed < 0 ? -1 : 1) * turnFactor;
+    var steerAngle = state.steer * 0.6; // max ~34 deg wheel angle at full lock
+    var turnRate = (state.speed / 6.5) * Math.tan(steerAngle); // wheelbase 6.5
+    turnRate = clamp(turnRate, -2.0, 2.0);
+    state.heading += turnRate * dt * turnFactor;
     if (state.heading > Math.PI) state.heading -= Math.PI * 2;
     if (state.heading < -Math.PI) state.heading += Math.PI * 2;
     if (gas) state.speed += busSpec.accel * dt;
@@ -3441,7 +3448,7 @@ function loadGLB(name) {
   }
 
   window.__BUSYATRA__ = {
-    state: state, version: '2.29.0', save: save, route: function () { return route.id; },
+    state: state, version: '2.30.0', save: save, route: function () { return route.id; },
     stations: STATIONS.map(function (s) { return s.name; }),
     audio: AudioEngine,
     nearBus: function () { return nearBus ? nearBus.spec.name : null; },
